@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi cuenta — Pickmap</title>
+<meta name="description" content="Tu panel de viajero Pickmap: próximos panoramas, Pick Points y combos recomendados.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="mode-client dash-body">
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.jpg" alt="" class="logo__mark">
+      Pick<span class="logo__map">map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="index.html">Ver panoramas</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__login" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="dash">
+  <div class="container">
+    <div class="dash__greeting">
+      <p class="eyebrow">Tu cuenta</p>
+      <h1 id="greetingName">Hola 👋</h1>
+      <p class="dash__sub">Esto es lo que Pickmap armó para ti esta semana.</p>
+    </div>
+
+    <div class="dash__grid">
+      <section class="dcard dcard--wide">
+        <h2 class="dcard__title">Mis próximos panoramas</h2>
+        <ul class="dash__plans">
+          <li class="dash__plan">
+            <div class="dash__plan-icon">🏔️</div>
+            <div class="dash__plan-info">
+              <p class="dash__plan-title">Canopy + termas</p>
+              <p class="dash__plan-sub">Sábado · 16:30</p>
+            </div>
+            <span class="dash__plan-tag">Pareja</span>
+          </li>
+          <li class="dash__plan">
+            <div class="dash__plan-icon">🛶</div>
+            <div class="dash__plan-info">
+              <p class="dash__plan-title">Cabaña junto al río</p>
+              <p class="dash__plan-sub">Domingo · 11:00</p>
+            </div>
+            <span class="dash__plan-tag">Familia</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="dcard">
+        <h2 class="dcard__title">Tu actividad</h2>
+        <div class="donut-row">
+          <div class="donut" style="--pct: 72;">
+            <span class="donut__value">72%</span>
+          </div>
+          <div class="donut-legend">
+            <span><i style="background:var(--coral)"></i>Panoramas</span>
+            <span><i style="background:var(--sun)"></i>Pick Points</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="dcard dcard--small">
+        <div class="dash__profile">
+          <div class="dash__avatar">🙂</div>
+          <div>
+            <p class="dash__level">Nivel Explorador</p>
+            <p class="dash__streak">🔥 4 días seguidos</p>
+          </div>
+        </div>
+        <div class="week-bars">
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:40%"></div></div><label>L</label></div>
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:65%"></div></div><label>M</label></div>
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:30%"></div></div><label>M</label></div>
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:80%"></div></div><label>J</label></div>
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:55%"></div></div><label>V</label></div>
+          <div class="week-day is-today"><div class="week-track"><div class="week-fill" style="height:95%"></div></div><label>S</label></div>
+          <div class="week-day"><div class="week-track"><div class="week-fill" style="height:20%"></div></div><label>D</label></div>
+        </div>
+      </section>
+
+      <section class="dcard dcard--small dcard--points">
+        <p class="dcard__title">Pick Points</p>
+        <p class="dash__points"><span class="count-up" data-target="1240">0</span></p>
+        <a href="index.html#puntos" class="btn btn--primary dash__redeem">Canjear puntos</a>
+      </section>
+
+      <section class="dcard dcard--wide">
+        <div class="dcard__header">
+          <h2 class="dcard__title">Combos recomendados</h2>
+          <a href="index.html#como-funciona" class="dash__see-more">Ver más</a>
+        </div>
+        <div class="dash__combos">
+          <div class="dash__combo">
+            <span class="dash__combo-tag">🎡 Kartings</span>
+            <p class="dash__combo-title">Karting bajo las estrellas</p>
+            <div class="dash__combo-meta">
+              <span>📅 Viernes · Después de las 20:00</span>
+              <span class="avatars">🙂🙂🙂<em>+3</em></span>
+            </div>
+          </div>
+          <div class="dash__combo">
+            <span class="dash__combo-tag">🍷 Tour de vinos</span>
+            <p class="dash__combo-title">Tour de vinos nocturno</p>
+            <div class="dash__combo-meta">
+              <span>👥 Grupo de amigos</span>
+              <span class="avatars">🙂🙂<em>+2</em></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>

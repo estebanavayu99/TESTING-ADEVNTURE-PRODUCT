@@ -1,0 +1,103 @@
+/* ========== Dashboard ========== */
+.dash-body { background: var(--bg); }
+.dash { padding: 48px 0 96px; }
+.dash__greeting { margin-bottom: 36px; }
+.dash__greeting h1 { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 4px 0 8px; color: var(--navy); }
+.dash__sub { color: var(--slate); margin: 0; }
+
+.dash__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 22px;
+}
+.dcard {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 26px;
+  box-shadow: var(--shadow);
+}
+.dcard--wide { grid-column: span 1; }
+.dcard__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.dcard__title { font-family: var(--font-display); font-size: 1.1rem; margin: 0 0 18px; color: var(--navy); }
+.dash__see-more { font-weight: 700; font-size: 0.85rem; color: var(--coral); }
+
+/* Plans list */
+.dash__plans { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.dash__plan { display: flex; align-items: center; gap: 14px; }
+.dash__plan-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+}
+.dash__plan-info { flex: 1; }
+.dash__plan-title { margin: 0; font-weight: 700; color: var(--navy); }
+.dash__plan-sub { margin: 2px 0 0; font-size: 0.82rem; color: var(--slate); }
+.dash__plan-tag {
+  background: var(--bg); border: 1px solid rgba(30,45,49,0.1);
+  padding: 5px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; color: var(--navy-2);
+}
+
+/* Donut */
+.donut-row { display: flex; align-items: center; gap: 24px; }
+.donut {
+  --pct: 72;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: conic-gradient(var(--coral) calc(var(--pct) * 1%), var(--sun) 0, var(--sun) 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.donut__value {
+  background: var(--white);
+  width: 82px; height: 82px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.2rem; color: var(--navy);
+}
+.donut-legend { display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; font-weight: 700; color: var(--navy-2); }
+.donut-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+
+/* Small cards row */
+.dcard--small { display: flex; flex-direction: column; gap: 18px; justify-content: space-between; }
+.dash__profile { display: flex; align-items: center; gap: 12px; }
+.dash__avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--sun);
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+}
+.dash__level { margin: 0; font-weight: 700; color: var(--navy); font-size: 0.92rem; }
+.dash__streak { margin: 2px 0 0; font-size: 0.8rem; color: var(--slate); }
+
+.week-bars { display: flex; gap: 10px; }
+.week-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.week-track { width: 100%; height: 56px; display: flex; align-items: flex-end; justify-content: center; }
+.week-fill { width: 60%; min-height: 6px; border-radius: 6px; background: var(--mist); }
+.week-day.is-today .week-fill { background: var(--coral); }
+.week-day label { font-size: 0.72rem; font-weight: 700; color: var(--slate); }
+.week-day.is-today label { color: var(--coral); }
+
+/* Points card */
+.dcard--points { align-items: flex-start; text-align: left; }
+.dash__points {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--navy);
+  margin: 0 0 16px;
+}
+.dash__redeem { width: 100%; text-align: center; }
+
+/* Combos */
+.dash__combos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dash__combo {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 16px;
+}
+.dash__combo-tag { font-size: 0.75rem; font-weight: 700; color: var(--deep-red); }
+.dash__combo-title { margin: 6px 0 10px; font-weight: 700; color: var(--navy); }
+.dash__combo-meta { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; color: var(--slate); }
+.avatars { letter-spacing: 2px; }
+.avatars em { font-style: normal; font-weight: 700; color: var(--navy-2); margin-left: 4px; }
+
+@media (max-width: 900px) {
+  .dash__grid { grid-template-columns: 1fr; }
+  .dash__combos { grid-template-columns: 1fr; }
+}

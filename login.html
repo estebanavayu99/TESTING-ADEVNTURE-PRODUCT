@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión — Pickmap</title>
+<meta name="description" content="Inicia sesión o crea tu cuenta Pickmap para ver tus panoramas y Pick Points.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="mode-client auth-body">
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.jpg" alt="" class="logo__mark">
+      Pick<span class="logo__map">map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="index.html">Volver al sitio</a>
+    </nav>
+  </div>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="auth-tab is-active" id="tabLogin" role="tab" aria-selected="true">Iniciar sesión</button>
+      <button type="button" class="auth-tab" id="tabSignup" role="tab" aria-selected="false">Crear cuenta</button>
+    </div>
+
+    <p class="auth-error" id="authError" hidden></p>
+
+    <form class="auth-form" id="formLogin">
+      <label class="auth-field">
+        <span>Correo</span>
+        <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
+      </label>
+      <label class="auth-field">
+        <span>Contraseña</span>
+        <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+      </label>
+      <button type="submit" class="btn btn--primary auth-submit">Entrar</button>
+      <p class="auth-switch">¿Primera vez por acá? <button type="button" class="auth-link" id="goSignup">Crea tu cuenta</button></p>
+    </form>
+
+    <form class="auth-form" id="formSignup" hidden>
+      <label class="auth-field">
+        <span>Nombre</span>
+        <input type="text" name="name" placeholder="Cami" required autocomplete="name">
+      </label>
+      <label class="auth-field">
+        <span>Correo</span>
+        <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
+      </label>
+      <label class="auth-field">
+        <span>Contraseña</span>
+        <input type="password" name="password" placeholder="Mínimo 4 caracteres" required minlength="4" autocomplete="new-password">
+      </label>
+      <button type="submit" class="btn btn--primary auth-submit">Crear cuenta</button>
+      <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
+    </form>
+
+    <p class="auth-note">Demo de Pickmap: tu cuenta se guarda solo en este navegador, no uses una contraseña real.</p>
+  </div>
+</main>
+
+<script src="js/auth.js"></script>
+</body>
+</html>
