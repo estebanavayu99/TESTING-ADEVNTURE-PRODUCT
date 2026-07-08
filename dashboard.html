@@ -13,6 +13,26 @@
 </head>
 <body class="mode-client dash-body">
 
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <div class="cloud cloud--storm cloud--storm-1"></div>
+  <div class="cloud cloud--storm cloud--storm-2"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+  <div class="weather-overlay"></div>
+  <canvas class="rain-canvas" id="rainCanvas"></canvas>
+</div>
+
 <header class="nav" id="top">
   <div class="container nav__inner">
     <a href="index.html" class="logo">
@@ -20,7 +40,8 @@
       Pick<span class="logo__map">map</span>
     </a>
     <nav class="nav__links">
-      <a href="index.html">Ver panoramas</a>
+      <a href="panoramas.html" class="nav__panoramas">Panoramas</a>
+      <a href="index.html">Ver sitio</a>
     </nav>
     <div class="nav__actions">
       <button type="button" class="nav__login" id="logoutBtn">Cerrar sesión</button>
@@ -38,39 +59,38 @@
 
     <div class="dash__grid">
       <section class="dcard dcard--wide">
-        <h2 class="dcard__title">Mis próximos panoramas</h2>
-        <ul class="dash__plans">
-          <li class="dash__plan">
-            <div class="dash__plan-icon">🏔️</div>
-            <div class="dash__plan-info">
-              <p class="dash__plan-title">Canopy + termas</p>
-              <p class="dash__plan-sub">Sábado · 16:30</p>
-            </div>
-            <span class="dash__plan-tag">Pareja</span>
-          </li>
-          <li class="dash__plan">
-            <div class="dash__plan-icon">🛶</div>
-            <div class="dash__plan-info">
-              <p class="dash__plan-title">Cabaña junto al río</p>
-              <p class="dash__plan-sub">Domingo · 11:00</p>
-            </div>
-            <span class="dash__plan-tag">Familia</span>
-          </li>
-        </ul>
+        <div class="dcard__header">
+          <h2 class="dcard__title">Panoramas</h2>
+          <a href="panoramas.html" class="dash__see-more">Ver todos →</a>
+        </div>
+        <a href="panoramas.html" class="dash__plans-link">
+          <ul class="dash__plans">
+            <li class="dash__plan">
+              <div class="dash__plan-icon">🏔️</div>
+              <div class="dash__plan-info">
+                <p class="dash__plan-title">Canopy + termas</p>
+                <p class="dash__plan-sub">Sábado · 16:30</p>
+              </div>
+              <span class="dash__plan-tag">Pareja</span>
+            </li>
+            <li class="dash__plan">
+              <div class="dash__plan-icon">🛶</div>
+              <div class="dash__plan-info">
+                <p class="dash__plan-title">Cabaña junto al río</p>
+                <p class="dash__plan-sub">Domingo · 11:00</p>
+              </div>
+              <span class="dash__plan-tag">Familia</span>
+            </li>
+          </ul>
+        </a>
       </section>
 
-      <section class="dcard">
-        <h2 class="dcard__title">Tu actividad</h2>
-        <div class="donut-row">
-          <div class="donut" style="--pct: 72;">
-            <span class="donut__value">72%</span>
-          </div>
-          <div class="donut-legend">
-            <span><i style="background:var(--coral)"></i>Panoramas</span>
-            <span><i style="background:var(--sun)"></i>Pick Points</span>
-          </div>
-        </div>
-      </section>
+      <div class="widget">
+        <p class="widget__label">Tu actividad</p>
+        <div class="widget__level">Nivel Explorador</div>
+        <div class="widget__bar"><span class="widget__bar-fill" data-fill="83"></span></div>
+        <div class="widget__count" id="progressCaption">Te faltan 260 Pick Points para tu próximo premio 🎁</div>
+      </div>
 
       <section class="dcard dcard--small">
         <div class="dash__profile">
@@ -89,6 +109,12 @@
           <div class="week-day is-today"><div class="week-track"><div class="week-fill" style="height:95%"></div></div><label>S</label></div>
           <div class="week-day"><div class="week-track"><div class="week-fill" style="height:20%"></div></div><label>D</label></div>
         </div>
+        <ul class="dash__badges">
+          <li><span class="dash__badge-icon">🥾</span><span class="dash__badge-name">10 check-ins</span><span class="dash__badge-pts">+50 pts</span></li>
+          <li><span class="dash__badge-icon">🌤️</span><span class="dash__badge-name">Madrugador</span><span class="dash__badge-pts">+30 pts</span></li>
+          <li><span class="dash__badge-icon">❤️</span><span class="dash__badge-name">5 reseñas</span><span class="dash__badge-pts">+40 pts</span></li>
+          <li><span class="dash__badge-icon">🔥</span><span class="dash__badge-name">Racha de 4 días</span><span class="dash__badge-pts">+20 pts</span></li>
+        </ul>
       </section>
 
       <section class="dcard dcard--small dcard--points">
@@ -100,7 +126,7 @@
       <section class="dcard dcard--wide">
         <div class="dcard__header">
           <h2 class="dcard__title">Combos recomendados</h2>
-          <a href="index.html#como-funciona" class="dash__see-more">Ver más</a>
+          <a href="panoramas.html?filtro=paquete" class="dash__see-more">Ver más</a>
         </div>
         <div class="dash__combos">
           <div class="dash__combo">
@@ -125,6 +151,7 @@
   </div>
 </main>
 
+<script src="js/skyline.js"></script>
 <script src="js/dashboard.js"></script>
 </body>
 </html>

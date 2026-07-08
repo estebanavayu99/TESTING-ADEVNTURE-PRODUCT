@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tus panoramas — Pickmap</title>
+<meta name="description" content="Todos los panoramas que Pickmap IA armó para ti, simples y en paquete, con la razón de por qué los elegimos.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/panoramas.css">
+</head>
+<body class="mode-client dash-body">
+
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <div class="cloud cloud--storm cloud--storm-1"></div>
+  <div class="cloud cloud--storm cloud--storm-2"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+  <div class="weather-overlay"></div>
+  <canvas class="rain-canvas" id="rainCanvas"></canvas>
+</div>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.jpg" alt="" class="logo__mark">
+      Pick<span class="logo__map">map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="panoramas.html" class="nav__panoramas is-current">Panoramas</a>
+      <a href="dashboard.html">Mi cuenta</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__login" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="dash">
+  <div class="container">
+    <div class="dash__greeting">
+      <p class="eyebrow">Pickmap IA</p>
+      <h1>Tus panoramas</h1>
+      <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
+    </div>
+
+    <div class="pano-filters" id="panoFilters">
+      <button type="button" class="pano-filter is-active" data-filter="todos">Todos</button>
+      <button type="button" class="pano-filter" data-filter="simple">Simples</button>
+      <button type="button" class="pano-filter" data-filter="paquete">Paquetes</button>
+    </div>
+
+    <div class="pano-grid" id="panoGrid"></div>
+  </div>
+</main>
+
+<script src="js/skyline.js"></script>
+<script src="js/panoramas.js"></script>
+</body>
+</html>

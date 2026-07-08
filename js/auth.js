@@ -22,9 +22,11 @@
     return localStorage.getItem(SESSION_KEY);
   }
 
-  // Redirect straight to the dashboard if already logged in.
-  if (getSession()) {
-    window.location.href = 'dashboard.html';
+  // Already logged in: skip straight to onboarding or the dashboard.
+  const activeEmail = getSession();
+  if (activeEmail) {
+    const activeUser = getUsers().find((u) => u.email === activeEmail);
+    window.location.href = activeUser && activeUser.onboarded ? 'dashboard.html' : 'onboarding.html';
     return;
   }
 
@@ -73,10 +75,10 @@
       return;
     }
 
-    users.push({ name, email, password });
+    users.push({ name, email, password, onboarded: false });
     saveUsers(users);
     setSession(email);
-    window.location.href = 'dashboard.html';
+    window.location.href = 'onboarding.html';
   });
 
   formLogin.addEventListener('submit', (e) => {
@@ -93,6 +95,6 @@
     }
 
     setSession(email);
-    window.location.href = 'dashboard.html';
+    window.location.href = match.onboarded ? 'dashboard.html' : 'onboarding.html';
   });
 })();

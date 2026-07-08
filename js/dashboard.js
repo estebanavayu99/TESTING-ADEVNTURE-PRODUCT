@@ -10,9 +10,33 @@
 
   const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
   const user = users.find((u) => u.email === email);
-  const firstName = user ? user.name.trim().split(' ')[0] : 'viajero';
 
+  if (!user || !user.onboarded) {
+    window.location.href = 'onboarding.html';
+    return;
+  }
+
+  const firstName = user.name.trim().split(' ')[0];
   document.getElementById('greetingName').textContent = `Hola, ${firstName} 👋`;
+
+  const TASTE_LABELS = {
+    naturaleza: 'la naturaleza y la aventura',
+    gastronomia: 'la buena mesa',
+    relax: 'el relax y el spa',
+    vidanocturna: 'la vida nocturna',
+    cultura: 'la cultura y los tours',
+    extremo: 'los deportes extremos',
+  };
+  const subEl = document.querySelector('.dash__sub');
+  if (subEl && user.tastes && user.tastes.length) {
+    const likes = user.tastes.map((t) => TASTE_LABELS[t]).filter(Boolean);
+    if (likes.length) {
+      const likesText = likes.length > 1
+        ? `${likes.slice(0, -1).join(', ')} y ${likes[likes.length - 1]}`
+        : likes[0];
+      subEl.textContent = `Como te gusta ${likesText}, así arma Pickmap tu semana.`;
+    }
+  }
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem(SESSION_KEY);
@@ -31,5 +55,17 @@
       if (progress < 1) requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
+
+    const NEXT_REWARD = 1500;
+    const pct = Math.min(100, Math.round((target / NEXT_REWARD) * 100));
+    const remaining = Math.max(0, NEXT_REWARD - target);
+    const barFill = document.querySelector('.widget__bar-fill');
+    const caption = document.getElementById('progressCaption');
+    if (barFill) requestAnimationFrame(() => { barFill.style.width = pct + '%'; });
+    if (caption) {
+      caption.textContent = remaining > 0
+        ? `Te faltan ${remaining.toLocaleString('es-CL')} Pick Points para tu próximo premio 🎁`
+        : '¡Ya puedes canjear tu próximo premio! 🎁';
+    }
   }
 })();

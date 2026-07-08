@@ -1,8 +1,5 @@
 /* ========== Auth (login / signup) ========== */
-.auth-body {
-  background: linear-gradient(180deg, #FDEFD3 0%, #FBD6A8 35%, #F7B98F 100%);
-  min-height: 100vh;
-}
+.auth-body { min-height: 100vh; }
 .auth-main {
   display: flex;
   align-items: center;
@@ -88,4 +85,61 @@
   font-size: 0.75rem;
   color: var(--slate);
   margin: 22px 0 0;
+}
+
+/* ========== Onboarding ========== */
+.onboarding-card { max-width: 560px; }
+.onboarding-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  color: var(--navy);
+  margin: 4px 0 10px;
+}
+.onboarding-lead { color: var(--navy-2); margin: 0 0 28px; line-height: 1.55; }
+.onboarding-form { display: flex; flex-direction: column; gap: 26px; }
+.onboarding-field label { font-weight: 700; color: var(--navy); display: block; margin-bottom: 6px; }
+.onboarding-optional { font-weight: 400; color: var(--slate); font-size: 0.85rem; }
+.onboarding-hint { margin: 0 0 10px; font-size: 0.8rem; color: var(--slate); }
+.onboarding-field input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 45, 49, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--navy);
+}
+.onboarding-field input:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(245, 94, 97, 0.18);
+}
+
+.chip-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy-2);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(30, 45, 49, 0.16);
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s, transform .15s;
+}
+.chip:hover { transform: translateY(-1px); }
+.chip.is-selected {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+
+.onboarding-skip {
+  display: block;
+  text-align: center;
+  margin: 6px auto 0;
+  color: var(--slate);
+  font-weight: 600;
 }

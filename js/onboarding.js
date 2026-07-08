@@ -1,0 +1,59 @@
+(() => {
+  const USERS_KEY = 'pickmap_users';
+  const SESSION_KEY = 'pickmap_current_user';
+
+  const email = localStorage.getItem(SESSION_KEY);
+  if (!email) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+  const user = users.find((u) => u.email === email);
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const firstName = user.name.trim().split(' ')[0];
+  document.getElementById('onboardingTitle').textContent = `¡Bienvenido/a, ${firstName}! Cuéntanos un poco de ti`;
+
+  // Chip toggle groups
+  document.querySelectorAll('.chip-group').forEach((group) => {
+    group.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => chip.classList.toggle('is-selected'));
+    });
+  });
+
+  function getSelected(groupId) {
+    return Array.from(document.querySelectorAll(`#${groupId} .chip.is-selected`)).map((c) => c.dataset.value);
+  }
+
+  function saveProfile(profile) {
+    const updated = users.map((u) => (u.email === email ? { ...u, ...profile, onboarded: true } : u));
+    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+    window.location.href = 'dashboard.html';
+  }
+
+  const errorBox = document.getElementById('onboardingError');
+
+  document.getElementById('formOnboarding').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const age = document.getElementById('age').value;
+    const company = getSelected('groupCompany');
+    const tastes = getSelected('groupTastes');
+    const city = document.getElementById('city').value.trim();
+
+    if (!age || company.length === 0 || tastes.length === 0) {
+      errorBox.textContent = 'Cuéntanos al menos tu edad, con quién sueles ir y qué te gusta — así armamos algo a tu pinta.';
+      errorBox.hidden = false;
+      return;
+    }
+
+    saveProfile({ age: Number(age), company, tastes, city });
+  });
+
+  document.getElementById('skipOnboarding').addEventListener('click', () => {
+    window.location.href = 'dashboard.html';
+  });
+})();

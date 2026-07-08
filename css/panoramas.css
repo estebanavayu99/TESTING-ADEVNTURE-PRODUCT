@@ -1,0 +1,61 @@
+/* ========== Panoramas listing ========== */
+.pano-filters { display: flex; gap: 10px; margin-bottom: 28px; }
+.pano-filter {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--navy-2);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.pano-filter.is-active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+.pano-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+.pano-card {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 46px rgba(15, 20, 22, 0.1);
+}
+.pano-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pano-card__icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+}
+.pano-card__kind {
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 5px 10px; border-radius: 999px; white-space: nowrap;
+}
+.pano-card__kind--simple { background: rgba(131, 208, 97, 0.18); color: #3f7a2c; }
+.pano-card__kind--paquete { background: rgba(245, 94, 97, 0.14); color: var(--deep-red); }
+.pano-card__title { margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--navy); }
+.pano-card__meta { margin: 0; font-size: 0.82rem; color: var(--slate); }
+.pano-card__why {
+  background: rgba(30, 45, 49, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--navy-2);
+  line-height: 1.5;
+}
+.pano-card__why b { color: var(--navy); }
+.pano-empty { text-align: center; color: var(--navy-2); padding: 40px 0; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .pano-filters { flex-wrap: wrap; }
+}
