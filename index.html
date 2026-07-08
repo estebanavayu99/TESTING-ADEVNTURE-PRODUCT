@@ -45,12 +45,15 @@
       <a href="#alianzas" class="nav__biz" data-mode-link="business">Para empresas</a>
     </nav>
     <div class="nav__actions">
-      <button class="mode-toggle" id="modeToggle" type="button" role="switch" aria-checked="false">
-        <span class="mode-toggle__pill">
-          <span class="mode-toggle__opt is-active" data-mode="client">Soy viajero</span>
-          <span class="mode-toggle__opt" data-mode="business">Soy empresa</span>
-        </span>
-      </button>
+      <div class="nav__account">
+        <button class="mode-toggle" id="modeToggle" type="button" role="switch" aria-checked="false">
+          <span class="mode-toggle__pill">
+            <span class="mode-toggle__opt is-active" data-mode="client">Soy viajero</span>
+            <span class="mode-toggle__opt" data-mode="business">Soy empresa</span>
+          </span>
+        </button>
+        <a href="#" class="nav__login">Iniciar sesión</a>
+      </div>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>

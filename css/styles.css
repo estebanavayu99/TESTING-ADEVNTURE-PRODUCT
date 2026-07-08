@@ -305,6 +305,17 @@ a { color: inherit; text-decoration: none; }
 .nav__biz { color: var(--deep-red); }
 .nav__actions { display: flex; align-items: center; gap: 14px; }
 
+.nav__account { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.nav__login {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  opacity: 0.75;
+  transition: opacity .2s;
+}
+.nav__login:hover { opacity: 1; text-decoration: underline; }
+body.mode-business .nav__login { display: none; }
+
 .mode-toggle {
   background: var(--navy);
   border: none;
