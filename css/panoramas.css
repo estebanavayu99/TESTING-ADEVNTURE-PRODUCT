@@ -1,4 +1,40 @@
-/* ========== Panoramas listing ========== */
+/* ========== Panoramas: rows ========== */
+.pano-row { margin-bottom: 40px; }
+.pano-row__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.pano-row__header h2 { font-family: var(--font-display); font-size: 1.2rem; color: var(--navy); margin: 0; }
+.pano-row__seeall {
+  font-weight: 700; font-size: 0.85rem; color: var(--coral);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 7px 16px; border-radius: 999px;
+}
+.pano-row__scroll {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.pano-row__scroll .pano-card { min-width: 240px; max-width: 240px; scroll-snap-align: start; }
+.pano-row__scroll::-webkit-scrollbar { height: 6px; }
+.pano-row__scroll::-webkit-scrollbar-thumb { background: rgba(30,45,49,0.18); border-radius: 999px; }
+
+/* ========== Explore section (Recomendado / General) ========== */
+.pano-explore { scroll-margin-top: 100px; padding-top: 8px; }
+.pano-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+.pano-tab {
+  font-family: var(--font-body); font-weight: 700; font-size: 0.9rem;
+  color: var(--navy-2);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.pano-tab.is-active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
 .pano-filters { display: flex; gap: 10px; margin-bottom: 28px; }
 .pano-filter {
   font-family: var(--font-body);
@@ -13,49 +49,85 @@
   cursor: pointer;
   transition: background .2s, color .2s;
 }
-.pano-filter.is-active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.pano-filter.is-active { background: var(--sun); color: var(--navy); border-color: var(--sun); }
 
 .pano-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 22px;
 }
+
+/* ========== Card ========== */
 .pano-card {
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(18px) saturate(120%);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius);
-  padding: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 46px rgba(15, 20, 22, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 20px 46px rgba(15, 20, 22, 0.1);
 }
-.pano-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.pano-card__icon {
-  width: 48px; height: 48px; border-radius: 14px;
-  background: linear-gradient(135deg, var(--sun), var(--coral));
-  display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+.pano-card__photo {
+  position: relative;
+  height: 132px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
+.pano-card__photo--g1 { background: linear-gradient(135deg, #F6CD4C, #F55E61); }
+.pano-card__photo--g2 { background: linear-gradient(135deg, #83D061, #3f7a2c); }
+.pano-card__photo--g3 { background: linear-gradient(135deg, #7FC8E8, #3A6EA5); }
+.pano-card__photo--g4 { background: linear-gradient(135deg, #F58F8F, #AF4345); }
+.pano-card__photo--g5 { background: linear-gradient(135deg, #C7A6F5, #6C4AA6); }
+.pano-card__photo--g6 { background: linear-gradient(135deg, #FBD6A8, #C9757A); }
+.pano-card__emoji { font-size: 2.6rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15)); }
+.pano-card__tag {
+  position: absolute; left: 10px; bottom: 10px;
+  background: rgba(255,255,255,0.9);
+  color: var(--navy);
+  font-size: 0.68rem; font-weight: 800;
+  padding: 4px 10px; border-radius: 999px;
+}
+.pano-card__heart {
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: var(--deep-red);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.pano-card__heart:hover { transform: scale(1.1); }
+.pano-card__heart.is-liked { color: var(--coral); }
 .pano-card__kind {
-  font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
-  padding: 5px 10px; border-radius: 999px; white-space: nowrap;
+  position: absolute; top: 10px; left: 10px;
+  font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 4px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.9);
 }
-.pano-card__kind--simple { background: rgba(131, 208, 97, 0.18); color: #3f7a2c; }
-.pano-card__kind--paquete { background: rgba(245, 94, 97, 0.14); color: var(--deep-red); }
-.pano-card__title { margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--navy); }
-.pano-card__meta { margin: 0; font-size: 0.82rem; color: var(--slate); }
+.pano-card__kind--simple { color: #3f7a2c; }
+.pano-card__kind--paquete { color: var(--deep-red); }
+
+.pano-card__body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.pano-card__title { margin: 0; font-weight: 700; font-size: 1rem; color: var(--navy); line-height: 1.3; }
+.pano-card__rating { margin: 0; font-size: 0.82rem; color: var(--navy-2); font-weight: 700; }
+.pano-card__rating span { font-weight: 500; color: var(--slate); }
+.pano-card__price { margin: 0 0 8px; font-size: 0.85rem; color: var(--navy-2); }
+.pano-card__price b { color: var(--navy); font-family: var(--font-display); }
 .pano-card__why {
+  margin-top: auto;
   background: rgba(30, 45, 49, 0.05);
   border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 0.82rem;
+  padding: 10px 12px;
+  font-size: 0.78rem;
   color: var(--navy-2);
   line-height: 1.5;
 }
+.pano-card__why--general { background: rgba(246, 205, 76, 0.16); }
 .pano-card__why b { color: var(--navy); }
-.pano-empty { text-align: center; color: var(--navy-2); padding: 40px 0; font-weight: 600; }
+.pano-empty { text-align: center; color: var(--navy-2); padding: 40px 0; font-weight: 600; grid-column: 1 / -1; }
 
 @media (max-width: 640px) {
-  .pano-filters { flex-wrap: wrap; }
+  .pano-filters, .pano-tabs { flex-wrap: wrap; }
+  .pano-row__scroll .pano-card { min-width: 210px; max-width: 210px; }
 }

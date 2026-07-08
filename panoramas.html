@@ -53,18 +53,47 @@
 <main class="dash">
   <div class="container">
     <div class="dash__greeting">
-      <p class="eyebrow">Pickmap IA</p>
+      <p class="eyebrow">🤖 Beto · tu IA de panoramas</p>
       <h1>Tus panoramas</h1>
       <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
     </div>
 
-    <div class="pano-filters" id="panoFilters">
-      <button type="button" class="pano-filter is-active" data-filter="todos">Todos</button>
-      <button type="button" class="pano-filter" data-filter="simple">Simples</button>
-      <button type="button" class="pano-filter" data-filter="paquete">Paquetes</button>
-    </div>
+    <section class="pano-row">
+      <div class="pano-row__header">
+        <h2>Simples</h2>
+        <a href="#explorar" class="pano-row__seeall" data-target-filter="simple">Ver todo →</a>
+      </div>
+      <div class="pano-row__scroll" id="rowSimple"></div>
+    </section>
 
-    <div class="pano-grid" id="panoGrid"></div>
+    <section class="pano-row">
+      <div class="pano-row__header">
+        <h2>Combos</h2>
+        <a href="#explorar" class="pano-row__seeall" data-target-filter="paquete">Ver todo →</a>
+      </div>
+      <div class="pano-row__scroll" id="rowPaquete"></div>
+    </section>
+
+    <section class="pano-row">
+      <div class="pano-row__header">
+        <h2>Todos</h2>
+        <a href="#explorar" class="pano-row__seeall" data-target-filter="todos">Ver todo →</a>
+      </div>
+      <div class="pano-row__scroll" id="rowTodos"></div>
+    </section>
+
+    <section class="pano-explore" id="explorar">
+      <div class="pano-tabs">
+        <button type="button" class="pano-tab is-active" data-tab="recomendado">Recomendado para ti</button>
+        <button type="button" class="pano-tab" data-tab="general">General</button>
+      </div>
+      <div class="pano-filters" id="panoFilters">
+        <button type="button" class="pano-filter is-active" data-filter="todos">Todos</button>
+        <button type="button" class="pano-filter" data-filter="simple">Simples</button>
+        <button type="button" class="pano-filter" data-filter="paquete">Paquetes</button>
+      </div>
+      <div class="pano-grid" id="panoGrid"></div>
+    </section>
   </div>
 </main>
 
