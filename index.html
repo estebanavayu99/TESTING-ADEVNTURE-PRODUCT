@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funly — Déjanos organizarlo por ti</title>
+<meta name="description" content="Funly es la plataforma que arma panoramas personalizados según tu clima, tus gustos y tu grupo. Descúbrelo o súmate como aliado.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="mode-client">
+
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+</div>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="#top" class="logo">Fun<span>ly</span></a>
+    <nav class="nav__links" id="navLinks">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#segmentos">Para quién</a>
+      <a href="#puntos">Puntos Funly</a>
+      <a href="#alianzas" class="nav__biz" data-mode-link="business">Para empresas</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="mode-toggle" id="modeToggle" type="button" role="switch" aria-checked="false">
+        <span class="mode-toggle__pill">
+          <span class="mode-toggle__opt is-active" data-mode="client">Soy viajero</span>
+          <span class="mode-toggle__opt" data-mode="business">Soy empresa</span>
+        </span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow" data-client="Planes a tu medida" data-business="Nuevos clientes, todo el año">Planes a tu medida</p>
+        <h1 data-client="Déjanos organizarlo por ti." data-business="Llena tus cupos. Nosotros te traemos la gente.">Déjanos organizarlo por ti.</h1>
+        <p class="hero__sub" data-client="Funly arma tu próximo panorama según el clima de hoy, tu edad, tus gustos y con quién vas. Sin planear nada, solo vivirlo." data-business="Funly conecta tu experiencia —cabañas, tours, canopy, bares con onda— con personas que buscan justo lo que ofreces, cuando el clima y el ánimo son ideales.">
+          Funly arma tu próximo panorama según el clima de hoy, tu edad, tus gustos y con quién vas. Sin planear nada, solo vivirlo.
+        </p>
+        <div class="hero__ctas">
+          <a href="#como-funciona" class="btn btn--primary" data-client="Quiero mi panorama" data-business="Quiero ser aliado" data-target="#como-funciona:#alianzas">Quiero mi panorama</a>
+          <a href="#puntos" class="btn btn--ghost" data-client="Ver sistema de puntos" data-business="Ver cómo funciona la alianza" data-target="#puntos:#alianzas-como">Ver sistema de puntos</a>
+        </div>
+        <div class="hero__stats">
+          <div><strong>+18</strong><span>tipos de panoramas</span></div>
+          <div><strong>100%</strong><span>personalizado</span></div>
+          <div><strong>Puntos</strong><span>que se acumulan y canjean</span></div>
+        </div>
+      </div>
+
+      <div class="hero__mock" aria-hidden="true">
+        <div class="phone">
+          <div class="phone__notch"></div>
+          <div class="phone__screen">
+            <div class="app__topbar">
+              <span class="app__weather">☀️ 22°</span>
+              <span class="app__greeting">Hola, Cami 👋</span>
+              <span class="app__points">⭐ 1.240</span>
+            </div>
+            <p class="app__label">Panoramas para hoy</p>
+            <div class="app__card app__card--a">
+              <div class="app__card-img">🏔️</div>
+              <div>
+                <p class="app__card-title">Canopy + termas</p>
+                <p class="app__card-sub">A 40 min · Ideal con este sol</p>
+              </div>
+            </div>
+            <div class="app__card app__card--b">
+              <div class="app__card-img">🛶</div>
+              <div>
+                <p class="app__card-title">Cabaña junto al río</p>
+                <p class="app__card-sub">Pareja · Escapada express</p>
+              </div>
+            </div>
+            <div class="app__combo">
+              <span>✨ Funly IA armó un combo para tu grupo</span>
+              <button type="button">Ver combo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a class="scroll-cue" href="#como-funciona" aria-label="Bajar">↓</a>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="section" id="como-funciona">
+    <div class="container">
+      <p class="section__eyebrow">Cómo funciona</p>
+      <h2>Cuatro pasos y ya estás en modo panorama</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step__num">1</span>
+          <h3>Cuéntanos quién va</h3>
+          <p>Edad, gustos, si van niños, en pareja, con amigos o con el equipo de la pega.</p>
+        </div>
+        <div class="step">
+          <span class="step__num">2</span>
+          <h3>Miramos el clima y el ánimo</h3>
+          <p>Sol, lluvia, frío o calor: filtramos panoramas que de verdad tienen sentido hoy.</p>
+        </div>
+        <div class="step">
+          <span class="step__num">3</span>
+          <h3>Armamos el combo</h3>
+          <p>Nuestra IA junta actividad + comida + alojamiento cerca o lejos, según tu tiempo.</p>
+        </div>
+        <div class="step">
+          <span class="step__num">4</span>
+          <h3>Vives y sumas puntos</h3>
+          <p>Cada reserva y check-in suma puntos Funly, canjeables en tu próximo panorama.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEGMENTOS -->
+  <section class="section section--alt" id="segmentos">
+    <div class="container">
+      <p class="section__eyebrow">Para quién es Funly</p>
+      <h2>Un panorama distinto para cada tipo de grupo</h2>
+      <div class="cards cards--4">
+        <article class="card">
+          <div class="card__icon">💑</div>
+          <h3>Parejas</h3>
+          <p>Escapadas express de último minuto, sin saber bien a dónde ni cómo. Funly resuelve el "dónde".</p>
+        </article>
+        <article class="card">
+          <div class="card__icon">👨‍👩‍👧‍👦</div>
+          <h3>Familias</h3>
+          <p>Panoramas domingueros que le acomodan a todas las edades, desde los peques hasta los abuelos.</p>
+        </article>
+        <article class="card">
+          <div class="card__icon">🎉</div>
+          <h3>Amigos y jóvenes</h3>
+          <p>Planes espontáneos para el finde: bares con onda, canopy, kartings, lo que se tenga ganas.</p>
+        </article>
+        <article class="card">
+          <div class="card__icon">🏢</div>
+          <h3>Empresas</h3>
+          <p>Panoramas de bienestar laboral para tus equipos: un viernes de salida, nosotros facilitamos todo.</p>
+        </article>
+      </div>
+
+      <div class="examples">
+        <p class="examples__title">Así se ve en la vida real</p>
+        <div class="examples__grid">
+          <div class="example">
+            <span class="example__tag">Pareja</span>
+            <p>"Queremos una escapada express, no sabemos dónde ni cómo." Funly propone cabaña + termas a 40 minutos, disponible para esta noche.</p>
+          </div>
+          <div class="example">
+            <span class="example__tag">Empresa</span>
+            <p>Un equipo con ganas de salir un viernes. Funly arma el panorama y coordina el transporte de todos.</p>
+          </div>
+          <div class="example">
+            <span class="example__tag">Familia</span>
+            <p>Domingo en familia, integrantes de 5 a 70 años. Funly filtra opciones que le sirven a todos, sin discutir.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUNTOS / GAMIFICACION -->
+  <section class="section" id="puntos">
+    <div class="container puntos__inner">
+      <div class="puntos__copy">
+        <p class="section__eyebrow">Sistema de puntos</p>
+        <h2>Cada panorama que vives, suma</h2>
+        <p class="puntos__lead">Reserva, haz check-in y reseña tus panoramas para acumular puntos Funly. Canjéalos en tu próxima escapada, en alojamiento, actividades o combos exclusivos.</p>
+        <ul class="puntos__list">
+          <li><span>📍</span> Puntos por check-in en cada actividad</li>
+          <li><span>⭐</span> Puntos extra por reseñas</li>
+          <li><span>🎁</span> Canje directo en tu próxima reserva</li>
+          <li><span>🔥</span> Ofertas del día solo para nivel alto</li>
+        </ul>
+      </div>
+      <div class="puntos__widget" aria-hidden="true">
+        <div class="widget">
+          <p class="widget__label">Tu progreso</p>
+          <div class="widget__level">Nivel Explorador</div>
+          <div class="widget__bar"><span class="widget__bar-fill" data-fill="72"></span></div>
+          <div class="widget__count"><span class="count-up" data-target="1240">0</span> pts</div>
+          <div class="widget__badges">
+            <span>🥾 10 check-ins</span>
+            <span>🌤️ Madrugador</span>
+            <span>❤️ 5 reseñas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES / IDEAS FUNCIONALES -->
+  <section class="section section--alt" id="funciones">
+    <div class="container">
+      <p class="section__eyebrow">Lo que hace Funly por ti</p>
+      <h2>Más que recomendaciones: panoramas listos para vivir</h2>
+      <div class="cards cards--3">
+        <article class="card card--feature">
+          <div class="card__icon">🌦️</div>
+          <h3>Ideal para el clima</h3>
+          <p>Filtramos actividades según el pronóstico del día, no solo tus gustos.</p>
+        </article>
+        <article class="card card--feature">
+          <div class="card__icon">🏷️</div>
+          <h3>Ofertas del día</h3>
+          <p>Descuentos activados por baja demanda o último minuto, directo de tus aliados favoritos.</p>
+        </article>
+        <article class="card card--feature">
+          <div class="card__icon">🤝</div>
+          <h3>Alianzas cerca tuyo</h3>
+          <p>Cabañas, Airbnbs y actividades cercanas a tu panorama, coordinadas en un solo lugar.</p>
+        </article>
+        <article class="card card--feature">
+          <div class="card__icon">🚌</div>
+          <h3>Convenios de transporte</h3>
+          <p>Buses gestionados para equipos de trabajo: salir con la empresa nunca fue tan fácil.</p>
+        </article>
+        <article class="card card--feature">
+          <div class="card__icon">🗺️</div>
+          <h3>Mapas y combos</h3>
+          <p>Referencias, rutas y combos armados para que solo tengas que aparecer.</p>
+        </article>
+        <article class="card card--feature">
+          <div class="card__icon">✨</div>
+          <h3>Funly IA</h3>
+          <p>Nuestra inteligencia arma el combo completo —actividad, comida y estadía— en segundos.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALIANZAS (para empresas) -->
+  <section class="section section--business" id="alianzas">
+    <div class="container">
+      <p class="section__eyebrow section__eyebrow--inv">Para empresas y aliados</p>
+      <h2 class="inv">Súmate como aliado Funly</h2>
+      <p class="alianzas__lead">Llevamos personas con ganas de vivir un panorama directo a tu puerta: cuando el clima acompaña y el ánimo está a mil. Tú pones la experiencia, nosotros la demanda.</p>
+
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span>Canopy</span><span>Bares con temática</span><span>Cabañas junto a termas</span><span>Paintball</span>
+          <span>Zoológico</span><span>Kartings</span><span>Camping</span><span>Subidas a la nieve</span>
+          <span>Masajes</span><span>Tour de vinos</span><span>Tour de cervezas</span><span>Circo</span><span>Trampolines</span><span>Vuelo en avioneta</span><span>Paracaídas</span>
+          <span>Canopy</span><span>Bares con temática</span><span>Cabañas junto a termas</span><span>Paintball</span>
+          <span>Zoológico</span><span>Kartings</span><span>Camping</span><span>Subidas a la nieve</span>
+          <span>Masajes</span><span>Tour de vinos</span><span>Tour de cervezas</span><span>Circo</span><span>Trampolines</span><span>Vuelo en avioneta</span><span>Paracaídas</span>
+        </div>
+      </div>
+
+      <div class="cards cards--3" id="alianzas-como">
+        <article class="card card--inv">
+          <div class="card__icon">📈</div>
+          <h3>Más reservas, sin publicidad extra</h3>
+          <p>Apareces frente a personas que ya están buscando un panorama como el tuyo, filtradas por clima, edad y grupo.</p>
+        </article>
+        <article class="card card--inv">
+          <div class="card__icon">🤝</div>
+          <h3>Comisión solo si reservan</h3>
+          <p>Pagas comisión por reserva concretada, o un plan mensual fijo si prefieres visibilidad constante.</p>
+        </article>
+        <article class="card card--inv">
+          <div class="card__icon">🚀</div>
+          <h3>Panel simple para tu negocio</h3>
+          <p>Publica tu experiencia, gestiona disponibilidad y aparece en los combos que arma Funly IA.</p>
+        </article>
+      </div>
+
+      <div class="alianzas__cta">
+        <a href="mailto:contacto@funly.cl" class="btn btn--primary btn--lg">Quiero ser aliado Funly</a>
+        <p>Escríbenos y te contactamos en menos de 48 horas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="section cta-final" id="cta">
+    <div class="container cta-final__inner">
+      <h2>Tu próximo panorama ya casi está listo.</h2>
+      <p>Cuéntanos cómo estás, con quién vas y qué clima hace hoy. Nosotros hacemos el resto.</p>
+      <div class="hero__ctas">
+        <a href="#" class="btn btn--primary btn--lg">Descargar Funly</a>
+        <a href="#alianzas" class="btn btn--ghost btn--lg">Soy una empresa</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div>
+      <a href="#top" class="logo logo--footer">Fun<span>ly</span></a>
+      <p>Déjanos organizarlo por ti.</p>
+    </div>
+    <div class="footer__cols">
+      <div>
+        <p class="footer__title">Producto</p>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#segmentos">Para quién</a>
+        <a href="#puntos">Puntos Funly</a>
+      </div>
+      <div>
+        <p class="footer__title">Empresas</p>
+        <a href="#alianzas">Súmate como aliado</a>
+        <a href="mailto:contacto@funly.cl">contacto@funly.cl</a>
+      </div>
+      <div>
+        <p class="footer__title">Síguenos</p>
+        <a href="#">Instagram</a>
+        <a href="#">TikTok</a>
+      </div>
+    </div>
+  </div>
+  <div class="container footer__bottom">
+    <span>© 2026 Funly. Todos los derechos reservados.</span>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
