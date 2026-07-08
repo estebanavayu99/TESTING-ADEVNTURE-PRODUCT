@@ -59,9 +59,11 @@
     const NEXT_REWARD = 1500;
     const pct = Math.min(100, Math.round((target / NEXT_REWARD) * 100));
     const remaining = Math.max(0, NEXT_REWARD - target);
-    const barFill = document.querySelector('.widget__bar-fill');
+    const barFill = document.querySelector('.beto-bar__fill');
+    const marker = document.querySelector('.beto-bar__marker');
     const caption = document.getElementById('progressCaption');
     if (barFill) requestAnimationFrame(() => { barFill.style.width = pct + '%'; });
+    if (marker) requestAnimationFrame(() => { marker.style.left = pct + '%'; });
     if (caption) {
       caption.textContent = remaining > 0
         ? `Te faltan ${remaining.toLocaleString('es-CL')} Pick Points para tu próximo premio 🎁`

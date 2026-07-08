@@ -58,38 +58,28 @@
     </div>
 
     <div class="dash__grid">
-      <section class="dcard dcard--wide">
-        <div class="dcard__header">
-          <h2 class="dcard__title">Panoramas</h2>
-          <a href="panoramas.html" class="dash__see-more">Ver todos →</a>
+      <div class="dcard dcard--beto">
+        <div class="beto-card__head">
+          <span class="beto-card__avatar">🤖</span>
+          <div>
+            <p class="beto-card__label">Beto vio tu actividad</p>
+            <p class="beto-card__msg" id="betoMsg">Vas con todo esta semana, sigue así 🔥</p>
+          </div>
         </div>
-        <a href="panoramas.html" class="dash__plans-link">
-          <ul class="dash__plans">
-            <li class="dash__plan">
-              <div class="dash__plan-icon">🏔️</div>
-              <div class="dash__plan-info">
-                <p class="dash__plan-title">Canopy + termas</p>
-                <p class="dash__plan-sub">Sábado · 16:30</p>
-              </div>
-              <span class="dash__plan-tag">Pareja</span>
-            </li>
-            <li class="dash__plan">
-              <div class="dash__plan-icon">🛶</div>
-              <div class="dash__plan-info">
-                <p class="dash__plan-title">Cabaña junto al río</p>
-                <p class="dash__plan-sub">Domingo · 11:00</p>
-              </div>
-              <span class="dash__plan-tag">Familia</span>
-            </li>
-          </ul>
-        </a>
-      </section>
-
-      <div class="widget">
-        <p class="widget__label">Tu actividad</p>
-        <div class="widget__level">Nivel Explorador</div>
-        <div class="widget__bar"><span class="widget__bar-fill" data-fill="83"></span></div>
-        <div class="widget__count" id="progressCaption">Te faltan 260 Pick Points para tu próximo premio 🎁</div>
+        <div class="beto-bar">
+          <span class="beto-bar__milestone" style="left:22%">🥉</span>
+          <span class="beto-bar__milestone" style="left:50%">🥈</span>
+          <span class="beto-bar__milestone" style="left:78%">🥇</span>
+          <span class="beto-bar__milestone beto-bar__milestone--end">🎁</span>
+          <div class="beto-bar__track">
+            <div class="beto-bar__fill" data-fill="83"></div>
+          </div>
+          <span class="beto-bar__marker">🚀</span>
+        </div>
+        <div class="beto-card__footer">
+          <p class="beto-card__points"><span class="count-up" data-target="1240">0</span> <small>Pick Points</small></p>
+          <p class="beto-card__caption" id="progressCaption">Te faltan 260 Pick Points para tu próximo premio 🎁</p>
+        </div>
       </div>
 
       <section class="dcard dcard--small">
@@ -116,38 +106,16 @@
           <li><span class="dash__badge-icon">🔥</span><span class="dash__badge-name">Racha de 4 días</span><span class="dash__badge-pts">+20 pts</span></li>
         </ul>
       </section>
-
-      <section class="dcard dcard--small dcard--points">
-        <p class="dcard__title">Pick Points</p>
-        <p class="dash__points"><span class="count-up" data-target="1240">0</span></p>
-        <a href="index.html#puntos" class="btn btn--primary dash__redeem">Canjear puntos</a>
-      </section>
-
-      <section class="dcard dcard--wide">
-        <div class="dcard__header">
-          <h2 class="dcard__title">Combos recomendados</h2>
-          <a href="panoramas.html?filtro=paquete" class="dash__see-more">Ver más</a>
-        </div>
-        <div class="dash__combos">
-          <div class="dash__combo">
-            <span class="dash__combo-tag">🎡 Kartings</span>
-            <p class="dash__combo-title">Karting bajo las estrellas</p>
-            <div class="dash__combo-meta">
-              <span>📅 Viernes · Después de las 20:00</span>
-              <span class="avatars">🙂🙂🙂<em>+3</em></span>
-            </div>
-          </div>
-          <div class="dash__combo">
-            <span class="dash__combo-tag">🍷 Tour de vinos</span>
-            <p class="dash__combo-title">Tour de vinos nocturno</p>
-            <div class="dash__combo-meta">
-              <span>👥 Grupo de amigos</span>
-              <span class="avatars">🙂🙂<em>+2</em></span>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
+
+    <a href="panoramas.html#explorar" class="dash__cta">
+      <span class="dash__cta-icon">🗺️</span>
+      <span class="dash__cta-text">
+        <strong>Ver mis panoramas</strong>
+        <small>Todo lo que Beto armó especialmente para ti</small>
+      </span>
+      <span class="dash__cta-arrow">→</span>
+    </a>
   </div>
 </main>
 

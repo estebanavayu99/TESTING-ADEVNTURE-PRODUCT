@@ -208,4 +208,8 @@
   });
 
   renderExplore();
+
+  if (window.location.hash === '#explorar') {
+    document.getElementById('explorar').scrollIntoView();
+  }
 })();
