@@ -406,10 +406,18 @@ a { color: inherit; text-decoration: none; }
 .btn--ghost:hover { background: var(--navy); color: var(--white); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
 
-.hero__stats { display: flex; gap: 32px; }
-.hero__stats div { display: flex; flex-direction: column; }
+.hero__stats { display: flex; gap: 14px; }
+.hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 18px;
+  border: 1px solid rgba(30, 45, 49, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.4);
+}
 .hero__stats strong { font-family: var(--font-display); font-size: 1.4rem; color: var(--navy); }
-.hero__stats span { font-size: 0.8rem; color: var(--slate); }
+.hero__stats span { font-size: 0.78rem; color: var(--slate); }
 
 .scroll-cue {
   position: absolute;
