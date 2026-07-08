@@ -68,7 +68,7 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: linear-gradient(180deg, #0B1220 0%, #16202E 30%, #1E2D31 58%, #2C2130 82%, #3A2233 100%);
   opacity: 0;
-  animation: nightFade 150s ease-in-out infinite;
+  animation: nightFade 45s ease-in-out infinite;
 }
 @keyframes nightFade {
   0%    { opacity: 0; }
@@ -84,7 +84,7 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 0 0 40% 0;
   opacity: 0;
-  animation: nightFade 150s ease-in-out infinite;
+  animation: nightFade 45s ease-in-out infinite;
   background-image:
     radial-gradient(1.6px 1.6px at 8% 18%, #fff, transparent),
     radial-gradient(1.4px 1.4px at 18% 32%, #fff, transparent),
@@ -109,7 +109,7 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: linear-gradient(180deg, rgba(94, 104, 112, 0.5), rgba(70, 80, 90, 0.62) 55%, rgba(45, 53, 61, 0.68) 100%);
   opacity: 0;
-  animation: weatherFade 150s ease-in-out infinite;
+  animation: weatherFade 45s ease-in-out infinite;
   pointer-events: none;
 }
 @keyframes weatherFade {
@@ -135,11 +135,11 @@ a { color: inherit; text-decoration: none; }
 }
 .rain--1 {
   background-image: repeating-linear-gradient(12deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 32px);
-  animation: rainCycle 150s ease-in-out infinite, rainFall1 0.45s linear infinite;
+  animation: rainCycle 45s ease-in-out infinite, rainFall1 0.45s linear infinite;
 }
 .rain--2 {
   background-image: repeating-linear-gradient(12deg, rgba(255,255,255,0.35) 0 1.5px, transparent 1.5px 18px);
-  animation: rainCycle 150s ease-in-out infinite, rainFall2 0.3s linear infinite;
+  animation: rainCycle 45s ease-in-out infinite, rainFall2 0.3s linear infinite;
 }
 @keyframes rainFall1 { from { background-position: 0 0; } to { background-position: -24px 240px; } }
 @keyframes rainFall2 { from { background-position: 0 0; } to { background-position: -14px 140px; } }
@@ -160,7 +160,7 @@ a { color: inherit; text-decoration: none; }
   background: rgba(88, 97, 105, 0.8);
   filter: blur(2px);
   opacity: 0;
-  animation: driftRight 65s linear infinite, stormCloudFade 150s ease-in-out infinite;
+  animation: driftRight 65s linear infinite, stormCloudFade 45s ease-in-out infinite;
 }
 .cloud--storm::before { width: 130px; height: 130px; top: -60px; left: 30px; }
 .cloud--storm::after { width: 100px; height: 100px; top: -40px; left: 155px; }
@@ -184,13 +184,13 @@ a { color: inherit; text-decoration: none; }
   left: 15%;
   background: radial-gradient(circle at 35% 35%, #FFF6D8, var(--sun) 60%, #F6B24C 100%);
   box-shadow: 0 0 60px 20px rgba(246, 205, 76, 0.55), 0 0 140px 60px rgba(245, 94, 97, 0.25);
-  animation: sunCycle 150s ease-in-out infinite;
+  animation: sunCycle 45s ease-in-out infinite;
 }
 /* One full weather cycle: sunrise -> clear morning -> clouds gather and it
    pours (sun dims behind the overcast, 40-74%) -> skies clear again -> warm
    sunset, dipping behind the mountain silhouette -> night -> sunrise once
-   more. Slow and gentle on purpose so it reads as ambient scenery, not a
-   distracting flicker. */
+   more. Runs quickly (45s) so visitors see the whole day/weather story
+   without having to sit and wait for it. */
 @keyframes sunCycle {
   0%   { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
   20%  { top: 8%;  left: 38%; opacity: 1;    transform: scale(1.08); }
