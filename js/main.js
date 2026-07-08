@@ -153,6 +153,71 @@
     requestAnimationFrame(tick);
   }
 
+  /* ---------- Phone mockup: slow content crossfade ---------- */
+  const appContent = document.getElementById('appContent');
+  if (appContent && !reduceMotion) {
+    const scenes = [
+      {
+        weather: '☀️ 22°',
+        points: '1.240',
+        cardA: { icon: '🏔️', title: 'Canopy + termas', sub: 'A 40 min · Ideal con este sol' },
+        cardB: { icon: '🛶', title: 'Cabaña junto al río', sub: 'Pareja · Escapada express' },
+        combo: '✨ Funly IA armó un combo para tu grupo',
+      },
+      {
+        weather: '🌧️ 15°',
+        points: '1.310',
+        cardA: { icon: '🎳', title: 'Bowling + pizza bar', sub: 'A 12 min · Plan bajo techo' },
+        cardB: { icon: '🎪', title: 'Circo + chocolate caliente', sub: 'Familia · Ideal para la lluvia' },
+        combo: '✨ Funly IA cambió el plan por la lluvia',
+      },
+      {
+        weather: '🌙 18°',
+        points: '1.385',
+        cardA: { icon: '🍷', title: 'Tour de vinos nocturno', sub: 'A 25 min · Grupo de amigos' },
+        cardB: { icon: '🎡', title: 'Karting bajo las estrellas', sub: 'Viernes · Después de las 8pm' },
+        combo: '✨ Funly IA armó otro combo para ti',
+      },
+    ];
+
+    const el = {
+      weather: document.getElementById('appWeather'),
+      points: document.getElementById('appPoints'),
+      wave: document.getElementById('appWave'),
+      cardAIcon: document.getElementById('cardAIcon'),
+      cardATitle: document.getElementById('cardATitle'),
+      cardASub: document.getElementById('cardASub'),
+      cardBIcon: document.getElementById('cardBIcon'),
+      cardBTitle: document.getElementById('cardBTitle'),
+      cardBSub: document.getElementById('cardBSub'),
+      combo: document.getElementById('comboText'),
+    };
+
+    let sceneIndex = 0;
+    setInterval(() => {
+      sceneIndex = (sceneIndex + 1) % scenes.length;
+      const s = scenes[sceneIndex];
+
+      appContent.classList.add('is-fading');
+      setTimeout(() => {
+        el.weather.textContent = s.weather;
+        el.points.textContent = s.points;
+        el.cardAIcon.textContent = s.cardA.icon;
+        el.cardATitle.textContent = s.cardA.title;
+        el.cardASub.textContent = s.cardA.sub;
+        el.cardBIcon.textContent = s.cardB.icon;
+        el.cardBTitle.textContent = s.cardB.title;
+        el.cardBSub.textContent = s.cardB.sub;
+        el.combo.textContent = s.combo;
+        appContent.classList.remove('is-fading');
+
+        el.wave.classList.remove('is-waving');
+        void el.wave.offsetWidth;
+        el.wave.classList.add('is-waving');
+      }, 500);
+    }, 5500);
+  }
+
   /* ---------- Parallax mountains on scroll ---------- */
   const back = document.querySelector('.mountains--back');
   const mid = document.querySelector('.mountains--mid');

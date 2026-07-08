@@ -83,29 +83,31 @@
         <div class="phone">
           <div class="phone__notch"></div>
           <div class="phone__screen">
-            <div class="app__topbar">
-              <span class="app__weather">☀️ 22°</span>
-              <span class="app__greeting">Hola, Cami 👋</span>
-              <span class="app__points">⭐ 1.240</span>
-            </div>
-            <p class="app__label">Panoramas para hoy</p>
-            <div class="app__card app__card--a">
-              <div class="app__card-img">🏔️</div>
-              <div>
-                <p class="app__card-title">Canopy + termas</p>
-                <p class="app__card-sub">A 40 min · Ideal con este sol</p>
+            <div class="app__content" id="appContent">
+              <div class="app__topbar">
+                <span class="app__weather" id="appWeather">☀️ 22°</span>
+                <span class="app__greeting">Hola, Cami <span class="wave" id="appWave">👋</span></span>
+                <span class="app__points">⭐ <span id="appPoints">1.240</span></span>
               </div>
-            </div>
-            <div class="app__card app__card--b">
-              <div class="app__card-img">🛶</div>
-              <div>
-                <p class="app__card-title">Cabaña junto al río</p>
-                <p class="app__card-sub">Pareja · Escapada express</p>
+              <p class="app__label">Panoramas para hoy</p>
+              <div class="app__card app__card--a">
+                <div class="app__card-img" id="cardAIcon">🏔️</div>
+                <div>
+                  <p class="app__card-title" id="cardATitle">Canopy + termas</p>
+                  <p class="app__card-sub" id="cardASub">A 40 min · Ideal con este sol</p>
+                </div>
               </div>
-            </div>
-            <div class="app__combo">
-              <span>✨ Funly IA armó un combo para tu grupo</span>
-              <button type="button">Ver combo</button>
+              <div class="app__card app__card--b">
+                <div class="app__card-img" id="cardBIcon">🛶</div>
+                <div>
+                  <p class="app__card-title" id="cardBTitle">Cabaña junto al río</p>
+                  <p class="app__card-sub" id="cardBSub">Pareja · Escapada express</p>
+                </div>
+              </div>
+              <div class="app__combo">
+                <span id="comboText">✨ Funly IA armó un combo para tu grupo</span>
+                <button type="button">Ver combo</button>
+              </div>
             </div>
           </div>
         </div>
