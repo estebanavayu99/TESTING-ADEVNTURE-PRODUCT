@@ -123,26 +123,19 @@ a { color: inherit; text-decoration: none; }
   100% { opacity: 0; }
 }
 
-/* Rain: two layers (bigger/faster + finer/slower) for a "mucha lluvia" feel.
-   Falling motion is a separate, fast, always-on animation; visibility is
-   controlled by the slow weather cycle so it only rains during its phase. */
-.rain {
+/* Rain: real drops drawn on a canvas (js/main.js) rather than a CSS stripe
+   pattern, which read as flat diagonal wallpaper instead of falling rain.
+   The canvas draws continuously; only its opacity is tied to the weather
+   cycle below, so it's only visible during the storm phase. */
+.rain-canvas {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
+  animation: rainCycle 45s ease-in-out infinite;
 }
-.rain--1 {
-  background-image: repeating-linear-gradient(12deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 32px);
-  animation: rainCycle 45s ease-in-out infinite, rainFall1 0.45s linear infinite;
-}
-.rain--2 {
-  background-image: repeating-linear-gradient(12deg, rgba(255,255,255,0.35) 0 1.5px, transparent 1.5px 18px);
-  animation: rainCycle 45s ease-in-out infinite, rainFall2 0.3s linear infinite;
-}
-@keyframes rainFall1 { from { background-position: 0 0; } to { background-position: -24px 240px; } }
-@keyframes rainFall2 { from { background-position: 0 0; } to { background-position: -14px 140px; } }
 @keyframes rainCycle {
   0%   { opacity: 0; }
   40%  { opacity: 0; }
@@ -744,11 +737,11 @@ a { color: inherit; text-decoration: none; }
 
 /* ========== Reduced motion: keep a pleasant static day scene ========== */
 @media (prefers-reduced-motion: reduce) {
-  .sun, .sky-night, .stars, .weather-overlay, .rain--1, .rain--2,
+  .sun, .sky-night, .stars, .weather-overlay, .rain-canvas,
   .cloud, .bird, .mountains--back, .mountains--mid, .mountains--front {
     animation: none !important;
   }
   .sun { top: 10%; left: 50%; opacity: 1; transform: scale(1.05); }
-  .sky-night, .stars, .weather-overlay, .rain--1, .rain--2 { opacity: 0; }
+  .sky-night, .stars, .weather-overlay, .rain-canvas { opacity: 0; }
   html { scroll-behavior: auto; }
 }
