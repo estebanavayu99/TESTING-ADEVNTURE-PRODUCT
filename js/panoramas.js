@@ -592,6 +592,27 @@
     return plan;
   }
 
+  function formatWhen(ds, slot) {
+    if (!ds) return null;
+    const [y, m, d] = ds.split('-').map(Number);
+    return `📅 ${d} de ${MONTH_LABELS[m - 1]} · ${slot}`;
+  }
+
+  function updateActivityWhenLabel(el) {
+    if (!el) return;
+    const whenEl = el.querySelector('.reserve-activity__when');
+    if (!whenEl) return;
+    const dateVal = el.querySelector('.reserve-activity__date').value;
+    const slotBtn = el.querySelector('.reserve-slot.is-selected');
+    if (dateVal) {
+      whenEl.textContent = formatWhen(dateVal, slotBtn ? slotBtn.dataset.slot : '');
+      whenEl.classList.add('is-set');
+    } else {
+      whenEl.textContent = 'Sin fecha asignada aún';
+      whenEl.classList.remove('is-set');
+    }
+  }
+
   function applyAutoPlan(item) {
     const plan = autoPlanSchedule(item);
     const activityEls = Array.from(reserveModalBody.querySelectorAll('.reserve-activity'));
@@ -609,10 +630,7 @@
           slotBtn.classList.add('is-selected');
         }
       }
-      const details = el.querySelector('.reserve-activity__details');
-      details.hidden = false;
-      const toggle = el.querySelector('.reserve-activity__toggle');
-      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      updateActivityWhenLabel(el);
     });
     renderBreakdown();
   }
@@ -628,10 +646,11 @@
           <div class="reserve-summary__info">
             <b>${it.title}</b>
             <small>${isMain ? it.meta : 'Complemento agregado'}</small>
+            <small class="reserve-activity__when">Sin fecha asignada aún</small>
           </div>
-          <button type="button" class="reserve-activity__toggle" aria-expanded="${isMain ? 'true' : 'false'}" aria-label="Ver detalle y horario"><span class="pano-modal__nearby-chevron">⌄</span></button>
+          <button type="button" class="reserve-activity__toggle" aria-expanded="false" aria-label="Ajustar fecha y horario"><span class="pano-modal__nearby-chevron">⌄</span></button>
         </div>
-        <div class="reserve-activity__details"${isMain ? '' : ' hidden'}>
+        <div class="reserve-activity__details" hidden>
           <div class="reserve-activity__facts">
             <div class="reserve-activity__fact"><span>⭐</span><div><b>${it.rating} (${it.reviews})</b><small>Calificación</small></div></div>
             <div class="reserve-activity__fact"><span>📍</span><div><b>${getZone(it.category)}</b><small>Dirección aproximada</small></div></div>
@@ -653,60 +672,64 @@
     const allItems = [item, ...addonItems];
     return `
       <h2 class="reserve-modal__title" id="reserveModalTitle">Resumen de tu reserva</h2>
-      <div class="reserve-autoplan">
-        <button type="button" class="reserve-autoplan__btn" id="reserveAutoPlanBtn">🤖 Que Beto arme el plan automáticamente</button>
-        <p class="reserve-autoplan__note" id="reserveAutoPlanNote">Beto puede revisar la disponibilidad y la distancia entre actividades y proponerte fechas y horarios. Igual puedes ajustar cualquier cosa después.</p>
-      </div>
-      <div class="reserve-activities">
-        ${allItems.map((it, idx) => activityRowHTML(it, idx, item)).join('')}
-      </div>
-      <div class="reserve-breakdown" id="reserveBreakdown"></div>
-      <div class="reserve-points" id="reservePoints">
-        <div class="reserve-points__head">
-          <span>💎 Pick Points disponibles</span>
-          <b id="reservePointsAvailable">0</b>
-        </div>
-        <label class="reserve-field">
-          <span>¿Cuántos quieres canjear? <small>(1 punto = $10)</small></span>
-          <input type="number" id="reservePointsInput" min="0" step="10" value="0">
-        </label>
-        <div class="reserve-points__summary">
-          <div class="reserve-points__row"><span>Descuento por Pick Points</span><b id="reservePointsDiscount">-$0</b></div>
-          <div class="reserve-points__row reserve-points__row--total"><span>Total a pagar</span><b id="reservePointsFinalTotal">$0</b></div>
-          <div class="reserve-points__row"><span>Saldo después de esta reserva</span><b id="reservePointsNewBalance">0</b></div>
-        </div>
-      </div>
-
       <form id="reserveForm" class="reserve-form" novalidate>
-        <label class="reserve-field">
-          <span>Número de personas</span>
-          <input type="number" name="people" min="1" value="1" required>
-        </label>
-        <div id="reservePassengers" class="reserve-passengers"></div>
-        <p class="reserve-form__section-title">Datos de contacto</p>
-        <label class="reserve-field">
-          <span>Nombre completo</span>
-          <input type="text" name="name" value="${user.name || ''}" required>
-        </label>
-        <label class="reserve-field">
-          <span>Correo</span>
-          <input type="email" name="email" value="${user.email || ''}" required>
-        </label>
-        <label class="reserve-field">
-          <span>Teléfono</span>
-          <input type="tel" name="phone" value="${user.phone || ''}" placeholder="+56 9 1234 5678">
-        </label>
-        <p class="reserve-form__section-title">Método de pago</p>
-        <label class="reserve-pay">
-          <input type="radio" name="pay" value="visa" checked>
-          <span>VISA •••• 4231</span>
-        </label>
-        <label class="reserve-pay">
-          <input type="radio" name="pay" value="mc">
-          <span>Mastercard •••• 8890</span>
-        </label>
-        <p class="reserve-form__feedback" id="reserveFeedback">&nbsp;</p>
-        <button type="submit" class="btn btn--primary reserve-form__submit">Confirmar reserva</button>
+        <div class="reserve-step" id="reserveStep1">
+          <p class="reserve-plan-note">🤖 Beto armó este plan según disponibilidad y distancia entre actividades. Toca <span class="reserve-plan-note__chevron">⌄</span> en cada actividad para ajustarla. <button type="button" class="reserve-plan-note__regen" id="reserveAutoPlanBtn">Generar otro plan</button></p>
+          <div class="reserve-activities">
+            ${allItems.map((it, idx) => activityRowHTML(it, idx, item)).join('')}
+          </div>
+          <div class="reserve-map" id="reserveMap"></div>
+          <div class="reserve-breakdown" id="reserveBreakdown"></div>
+          <div class="reserve-points" id="reservePoints">
+            <div class="reserve-points__head">
+              <span>💎 Pick Points disponibles</span>
+              <b id="reservePointsAvailable">0</b>
+            </div>
+            <label class="reserve-field">
+              <span>¿Cuántos quieres canjear? <small>(1 punto = $10)</small></span>
+              <input type="number" id="reservePointsInput" min="0" step="10" value="0">
+            </label>
+            <div class="reserve-points__summary">
+              <div class="reserve-points__row"><span>Descuento por Pick Points</span><b id="reservePointsDiscount">-$0</b></div>
+              <div class="reserve-points__row reserve-points__row--total"><span>Total a pagar</span><b id="reservePointsFinalTotal">$0</b></div>
+              <div class="reserve-points__row"><span>Saldo después de esta reserva</span><b id="reservePointsNewBalance">0</b></div>
+            </div>
+          </div>
+          <label class="reserve-field">
+            <span>Número de personas</span>
+            <input type="number" name="people" min="1" value="1" required>
+          </label>
+          <p class="reserve-form__feedback" id="reserveStep1Feedback">&nbsp;</p>
+          <button type="button" class="btn btn--primary reserve-step__next" id="reserveNextBtn">Avanzar a los datos del viajero →</button>
+        </div>
+        <div class="reserve-step" id="reserveStep2" hidden>
+          <button type="button" class="reserve-step__back" id="reserveBackBtn">← Volver al plan</button>
+          <div id="reservePassengers" class="reserve-passengers"></div>
+          <p class="reserve-form__section-title">Datos de contacto</p>
+          <label class="reserve-field">
+            <span>Nombre completo</span>
+            <input type="text" name="name" value="${user.name || ''}" required>
+          </label>
+          <label class="reserve-field">
+            <span>Correo</span>
+            <input type="email" name="email" value="${user.email || ''}" required>
+          </label>
+          <label class="reserve-field">
+            <span>Teléfono</span>
+            <input type="tel" name="phone" value="${user.phone || ''}" placeholder="+56 9 1234 5678">
+          </label>
+          <p class="reserve-form__section-title">Método de pago</p>
+          <label class="reserve-pay">
+            <input type="radio" name="pay" value="visa" checked>
+            <span>VISA •••• 4231</span>
+          </label>
+          <label class="reserve-pay">
+            <input type="radio" name="pay" value="mc">
+            <span>Mastercard •••• 8890</span>
+          </label>
+          <p class="reserve-form__feedback" id="reserveFeedback">&nbsp;</p>
+          <button type="submit" class="btn btn--primary reserve-form__submit">Confirmar reserva</button>
+        </div>
       </form>
     `;
   }
@@ -744,8 +767,65 @@
       });
   }
 
+  function computeDayGroups(item) {
+    const addonItems = getAddonItemsFor(item.title);
+    const allItems = [item, ...addonItems];
+    const activityEls = Array.from(reserveModalBody.querySelectorAll('.reserve-activity'));
+    const entries = includedActivityIndexes(allItems, activityEls).map((idx) => {
+      const el = activityEls[idx];
+      const dateInput = el.querySelector('.reserve-activity__date');
+      const slotBtn = el.querySelector('.reserve-slot.is-selected');
+      return { item: allItems[idx], date: dateInput.value, slot: slotBtn ? slotBtn.dataset.slot : null };
+    }).filter((e) => e.date && e.slot);
+    const byDate = {};
+    entries.forEach((e) => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    const dates = Object.keys(byDate).sort();
+    dates.forEach((d) => byDate[d].sort((a, b) => minutesOf(a.slot) - minutesOf(b.slot)));
+    return dates.map((d) => ({ date: d, entries: byDate[d] }));
+  }
+
+  function routeBetween(a, b) {
+    const km = Math.abs(a.item.km - b.item.km);
+    return { km, mins: travelBufferMinutes(km) };
+  }
+
+  function mapHTML(item) {
+    const groups = computeDayGroups(item);
+    if (!groups.length) {
+      return '<p class="reserve-map__empty">Elige fecha y horario en tus actividades para ver la ruta sugerida.</p>';
+    }
+    return `<p class="reserve-map__title">🗺️ Tu ruta</p>${groups.map((g) => {
+      const [y, m, d] = g.date.split('-').map(Number);
+      const dayLabel = `${d} de ${MONTH_LABELS[m - 1]}`;
+      const path = g.entries.map((e, i) => {
+        const stop = `
+          <div class="reserve-map__stop">
+            <span class="reserve-summary__icon reserve-summary__icon--${e.item.grad}">${e.item.icon}</span>
+            <span class="reserve-map__stop-label"><b>${e.item.title}</b><small>${e.slot}</small></span>
+          </div>`;
+        if (i === 0) return stop;
+        const r = routeBetween(g.entries[i - 1], e);
+        return `<div class="reserve-map__route"><span>🚗 ${r.km} km · ~${r.mins} min</span></div>${stop}`;
+      }).join('');
+      const routes = g.entries.slice(1).map((e, i) => {
+        const prev = g.entries[i];
+        const r = routeBetween(prev, e);
+        return `<li>De <b>${prev.item.title}</b> a <b>${e.item.title}</b>: ${r.km} km aprox. · ~${r.mins} min de traslado</li>`;
+      }).join('');
+      return `
+        <div class="reserve-map__day">
+          <p class="reserve-map__day-label">${dayLabel}</p>
+          <div class="reserve-map__path">${path}</div>
+          ${routes ? `<ul class="reserve-map__routes">${routes}</ul>` : ''}
+        </div>
+      `;
+    }).join('')}`;
+  }
+
   function renderBreakdown() {
     if (!currentModalItem) return;
+    const mapEl = reserveModalBody.querySelector('#reserveMap');
+    if (mapEl) mapEl.innerHTML = mapHTML(currentModalItem);
     const addonItems = getAddonItemsFor(currentModalItem.title);
     const allItems = [currentModalItem, ...addonItems];
     const activityEls = Array.from(reserveModalBody.querySelectorAll('.reserve-activity'));
@@ -787,7 +867,7 @@
 
   function openReserveModal(item) {
     reserveModalBody.innerHTML = reserveModalHTML(item);
-    renderBreakdown();
+    applyAutoPlan(item);
     reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
     modalOverlay.hidden = true;
     reserveModalOverlay.hidden = false;
@@ -805,6 +885,15 @@
     document.body.classList.remove('pano-modal-open');
   }
 
+  function showReserveStep(step) {
+    const step1 = reserveModalBody.querySelector('#reserveStep1');
+    const step2 = reserveModalBody.querySelector('#reserveStep2');
+    if (!step1 || !step2) return;
+    step1.hidden = step !== 1;
+    step2.hidden = step !== 2;
+    reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
+  }
+
   reserveModalOverlay.querySelector('.reserve-modal__close').addEventListener('click', closeReserveModal);
   reserveModalOverlay.addEventListener('click', (e) => {
     if (e.target === reserveModalOverlay) closeReserveModal();
@@ -818,11 +907,23 @@
     if (e.target.closest('#reserveAutoPlanBtn')) {
       if (!currentModalItem) return;
       applyAutoPlan(currentModalItem);
-      const note = document.getElementById('reserveAutoPlanNote');
-      if (note) {
-        note.textContent = '🤖 Beto armó este plan según disponibilidad y distancia entre actividades. Puedes ajustar cualquier fecha u horario manualmente.';
-        note.classList.add('is-ok');
+      return;
+    }
+    if (e.target.closest('#reserveNextBtn')) {
+      const activityEls = Array.from(reserveModalBody.querySelectorAll('.reserve-activity'));
+      const mainDateInput = activityEls[0] && activityEls[0].querySelector('.reserve-activity__date');
+      const feedback = document.getElementById('reserveStep1Feedback');
+      if (!mainDateInput || !mainDateInput.value) {
+        if (feedback) { feedback.textContent = 'Elige fecha y horario para la actividad principal antes de continuar.'; feedback.classList.add('is-error'); }
+        return;
       }
+      if (feedback) { feedback.textContent = ' '; feedback.classList.remove('is-error'); }
+      renderPassengerFields(reserveModalBody.querySelector('input[name="people"]'));
+      showReserveStep(2);
+      return;
+    }
+    if (e.target.closest('#reserveBackBtn')) {
+      showReserveStep(1);
       return;
     }
     const actToggle = e.target.closest('.reserve-activity__toggle');
@@ -838,6 +939,8 @@
       if (slotBtn.disabled) return;
       slotBtn.parentElement.querySelectorAll('.reserve-slot').forEach((b) => b.classList.remove('is-selected'));
       slotBtn.classList.add('is-selected');
+      updateActivityWhenLabel(slotBtn.closest('.reserve-activity'));
+      renderBreakdown();
       return;
     }
     const calNav = e.target.closest('.reserve-calendar__nav');
@@ -859,6 +962,7 @@
       calDay.classList.add('is-selected');
       calEl.querySelector('.reserve-activity__date').value = calDay.dataset.date;
       calEl.querySelector('.reserve-calendar__slots-wrap').innerHTML = scheduleSlotsHTML(calEl.dataset.title, calDay.dataset.date);
+      updateActivityWhenLabel(calEl.closest('.reserve-activity'));
       renderBreakdown();
       return;
     }

@@ -538,28 +538,52 @@ body.pano-modal-open { overflow: hidden; }
 .reserve-calendar__hint { margin: 0; font-size: 0.8rem; color: var(--slate); }
 .reserve-calendar__slots-wrap { margin-top: 12px; }
 
-.reserve-autoplan {
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(246, 205, 76, 0.14);
-  border: 1px solid rgba(246, 205, 76, 0.35);
+.reserve-plan-note {
+  margin: 0 0 16px;
+  font-size: 0.78rem;
+  color: var(--slate);
+  line-height: 1.5;
 }
-.reserve-autoplan__btn {
-  width: 100%;
-  padding: 11px;
-  border-radius: 12px;
+.reserve-plan-note__chevron { display: inline-block; font-weight: 800; color: var(--navy-2); }
+.reserve-plan-note__regen {
   border: none;
-  background: var(--navy);
-  color: var(--white);
+  background: none;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 0.78rem;
   font-weight: 700;
-  font-size: 0.85rem;
+  color: var(--coral);
+  text-decoration: underline;
   cursor: pointer;
-  transition: background .15s;
 }
-.reserve-autoplan__btn:hover { background: var(--navy-2); }
-.reserve-autoplan__note { margin: 10px 0 0; font-size: 0.78rem; color: var(--navy-2); line-height: 1.4; }
-.reserve-autoplan__note.is-ok { color: #3f7a2c; font-weight: 600; }
+.reserve-plan-note__regen:hover { color: var(--deep-red); }
+.reserve-activity__when { color: var(--coral); font-weight: 700; }
+.reserve-activity__when.is-set { color: #3f7a2c; }
+
+.reserve-map { margin-bottom: 16px; }
+.reserve-map__title {
+  margin: 0 0 10px;
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--slate);
+}
+.reserve-map__empty { margin: 0 0 16px; font-size: 0.82rem; color: var(--slate); }
+.reserve-map__day { margin-bottom: 12px; padding: 14px; border-radius: 16px; background: var(--bg); }
+.reserve-map__day:last-child { margin-bottom: 0; }
+.reserve-map__day-label { margin: 0 0 10px; font-size: 0.8rem; font-weight: 700; color: var(--navy); text-transform: capitalize; }
+.reserve-map__path { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.reserve-map__stop { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 76px; text-align: center; }
+.reserve-map__stop .reserve-summary__icon { width: 38px; height: 38px; font-size: 1.1rem; }
+.reserve-map__stop-label { display: flex; flex-direction: column; }
+.reserve-map__stop-label b { font-size: 0.66rem; color: var(--navy); line-height: 1.25; }
+.reserve-map__stop-label small { font-size: 0.6rem; color: var(--slate); }
+.reserve-map__route { flex: 1; min-width: 46px; display: flex; align-items: center; justify-content: center; }
+.reserve-map__route span {
+  font-size: 0.62rem; font-weight: 700; color: var(--navy-2);
+  background: var(--white); padding: 3px 8px; border-radius: 999px;
+  border: 1px dashed rgba(30, 45, 49, 0.25);
+  white-space: nowrap;
+}
+.reserve-map__routes { margin: 10px 0 0; padding-left: 18px; font-size: 0.74rem; color: var(--navy-2); line-height: 1.6; }
 
 .reserve-breakdown { margin-bottom: 24px; border: 1px solid rgba(30, 45, 49, 0.08); border-radius: 16px; overflow: hidden; }
 .reserve-breakdown__row {
@@ -586,6 +610,20 @@ body.pano-modal-open { overflow: hidden; }
 .reserve-points__row--total b { font-family: var(--font-display); font-size: 1.1rem; color: var(--coral); }
 
 .reserve-form { display: flex; flex-direction: column; gap: 14px; }
+.reserve-step { display: flex; flex-direction: column; gap: 14px; }
+.reserve-step[hidden] { display: none; }
+.reserve-step__next { width: 100%; padding: 13px; }
+.reserve-step__back {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy-2);
+  cursor: pointer;
+}
+.reserve-step__back:hover { color: var(--coral); }
 .reserve-form__section-title {
   margin: 6px 0 -4px;
   font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
