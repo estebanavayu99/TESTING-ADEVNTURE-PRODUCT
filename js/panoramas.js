@@ -460,19 +460,76 @@
   document.body.appendChild(reserveModalOverlay);
   const reserveModalBody = reserveModalOverlay.querySelector('#reserveModalBody');
 
-  function activityScheduleSlotsHTML() {
-    return ['09:00', '11:00', '13:00', '15:00', '17:00']
-      .map((s) => `<button type="button" class="reserve-slot${s === '09:00' ? ' is-selected' : ''}" data-slot="${s}">${s}</button>`)
-      .join('');
-  }
+  const SLOT_TIMES = ['09:00', '11:00', '13:00', '15:00', '17:00'];
+  const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const MONTH_LABELS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
   function isSlotAvailable(title, date, slot) {
     return hashStr(`${title}|${date}|${slot}`) % 5 !== 0;
   }
 
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function toDateStr(y, m, d) { return `${y}-${pad2(m + 1)}-${pad2(d)}`; }
+
+  function dayAvailability(title, ds) {
+    const availableCount = SLOT_TIMES.filter((s) => isSlotAvailable(title, ds, s)).length;
+    if (availableCount === 0) return 'full';
+    if (availableCount <= 2) return 'low';
+    return 'open';
+  }
+
+  // Renders the time-slot row + availability note for a given activity title/date.
+  function scheduleSlotsHTML(title, ds) {
+    if (!ds) return '<p class="reserve-calendar__hint">Elige un día para ver los horarios disponibles.</p>';
+    const availability = SLOT_TIMES.map((s) => ({ slot: s, available: isSlotAvailable(title, ds, s) }));
+    const firstAvailable = availability.find((a) => a.available);
+    const availableCount = availability.filter((a) => a.available).length;
+    const slotBtns = availability.map((a) => `<button type="button" class="reserve-slot${firstAvailable && a.slot === firstAvailable.slot ? ' is-selected' : ''}${a.available ? '' : ' is-unavailable'}" data-slot="${a.slot}"${a.available ? '' : ' disabled'}>${a.slot}</button>`).join('');
+    const note = availableCount === 0
+      ? '<p class="reserve-activity__avail-note is-error">❌ Sin cupos disponibles ese día. Elige otra fecha.</p>'
+      : availableCount <= 2
+        ? `<p class="reserve-activity__avail-note is-warn">⚠️ Quedan pocos horarios disponibles (${availableCount}).</p>`
+        : '<p class="reserve-activity__avail-note is-ok">✅ Buena disponibilidad para esta fecha.</p>';
+    return `<div class="reserve-slots reserve-activity__slots">${slotBtns}</div>${note}`;
+  }
+
+  function calendarDaysHTML(title, year, month, selectedDate) {
+    const first = new Date(year, month, 1);
+    const startWeekday = (first.getDay() + 6) % 7;
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let cells = '';
+    for (let i = 0; i < startWeekday; i++) cells += '<span class="reserve-calendar__day reserve-calendar__day--empty"></span>';
+    for (let d = 1; d <= totalDays; d++) {
+      const ds = toDateStr(year, month, d);
+      const isPast = ds < todayStr;
+      const avail = dayAvailability(title, ds);
+      const isSelected = ds === selectedDate;
+      cells += `<button type="button" class="reserve-calendar__day reserve-calendar__day--${avail}${isSelected ? ' is-selected' : ''}" data-date="${ds}"${isPast ? ' disabled' : ''}>${d}</button>`;
+    }
+    return cells;
+  }
+
+  function calendarHTML(title, year, month, selectedDate) {
+    return `
+      <div class="reserve-calendar" data-title="${title}" data-year="${year}" data-month="${month}">
+        <div class="reserve-calendar__head">
+          <button type="button" class="reserve-calendar__nav" data-dir="-1" aria-label="Mes anterior">‹</button>
+          <span class="reserve-calendar__month-label">${MONTH_LABELS[month]} ${year}</span>
+          <button type="button" class="reserve-calendar__nav" data-dir="1" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="reserve-calendar__weekdays">${WEEKDAY_LABELS.map((w) => `<span>${w}</span>`).join('')}</div>
+        <div class="reserve-calendar__days">${calendarDaysHTML(title, year, month, selectedDate)}</div>
+        <input type="hidden" class="reserve-activity__date" value="${selectedDate || ''}">
+        <div class="reserve-calendar__slots-wrap">${scheduleSlotsHTML(title, selectedDate)}</div>
+      </div>
+    `;
+  }
+
   function activityRowHTML(it, idx, mainItem) {
     const isMain = idx === 0;
     const distFromMain = isMain ? it.km : Math.abs(it.km - mainItem.km);
+    const today = new Date();
     return `
       <div class="reserve-activity" data-index="${idx}" data-title="${it.title}">
         <div class="reserve-activity__row">
@@ -493,15 +550,7 @@
             <div class="reserve-activity__fact"><span>🎒</span><div><b>${it.gear}</b><small>Equipamiento / ropa ideal</small></div></div>
           </div>
           <div class="reserve-activity__schedule">
-            <label class="reserve-field">
-              <span>Fecha</span>
-              <input type="date" class="reserve-activity__date"${isMain ? ' required' : ''}>
-            </label>
-            <div class="reserve-field">
-              <span>Horario</span>
-              <div class="reserve-slots reserve-activity__slots">${activityScheduleSlotsHTML()}</div>
-              <p class="reserve-activity__avail-note">&nbsp;</p>
-            </div>
+            ${calendarHTML(it.title, today.getFullYear(), today.getMonth(), null)}
           </div>
         </div>
       </div>
@@ -621,6 +670,27 @@
       slotBtn.classList.add('is-selected');
       return;
     }
+    const calNav = e.target.closest('.reserve-calendar__nav');
+    if (calNav) {
+      const calEl = calNav.closest('.reserve-calendar');
+      const title = calEl.dataset.title;
+      let year = parseInt(calEl.dataset.year, 10);
+      let month = parseInt(calEl.dataset.month, 10) + parseInt(calNav.dataset.dir, 10);
+      if (month < 0) { month = 11; year -= 1; }
+      if (month > 11) { month = 0; year += 1; }
+      const selectedDate = calEl.querySelector('.reserve-activity__date').value || null;
+      calEl.outerHTML = calendarHTML(title, year, month, selectedDate);
+      return;
+    }
+    const calDay = e.target.closest('.reserve-calendar__day');
+    if (calDay && !calDay.disabled && calDay.dataset.date) {
+      const calEl = calDay.closest('.reserve-calendar');
+      calEl.querySelectorAll('.reserve-calendar__day').forEach((d) => d.classList.remove('is-selected'));
+      calDay.classList.add('is-selected');
+      calEl.querySelector('.reserve-activity__date').value = calDay.dataset.date;
+      calEl.querySelector('.reserve-calendar__slots-wrap').innerHTML = scheduleSlotsHTML(calEl.dataset.title, calDay.dataset.date);
+      return;
+    }
     if (e.target.closest('.reserve-success__close')) {
       finishReserveModal();
     }
@@ -642,44 +712,6 @@
   document.addEventListener('input', (e) => {
     if (e.target.name === 'people' && e.target.closest('#reserveForm')) {
       renderPassengerFields(e.target);
-      return;
-    }
-    if (e.target.classList.contains('reserve-activity__date')) {
-      const activityEl = e.target.closest('.reserve-activity');
-      const title = activityEl.dataset.title;
-      const date = e.target.value;
-      const slotBtns = activityEl.querySelectorAll('.reserve-slot');
-      let availableCount = 0;
-      let selectedStillAvailable = false;
-      slotBtns.forEach((btn) => {
-        const available = !date || isSlotAvailable(title, date, btn.dataset.slot);
-        btn.classList.toggle('is-unavailable', !available);
-        btn.disabled = !available;
-        btn.title = available ? '' : 'Sin cupos para este horario';
-        if (available) availableCount++;
-        if (available && btn.classList.contains('is-selected')) selectedStillAvailable = true;
-      });
-      if (date && !selectedStillAvailable) {
-        slotBtns.forEach((b) => b.classList.remove('is-selected'));
-        const firstAvail = Array.from(slotBtns).find((b) => !b.disabled);
-        if (firstAvail) firstAvail.classList.add('is-selected');
-      }
-      const note = activityEl.querySelector('.reserve-activity__avail-note');
-      if (note) {
-        if (!date) {
-          note.textContent = ' ';
-          note.className = 'reserve-activity__avail-note';
-        } else if (availableCount === 0) {
-          note.textContent = '❌ Sin cupos disponibles ese día. Prueba otra fecha.';
-          note.className = 'reserve-activity__avail-note is-error';
-        } else if (availableCount <= 2) {
-          note.textContent = `⚠️ Quedan pocos horarios disponibles (${availableCount}) para esta fecha.`;
-          note.className = 'reserve-activity__avail-note is-warn';
-        } else {
-          note.textContent = '✅ Buena disponibilidad para esta fecha.';
-          note.className = 'reserve-activity__avail-note is-ok';
-        }
-      }
     }
   });
 

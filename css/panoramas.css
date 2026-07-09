@@ -489,6 +489,55 @@ body.pano-modal-open { overflow: hidden; }
 .reserve-activity__fact small { display: block; font-size: 0.65rem; color: var(--slate); margin-top: 1px; }
 .reserve-activity__schedule { display: flex; flex-direction: column; gap: 12px; }
 
+.reserve-calendar { background: var(--bg); border-radius: 14px; padding: 14px; }
+.reserve-calendar__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.reserve-calendar__month-label { font-size: 0.82rem; font-weight: 700; color: var(--navy); text-transform: capitalize; }
+.reserve-calendar__nav {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: var(--white);
+  color: var(--navy-2);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s;
+}
+.reserve-calendar__nav:hover { background: rgba(245, 94, 97, 0.14); }
+.reserve-calendar__weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+.reserve-calendar__weekdays span { text-align: center; font-size: 0.62rem; font-weight: 800; color: var(--slate); text-transform: uppercase; }
+.reserve-calendar__days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
+.reserve-calendar__day {
+  position: relative;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--navy);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.reserve-calendar__day:hover:not(:disabled):not(.reserve-calendar__day--empty) { background: rgba(245, 94, 97, 0.14); }
+.reserve-calendar__day--empty { background: none; cursor: default; }
+.reserve-calendar__day:disabled { color: rgba(74, 90, 94, 0.35); cursor: not-allowed; }
+.reserve-calendar__day::after {
+  content: '';
+  position: absolute; bottom: 3px; left: 50%;
+  transform: translateX(-50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+.reserve-calendar__day--empty::after, .reserve-calendar__day:disabled::after { display: none; }
+.reserve-calendar__day--open::after { background: #3f7a2c; }
+.reserve-calendar__day--low::after { background: #c98a10; }
+.reserve-calendar__day--full::after { background: var(--deep-red); }
+.reserve-calendar__day.is-selected { background: var(--coral); color: var(--white); }
+.reserve-calendar__day.is-selected::after { background: var(--white); }
+.reserve-calendar__hint { margin: 0; font-size: 0.8rem; color: var(--slate); }
+.reserve-calendar__slots-wrap { margin-top: 12px; }
+
 .reserve-breakdown { margin-bottom: 24px; border: 1px solid rgba(30, 45, 49, 0.08); border-radius: 16px; overflow: hidden; }
 .reserve-breakdown__row {
   display: flex; align-items: center; justify-content: space-between;
