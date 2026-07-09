@@ -270,56 +270,78 @@
   document.body.appendChild(reserveModalOverlay);
   const reserveModalBody = reserveModalOverlay.querySelector('#reserveModalBody');
 
-  function timeSlotsHTML() {
+  function activityScheduleSlotsHTML() {
     return ['09:00', '11:00', '13:00', '15:00', '17:00']
-      .map((s, i) => `<button type="button" class="reserve-slot${i === 0 ? ' is-selected' : ''}" data-slot="${s}">${s}</button>`)
+      .map((s) => `<button type="button" class="reserve-slot${s === '09:00' ? ' is-selected' : ''}" data-slot="${s}">${s}</button>`)
       .join('');
+  }
+
+  function isSlotAvailable(title, date, slot) {
+    return hashStr(`${title}|${date}|${slot}`) % 5 !== 0;
+  }
+
+  function activityRowHTML(it, idx, mainItem) {
+    const isMain = idx === 0;
+    const itDifficulty = it.difficulty || 'suave';
+    const distFromMain = isMain ? it.km : Math.abs(it.km - mainItem.km);
+    return `
+      <div class="reserve-activity" data-index="${idx}" data-title="${it.title}">
+        <div class="reserve-activity__row">
+          <span class="reserve-summary__icon reserve-summary__icon--${it.grad}">${it.icon}</span>
+          <div class="reserve-summary__info">
+            <b>${it.title}</b>
+            <small>${isMain ? it.meta : 'Complemento agregado'}</small>
+          </div>
+          <button type="button" class="reserve-activity__toggle" aria-expanded="${isMain ? 'true' : 'false'}" aria-label="Ver detalle y horario"><span class="pano-modal__nearby-chevron">⌄</span></button>
+        </div>
+        <div class="reserve-activity__details"${isMain ? '' : ' hidden'}>
+          <div class="reserve-activity__facts">
+            <div class="reserve-activity__fact"><span>⭐</span><div><b>${it.rating} (${it.reviews})</b><small>Calificación</small></div></div>
+            <div class="reserve-activity__fact"><span>📍</span><div><b>${getZone(it.category)}</b><small>Dirección aproximada</small></div></div>
+            <div class="reserve-activity__fact"><span>🚗</span><div><b>${distFromMain} km</b><small>${isMain ? 'Distancia aprox.' : 'Distancia desde la actividad principal'}</small></div></div>
+            <div class="reserve-activity__fact"><span>🧭</span><div><b>${getArrival(it.category)}</b><small>Cómo llegar</small></div></div>
+            <div class="reserve-activity__fact"><span>${DIFFICULTY_ICONS[itDifficulty]}</span><div><b>${DIFFICULTY_LABELS[itDifficulty]}</b><small>Nivel de exigencia física</small></div></div>
+            <div class="reserve-activity__fact"><span>🎒</span><div><b>${it.gear || 'Ropa cómoda'}</b><small>Equipamiento / ropa ideal</small></div></div>
+          </div>
+          <div class="reserve-activity__schedule">
+            <label class="reserve-field">
+              <span>Fecha</span>
+              <input type="date" class="reserve-activity__date"${isMain ? ' required' : ''}>
+            </label>
+            <div class="reserve-field">
+              <span>Horario</span>
+              <div class="reserve-slots reserve-activity__slots">${activityScheduleSlotsHTML()}</div>
+              <p class="reserve-activity__avail-note">&nbsp;</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function reserveModalHTML(item) {
     const addonItems = getAddonItemsFor(item.title);
-    const addonsTotal = addonItems.reduce((sum, a) => sum + a.priceNum, 0);
-    const total = item.priceNum + addonsTotal;
+    const allItems = [item, ...addonItems];
+    const total = allItems.reduce((sum, it) => sum + it.priceNum, 0);
     return `
       <h2 class="reserve-modal__title" id="reserveModalTitle">Resumen de tu reserva</h2>
-      <div class="reserve-summary">
-        <div class="reserve-summary__row reserve-summary__row--main">
-          <span class="reserve-summary__icon reserve-summary__icon--${item.grad}">${item.icon}</span>
-          <div class="reserve-summary__info">
-            <b>${item.title}</b>
-            <small>${item.meta}</small>
-          </div>
-          <span class="reserve-summary__price">$${item.price}</span>
-        </div>
-        ${addonItems.map((a) => `
-          <div class="reserve-summary__row">
-            <span class="reserve-summary__icon reserve-summary__icon--${a.grad}">${a.icon}</span>
-            <div class="reserve-summary__info">
-              <b>${a.title}</b>
-              <small>Complemento agregado</small>
-            </div>
-            <span class="reserve-summary__price">$${a.price}</span>
-          </div>
-        `).join('')}
-        <div class="reserve-summary__total">
-          <span>Total estimado${addonItems.length ? ` · ${addonItems.length + 1} experiencias` : ''}</span>
+      <div class="reserve-activities">
+        ${allItems.map((it, idx) => activityRowHTML(it, idx, item)).join('')}
+      </div>
+      <div class="reserve-breakdown">
+        ${allItems.map((it) => `<div class="reserve-breakdown__row"><span>${it.title}</span><span>$${it.price}</span></div>`).join('')}
+        <div class="reserve-breakdown__total">
+          <span>Total estimado${allItems.length > 1 ? ` · ${allItems.length} experiencias` : ''}</span>
           <b>$${total.toLocaleString('es-CL')}</b>
         </div>
       </div>
 
       <form id="reserveForm" class="reserve-form" novalidate>
         <label class="reserve-field">
-          <span>Fecha</span>
-          <input type="date" name="date" required>
-        </label>
-        <div class="reserve-field">
-          <span>Horario disponible</span>
-          <div class="reserve-slots">${timeSlotsHTML()}</div>
-        </div>
-        <label class="reserve-field">
           <span>Número de personas</span>
           <input type="number" name="people" min="1" value="1" required>
         </label>
+        <div id="reservePassengers" class="reserve-passengers"></div>
         <p class="reserve-form__section-title">Datos de contacto</p>
         <label class="reserve-field">
           <span>Nombre completo</span>
@@ -349,7 +371,7 @@
   }
 
   function reserveSuccessHTML(item, data) {
-    const code = `PM-${(hashStr(item.title + data.date + data.slot) % 900000 + 100000)}`;
+    const code = `PM-${(hashStr(item.title + data.schedule.map((s) => s.date + s.slot).join('')) % 900000 + 100000)}`;
     return `
       <div class="reserve-success">
         <span class="reserve-success__icon">✅</span>
@@ -357,10 +379,8 @@
         <p class="reserve-success__sub">Te enviamos los detalles a <b>${data.email}</b>.</p>
         <div class="reserve-success__card">
           <div class="reserve-success__row"><span>Código de reserva</span><b>${code}</b></div>
-          <div class="reserve-success__row"><span>Panorama</span><b>${item.title}</b></div>
-          <div class="reserve-success__row"><span>Fecha</span><b>${data.date}</b></div>
-          <div class="reserve-success__row"><span>Horario</span><b>${data.slot}</b></div>
-          <div class="reserve-success__row"><span>Personas</span><b>${data.people}</b></div>
+          ${data.schedule.map((s) => `<div class="reserve-success__row"><span>${s.title}</span><b>${s.date} · ${s.slot}</b></div>`).join('')}
+          <div class="reserve-success__row"><span>Pasajeros</span><b>${data.passengers.join(', ')}</b></div>
           <div class="reserve-success__row"><span>Total</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
         </div>
         <button type="button" class="btn btn--primary reserve-success__close">Listo</button>
@@ -398,8 +418,17 @@
       if (currentModalItem) openReserveModal(currentModalItem);
       return;
     }
+    const actToggle = e.target.closest('.reserve-activity__toggle');
+    if (actToggle) {
+      const details = actToggle.closest('.reserve-activity').querySelector('.reserve-activity__details');
+      const expanded = details.hidden;
+      details.hidden = !expanded;
+      actToggle.setAttribute('aria-expanded', String(expanded));
+      return;
+    }
     const slotBtn = e.target.closest('.reserve-slot');
     if (slotBtn) {
+      if (slotBtn.disabled) return;
       slotBtn.parentElement.querySelectorAll('.reserve-slot').forEach((b) => b.classList.remove('is-selected'));
       slotBtn.classList.add('is-selected');
       return;
@@ -409,26 +438,109 @@
     }
   });
 
+  function renderPassengerFields(peopleInput) {
+    const form = peopleInput.closest('#reserveForm');
+    const container = form && form.querySelector('#reservePassengers');
+    if (!container) return;
+    const count = Math.max(1, parseInt(peopleInput.value, 10) || 1);
+    const prevValues = Array.from(container.querySelectorAll('.reserve-passenger-name')).map((i) => i.value);
+    let html = '';
+    for (let i = 2; i <= count; i++) {
+      html += `<label class="reserve-field"><span>Nombre pasajero ${i}</span><input type="text" class="reserve-passenger-name" value="${prevValues[i - 2] || ''}" required></label>`;
+    }
+    container.innerHTML = html;
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target.name === 'people' && e.target.closest('#reserveForm')) {
+      renderPassengerFields(e.target);
+      return;
+    }
+    if (e.target.classList.contains('reserve-activity__date')) {
+      const activityEl = e.target.closest('.reserve-activity');
+      const title = activityEl.dataset.title;
+      const date = e.target.value;
+      const slotBtns = activityEl.querySelectorAll('.reserve-slot');
+      let availableCount = 0;
+      let selectedStillAvailable = false;
+      slotBtns.forEach((btn) => {
+        const available = !date || isSlotAvailable(title, date, btn.dataset.slot);
+        btn.classList.toggle('is-unavailable', !available);
+        btn.disabled = !available;
+        btn.title = available ? '' : 'Sin cupos para este horario';
+        if (available) availableCount++;
+        if (available && btn.classList.contains('is-selected')) selectedStillAvailable = true;
+      });
+      if (date && !selectedStillAvailable) {
+        slotBtns.forEach((b) => b.classList.remove('is-selected'));
+        const firstAvail = Array.from(slotBtns).find((b) => !b.disabled);
+        if (firstAvail) firstAvail.classList.add('is-selected');
+      }
+      const note = activityEl.querySelector('.reserve-activity__avail-note');
+      if (note) {
+        if (!date) {
+          note.textContent = ' ';
+          note.className = 'reserve-activity__avail-note';
+        } else if (availableCount === 0) {
+          note.textContent = '❌ Sin cupos disponibles ese día. Prueba otra fecha.';
+          note.className = 'reserve-activity__avail-note is-error';
+        } else if (availableCount <= 2) {
+          note.textContent = `⚠️ Quedan pocos horarios disponibles (${availableCount}) para esta fecha.`;
+          note.className = 'reserve-activity__avail-note is-warn';
+        } else {
+          note.textContent = '✅ Buena disponibilidad para esta fecha.';
+          note.className = 'reserve-activity__avail-note is-ok';
+        }
+      }
+    }
+  });
+
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'reserveForm' || !currentModalItem) return;
     e.preventDefault();
     const form = e.target;
-    const date = form.date.value;
     const people = parseInt(form.people.value, 10) || 1;
     const name = form.name.value.trim();
     const emailVal = form.email.value.trim();
     const phone = form.phone.value.trim();
-    const selectedSlotBtn = form.querySelector('.reserve-slot.is-selected');
     const feedback = document.getElementById('reserveFeedback');
-    if (!date || !selectedSlotBtn || !name || !emailVal) {
-      feedback.textContent = 'Completa la fecha, el horario y tus datos de contacto.';
+
+    const addonItems = getAddonItemsFor(currentModalItem.title);
+    const allItems = [currentModalItem, ...addonItems];
+    const activityEls = Array.from(reserveModalBody.querySelectorAll('.reserve-activity'));
+    const mainDateInput = activityEls[0] ? activityEls[0].querySelector('.reserve-activity__date') : null;
+    const mainDate = mainDateInput ? mainDateInput.value : '';
+    const passengerInputs = Array.from(form.querySelectorAll('.reserve-passenger-name'));
+    const passengerNames = passengerInputs.map((i) => i.value.trim());
+
+    if (!mainDate || !name || !emailVal || passengerNames.some((n) => !n)) {
+      feedback.textContent = 'Completa la fecha de la actividad principal, tus datos de contacto y el nombre de cada pasajero.';
       feedback.classList.add('is-error');
       return;
     }
-    const addonItems = getAddonItemsFor(currentModalItem.title);
-    const addonsTotal = addonItems.reduce((sum, a) => sum + a.priceNum, 0);
-    const total = (currentModalItem.priceNum + addonsTotal) * people;
-    const data = { date, slot: selectedSlotBtn.dataset.slot, people, name, email: emailVal, phone, total };
+    const unavailableSlot = activityEls.some((el) => {
+      const selected = el.querySelector('.reserve-slot.is-selected');
+      return selected && selected.disabled;
+    });
+    if (unavailableSlot) {
+      feedback.textContent = 'Uno de los horarios elegidos ya no tiene cupos. Revisa la disponibilidad marcada en rojo.';
+      feedback.classList.add('is-error');
+      return;
+    }
+
+    const schedule = allItems.map((it, idx) => {
+      const el = activityEls[idx];
+      const dateInput = el ? el.querySelector('.reserve-activity__date') : null;
+      const slotBtn = el ? el.querySelector('.reserve-slot.is-selected') : null;
+      return {
+        title: it.title,
+        date: (dateInput && dateInput.value) || mainDate,
+        slot: (slotBtn && slotBtn.dataset.slot) || '09:00',
+      };
+    });
+    const total = allItems.reduce((sum, it) => sum + it.priceNum, 0) * people;
+    const passengers = [name, ...passengerNames];
+    const data = { schedule, people, name, email: emailVal, phone, total, passengers };
     reserveModalBody.innerHTML = reserveSuccessHTML(currentModalItem, data);
     reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
   });
