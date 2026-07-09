@@ -26,6 +26,14 @@
   }
   function saveFavorites(list) { localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); }
 
+  const ADDONS_KEY = `pickmap_addons_${user.email}`;
+  function getAddons() {
+    try { return JSON.parse(localStorage.getItem(ADDONS_KEY)) || []; } catch { return []; }
+  }
+  function saveAddons(list) { localStorage.setItem(ADDONS_KEY, JSON.stringify(list)); }
+  function addonKey(parent, child) { return `${parent}|||${child}`; }
+  function isAddedOn(parent, child) { return getAddons().includes(addonKey(parent, child)); }
+
   const kindLabel = { simple: 'Simple', paquete: 'Paquete' };
   const CATEGORY_LABELS = {
     naturaleza: 'Naturaleza', gastronomia: 'Gastronomía', relax: 'Relax', vidanocturna: 'Vida nocturna',
@@ -148,6 +156,7 @@
             const dayLabel = DAY_LABELS[n.day] || 'Cualquier día';
             const nDifficulty = n.difficulty || 'suave';
             const distFromPlace = Math.abs(n.km - item.km);
+            const added = isAddedOn(item.title, n.title);
             return `
             <div class="pano-modal__nearby-row">
               <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
@@ -157,7 +166,8 @@
                   <small>A ${distFromPlace} km de ahí · desde $${n.price}</small>
                 </span>
               </button>
-              <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false">+</button>
+              <button type="button" class="pano-modal__nearby-add${added ? ' is-added' : ''}" data-parent="${item.title}" data-title="${n.title}" aria-pressed="${added}" aria-label="${added ? 'Quitar de tu panorama' : 'Agregar a tu panorama'}">${added ? '✓' : '+'}</button>
+              <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false"><span class="pano-modal__nearby-chevron">⌄</span></button>
             </div>
             <div class="pano-modal__nearby-details" hidden>
               <div class="pano-modal__nearby-fact"><span>⭐</span><div><b>${n.rating} (${n.reviews} reseñas)</b><small>Calificación</small></div></div>
@@ -230,12 +240,27 @@
   });
 
   document.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('.pano-modal__nearby-add');
+    if (addBtn) {
+      const parent = addBtn.dataset.parent;
+      const title = addBtn.dataset.title;
+      const key = addonKey(parent, title);
+      const addons = getAddons();
+      const idx = addons.indexOf(key);
+      const nowAdded = idx === -1;
+      if (nowAdded) addons.push(key); else addons.splice(idx, 1);
+      saveAddons(addons);
+      addBtn.classList.toggle('is-added', nowAdded);
+      addBtn.textContent = nowAdded ? '✓' : '+';
+      addBtn.setAttribute('aria-pressed', String(nowAdded));
+      addBtn.setAttribute('aria-label', nowAdded ? 'Quitar de tu panorama' : 'Agregar a tu panorama');
+      return;
+    }
     const toggleBtn = e.target.closest('.pano-modal__nearby-toggle');
     if (toggleBtn) {
       const details = toggleBtn.closest('.pano-modal__nearby-row').nextElementSibling;
       const expanded = details.hidden;
       details.hidden = !expanded;
-      toggleBtn.textContent = expanded ? '−' : '+';
       toggleBtn.setAttribute('aria-expanded', String(expanded));
       return;
     }

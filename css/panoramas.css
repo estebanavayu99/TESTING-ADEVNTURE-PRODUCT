@@ -314,20 +314,36 @@ body.pano-modal-open { overflow: hidden; }
   transition: background .15s;
 }
 .pano-modal__nearby-item:hover { background: rgba(245, 94, 97, 0.1); }
-.pano-modal__nearby-toggle {
+.pano-modal__nearby-add {
   flex-shrink: 0;
   width: 34px; height: 34px;
   border-radius: 10px;
   border: none;
-  background: var(--bg);
-  color: var(--coral);
+  background: var(--coral);
+  color: var(--white);
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
   transition: background .15s;
 }
+.pano-modal__nearby-add:hover { background: var(--deep-red); }
+.pano-modal__nearby-add.is-added { background: #3f7a2c; }
+.pano-modal__nearby-toggle {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: var(--bg);
+  color: var(--navy-2);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s;
+}
 .pano-modal__nearby-toggle:hover { background: rgba(245, 94, 97, 0.1); }
+.pano-modal__nearby-chevron { display: inline-block; transition: transform .2s; }
+.pano-modal__nearby-toggle[aria-expanded="true"] .pano-modal__nearby-chevron { transform: rotate(180deg); }
 .pano-modal__nearby-details {
   display: flex;
   flex-direction: column;
