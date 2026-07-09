@@ -16,7 +16,25 @@
   }
 
   const firstName = user.name.trim().split(' ')[0];
-  document.getElementById('onboardingTitle').textContent = `¡Bienvenido/a, ${firstName}! Cuéntanos un poco de ti`;
+
+  if (user.onboarded) {
+    document.getElementById('onboardingTitle').textContent = `Actualiza tus datos, ${firstName}`;
+    document.querySelector('.onboarding-lead').textContent = 'Ajusta tu edad, con quién sueles viajar y tus gustos cuando quieras — Beto usa esto para seguir afinando tus panoramas.';
+    document.querySelector('.auth-submit').textContent = 'Guardar cambios';
+    document.getElementById('skipOnboarding').hidden = true;
+    document.getElementById('age').value = user.age || '';
+    document.getElementById('city').value = user.city || '';
+    (user.company || []).forEach((val) => {
+      const chip = document.querySelector(`#groupCompany .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
+    (user.tastes || []).forEach((val) => {
+      const chip = document.querySelector(`#groupTastes .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
+  } else {
+    document.getElementById('onboardingTitle').textContent = `¡Bienvenido/a, ${firstName}! Cuéntanos un poco de ti`;
+  }
 
   // Chip toggle groups
   document.querySelectorAll('.chip-group').forEach((group) => {
