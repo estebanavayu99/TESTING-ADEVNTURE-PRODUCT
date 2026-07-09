@@ -52,6 +52,10 @@
   document.getElementById('goSignup').addEventListener('click', () => showForm('signup'));
   document.getElementById('goLogin').addEventListener('click', () => showForm('login'));
 
+  if (new URLSearchParams(window.location.search).get('tab') === 'signup') {
+    showForm('signup');
+  }
+
   function showError(message) {
     errorBox.textContent = message;
     errorBox.hidden = false;

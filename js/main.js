@@ -160,22 +160,22 @@
       {
         weather: '☀️ 22°',
         points: '1.240',
-        cardA: { icon: '🏔️', title: 'Canopy + termas', sub: 'A 40 min · Ideal con este sol' },
-        cardB: { icon: '🛶', title: 'Cabaña junto al río', sub: 'Pareja · Escapada express' },
+        cardA: { icon: '🏔️', title: 'Canopy + termas', sub: 'A 40 min · Ideal con este sol', meta: '⭐ 4.8 · $29.000' },
+        cardB: { icon: '🛶', title: 'Cabaña junto al río', sub: 'Pareja · Escapada express', meta: '⭐ 4.7 · $54.000' },
         combo: 'Pickmap IA armó un combo para tu grupo',
       },
       {
         weather: '🌧️ 15°',
         points: '1.310',
-        cardA: { icon: '🎳', title: 'Bowling + pizza bar', sub: 'A 12 min · Plan bajo techo' },
-        cardB: { icon: '🎪', title: 'Circo + chocolate caliente', sub: 'Familia · Ideal para la lluvia' },
+        cardA: { icon: '🎳', title: 'Bowling + pizza bar', sub: 'A 12 min · Plan bajo techo', meta: '⭐ 4.6 · $14.000' },
+        cardB: { icon: '🎪', title: 'Circo + chocolate caliente', sub: 'Familia · Ideal para la lluvia', meta: '⭐ 4.9 · $18.000' },
         combo: 'Pickmap IA cambió el plan por la lluvia',
       },
       {
         weather: '🌙 18°',
         points: '1.385',
-        cardA: { icon: '🍷', title: 'Tour de vinos nocturno', sub: 'A 25 min · Grupo de amigos' },
-        cardB: { icon: '🎡', title: 'Karting bajo las estrellas', sub: 'Viernes · Después de las 8pm' },
+        cardA: { icon: '🍷', title: 'Tour de vinos nocturno', sub: 'A 25 min · Grupo de amigos', meta: '⭐ 4.7 · $32.000' },
+        cardB: { icon: '🎡', title: 'Karting bajo las estrellas', sub: 'Viernes · Después de las 8pm', meta: '⭐ 4.8 · $16.000' },
         combo: 'Pickmap IA armó otro combo para ti',
       },
     ];
@@ -187,9 +187,11 @@
       cardAIcon: document.getElementById('cardAIcon'),
       cardATitle: document.getElementById('cardATitle'),
       cardASub: document.getElementById('cardASub'),
+      cardAMeta: document.getElementById('cardAMeta'),
       cardBIcon: document.getElementById('cardBIcon'),
       cardBTitle: document.getElementById('cardBTitle'),
       cardBSub: document.getElementById('cardBSub'),
+      cardBMeta: document.getElementById('cardBMeta'),
       combo: document.getElementById('comboText'),
     };
 
@@ -205,9 +207,11 @@
         el.cardAIcon.textContent = s.cardA.icon;
         el.cardATitle.textContent = s.cardA.title;
         el.cardASub.textContent = s.cardA.sub;
+        el.cardAMeta.textContent = s.cardA.meta;
         el.cardBIcon.textContent = s.cardB.icon;
         el.cardBTitle.textContent = s.cardB.title;
         el.cardBSub.textContent = s.cardB.sub;
+        el.cardBMeta.textContent = s.cardB.meta;
         el.combo.textContent = s.combo;
         appContent.classList.remove('is-fading');
 

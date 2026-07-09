@@ -72,7 +72,7 @@
           Cruzamos el clima, tu edad, tus gustos y con quién vas, armamos el combo completo y coordinamos todo. Tú pones las ganas, nosotros el resto.
         </p>
         <div class="hero__ctas">
-          <a href="#como-funciona" class="btn btn--primary" data-client="Quiero mi panorama" data-business="Quiero ser aliado" data-target="#como-funciona:#alianzas">Quiero mi panorama</a>
+          <a href="login.html?tab=signup" class="btn btn--primary" data-client="Quiero mi panorama" data-business="Quiero ser aliado" data-target="login.html?tab=signup:#alianzas">Quiero mi panorama</a>
           <a href="#puntos" class="btn btn--ghost" data-client="Ver mis Pick Points" data-business="Ver cómo funciona la alianza" data-target="#puntos:#alianzas-como">Ver mis Pick Points</a>
         </div>
         <div class="hero__stats">
@@ -93,7 +93,10 @@
                   <span class="app__weather" id="appWeather">☀️ 22°</span>
                   <span class="app__points">⭐ <span id="appPoints">1.240</span></span>
                 </div>
-                <p class="app__greeting">Hola, Cami <span class="wave" id="appWave">👋</span></p>
+                <div class="app__header-user">
+                  <span class="app__avatar">🙂</span>
+                  <p class="app__greeting">Hola, Cami <span class="wave" id="appWave">👋</span></p>
+                </div>
               </div>
 
               <p class="app__label">Panoramas para hoy</p>
@@ -102,6 +105,7 @@
                 <div class="app__card-body">
                   <p class="app__card-title" id="cardATitle">Canopy + termas</p>
                   <p class="app__card-sub" id="cardASub">A 40 min · Ideal con este sol</p>
+                  <p class="app__card-meta" id="cardAMeta">⭐ 4.8 · $29.000</p>
                 </div>
                 <span class="app__card-tag">Simple</span>
               </div>
@@ -110,12 +114,16 @@
                 <div class="app__card-body">
                   <p class="app__card-title" id="cardBTitle">Cabaña junto al río</p>
                   <p class="app__card-sub" id="cardBSub">Pareja · Escapada express</p>
+                  <p class="app__card-meta" id="cardBMeta">⭐ 4.7 · $54.000</p>
                 </div>
                 <span class="app__card-tag app__card-tag--combo">Combo</span>
               </div>
 
               <div class="app__combo">
-                <p class="app__combo-text"><span class="app__combo-spark">✨</span> <span id="comboText">Pickmap IA armó un combo para tu grupo</span></p>
+                <div class="app__combo-top">
+                  <span class="app__combo-avatar">🤖</span>
+                  <p class="app__combo-text" id="comboText">Pickmap IA armó un combo para tu grupo</p>
+                </div>
                 <button type="button">Ver combo</button>
               </div>
 

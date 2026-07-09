@@ -462,31 +462,31 @@ body.mode-business .nav__login { display: none; }
 .phone {
   position: relative;
   z-index: 1;
-  width: 300px;
-  max-width: 84vw;
+  width: 250px;
+  max-width: 76vw;
   background: var(--navy);
   border: 3px solid rgba(255, 255, 255, 0.5);
-  border-radius: 46px;
-  padding: 14px;
+  border-radius: 40px;
+  padding: 12px;
   box-shadow: 0 6px 0 rgba(0,0,0,0.05), 0 44px 70px -14px rgba(15, 20, 22, 0.55), 0 0 0 10px rgba(255,255,255,0.18);
   transform: rotate(-2deg);
   transition: transform .4s ease;
 }
 .phone:hover { transform: rotate(0deg); }
 .phone__notch {
-  width: 84px; height: 20px;
+  width: 70px; height: 18px;
   background: var(--navy);
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 14px 14px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
 }
 .phone__screen {
   background: linear-gradient(180deg, #FFF9EE, #FFFFFF);
-  border-radius: 32px;
-  margin-top: -20px;
-  padding: 24px 18px 22px;
-  min-height: 560px;
+  border-radius: 28px;
+  margin-top: -18px;
+  padding: 18px 14px 16px;
+  min-height: 470px;
   display: flex;
   flex-direction: column;
 }
@@ -495,19 +495,28 @@ body.mode-business .nav__login { display: none; }
 
 .app__header {
   background: linear-gradient(135deg, var(--sun), var(--coral));
-  border-radius: 20px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
   color: var(--white);
 }
-.app__header-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; }
+.app__header-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; font-weight: 800; }
 .app__weather { display: inline-block; animation: weatherPulse 4s ease-in-out infinite; }
 @keyframes weatherPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
 }
-.app__points { background: rgba(255,255,255,0.28); padding: 3px 10px; border-radius: 999px; }
-.app__greeting { font-family: var(--font-display); font-size: 1.15rem; margin: 10px 0 0; }
+.app__points { background: rgba(255,255,255,0.28); padding: 3px 9px; border-radius: 999px; }
+.app__header-user { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.app__avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.app__greeting { font-family: var(--font-display); font-size: 1.02rem; margin: 0; }
 .wave { display: inline-block; transform-origin: 70% 70%; }
 .wave.is-waving { animation: waveHand 0.7s ease-in-out; }
 @keyframes waveHand {
@@ -515,80 +524,90 @@ body.mode-business .nav__login { display: none; }
   30% { transform: rotate(16deg); }
   60% { transform: rotate(-10deg); }
 }
-.app__label { font-size: 0.8rem; color: var(--slate); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px;}
+.app__label { font-size: 0.74rem; color: var(--slate); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px;}
 .app__card {
   position: relative;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
   background: var(--white);
-  border-radius: 18px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 10px;
   box-shadow: 0 6px 16px rgba(30,45,49,0.08);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .app__card-img {
-  width: 52px; height: 52px;
-  border-radius: 14px;
+  width: 44px; height: 44px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--sun), var(--coral));
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
-.app__card-body { flex: 1; min-width: 0; padding-right: 56px; }
-.app__card-title { margin: 0; font-weight: 700; font-size: 0.94rem; line-height: 1.25; }
-.app__card-sub { margin: 3px 0 0; font-size: 0.78rem; color: var(--slate); }
+.app__card-body { flex: 1; min-width: 0; padding-right: 50px; }
+.app__card-title { margin: 0; font-weight: 700; font-size: 0.86rem; line-height: 1.25; }
+.app__card-sub { margin: 3px 0 0; font-size: 0.72rem; color: var(--slate); }
+.app__card-meta { margin: 4px 0 0; font-size: 0.72rem; font-weight: 800; color: var(--deep-red); }
 .app__card-tag {
   position: absolute;
-  top: 10px; right: 12px;
-  font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  top: 9px; right: 10px;
+  font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
   color: #3f7a2c;
   background: rgba(131, 208, 97, 0.18);
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
 }
 .app__card-tag--combo { color: var(--deep-red); background: rgba(245, 94, 97, 0.15); }
 .app__combo {
   background: var(--navy);
   color: var(--white);
-  border-radius: 18px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  margin-top: 6px;
+  margin-top: 4px;
 }
-.app__combo-spark { display: inline-block; animation: weatherPulse 2.2s ease-in-out infinite; }
+.app__combo-top { display: flex; align-items: center; gap: 8px; }
+.app__combo-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  animation: weatherPulse 2.4s ease-in-out infinite;
+}
 .app__combo-text { margin: 0; line-height: 1.35; }
 .app__unlock {
   margin-top: auto;
-  padding-top: 18px;
+  padding-top: 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 .app__unlock-icon {
-  width: 40px; height: 40px;
-  border-radius: 12px;
+  width: 36px; height: 36px;
+  border-radius: 11px;
   background: linear-gradient(135deg, var(--sun), var(--coral));
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   flex-shrink: 0;
 }
 .app__unlock-text { flex: 1; display: flex; flex-direction: column; }
-.app__unlock-text strong { font-size: 0.85rem; color: var(--navy); }
-.app__unlock-text small { font-size: 0.76rem; color: var(--slate); margin-top: 1px; }
-.app__unlock-arrow { font-weight: 800; color: var(--coral); font-size: 1.1rem; }
+.app__unlock-text strong { font-size: 0.8rem; color: var(--navy); }
+.app__unlock-text small { font-size: 0.71rem; color: var(--slate); margin-top: 1px; }
+.app__unlock-arrow { font-weight: 800; color: var(--coral); font-size: 1.05rem; }
 .app__combo button {
   background: var(--sun);
   border: none;
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 7px 13px;
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   cursor: pointer;
   flex-shrink: 0;
 }
