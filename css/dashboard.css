@@ -270,6 +270,33 @@
 
 .dash__payments { margin-bottom: 22px; }
 
+/* Account settings */
+.dash__settings { margin-bottom: 22px; }
+.dash__settings-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dash__field { display: flex; flex-direction: column; gap: 6px; }
+.dash__field span { font-weight: 700; font-size: 0.85rem; color: var(--navy); }
+.dash__field input {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 45, 49, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--navy);
+}
+.dash__field input:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(245, 94, 97, 0.18);
+}
+.dash__settings-save { grid-column: 1 / -1; justify-self: start; padding: 11px 28px; }
+.dash__settings-feedback { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; font-weight: 700; color: #3f7a2c; min-height: 1.2em; }
+.dash__settings-feedback.is-error { color: var(--deep-red); }
+
+@media (max-width: 640px) {
+  .dash__settings-form { grid-template-columns: 1fr; }
+}
+
 /* Pick Points teaser (Mi cuenta -> Pick Points) */
 .dash__points-teaser {
   display: flex;

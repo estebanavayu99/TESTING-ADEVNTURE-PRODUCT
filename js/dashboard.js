@@ -43,6 +43,50 @@
     window.location.href = 'index.html';
   });
 
+  const settingsForm = document.getElementById('settingsForm');
+  if (settingsForm) {
+    document.getElementById('settingsName').value = user.name || '';
+    document.getElementById('settingsEmail').value = user.email || '';
+    document.getElementById('settingsPhone').value = user.phone || '';
+
+    const feedback = document.getElementById('settingsFeedback');
+
+    settingsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newName = document.getElementById('settingsName').value.trim();
+      const newEmail = document.getElementById('settingsEmail').value.trim().toLowerCase();
+      const newPhone = document.getElementById('settingsPhone').value.trim();
+
+      if (!newName || !newEmail) {
+        feedback.textContent = 'El nombre y el correo no pueden estar vacíos.';
+        feedback.classList.add('is-error');
+        return;
+      }
+
+      const allUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const emailTaken = allUsers.some((u) => u.email === newEmail && u.email !== user.email);
+      if (emailTaken) {
+        feedback.textContent = 'Ese correo ya está en uso por otra cuenta.';
+        feedback.classList.add('is-error');
+        return;
+      }
+
+      const idx = allUsers.findIndex((u) => u.email === user.email);
+      if (idx !== -1) {
+        allUsers[idx] = { ...allUsers[idx], name: newName, email: newEmail, phone: newPhone };
+        localStorage.setItem(USERS_KEY, JSON.stringify(allUsers));
+        localStorage.setItem(SESSION_KEY, newEmail);
+        user.name = newName;
+        user.email = newEmail;
+        user.phone = newPhone;
+      }
+
+      feedback.classList.remove('is-error');
+      feedback.textContent = '¡Cambios guardados!';
+      document.getElementById('greetingName').textContent = `Hola, ${newName.split(' ')[0]} 👋`;
+    });
+  }
+
   const counter = document.querySelector('.count-up');
   if (counter) {
     const target = parseInt(counter.dataset.target, 10);

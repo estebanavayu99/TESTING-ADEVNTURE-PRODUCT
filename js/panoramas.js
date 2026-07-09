@@ -20,6 +20,13 @@
     window.location.href = 'index.html';
   });
 
+  const FAVORITES_KEY = `pickmap_favorites_${user.email}`;
+  function getFavorites() {
+    try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
+  }
+  function saveFavorites(list) { localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); }
+  function isFavorited(title) { return getFavorites().some((f) => f.title === title); }
+
   const TASTE_POOL = [
     { taste: 'naturaleza', kind: 'simple', icon: '🌲', title: 'Canopy en el Cajón del Maipo', meta: 'A 40 min · Medio día', reason: 'te gusta la naturaleza y la aventura' },
     { taste: 'naturaleza', kind: 'paquete', icon: '🛖', title: 'Trekking + cabaña con tinaja', meta: 'Paquete de 2 días', reason: 'te gusta la naturaleza y quieres desconectarte sin organizar nada' },
@@ -160,12 +167,13 @@
     const whyBox = item.reason
       ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
       : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
+    const liked = isFavorited(item.title);
     return `
       <article class="pano-card">
         <div class="pano-card__photo pano-card__photo--${item.grad}">
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
-          <span class="pano-card__heart">♡</span>
+          <span class="pano-card__heart${liked ? ' is-liked' : ''}" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
           <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
         </div>
         <div class="pano-card__body">
@@ -189,8 +197,21 @@
   document.addEventListener('click', (e) => {
     const heart = e.target.closest('.pano-card__heart');
     if (!heart) return;
-    const liked = heart.classList.toggle('is-liked');
-    heart.textContent = liked ? '♥' : '♡';
+    const title = heart.dataset.title;
+    const nowLiked = !heart.classList.contains('is-liked');
+    const favorites = getFavorites();
+    if (nowLiked) {
+      const full = CATALOG.find((i) => i.title === title);
+      if (full && !favorites.some((f) => f.title === title)) favorites.push(full);
+    } else {
+      const idx = favorites.findIndex((f) => f.title === title);
+      if (idx !== -1) favorites.splice(idx, 1);
+    }
+    saveFavorites(favorites);
+    document.querySelectorAll(`.pano-card__heart[data-title="${CSS.escape(title)}"]`).forEach((h) => {
+      h.classList.toggle('is-liked', nowLiked);
+      h.textContent = nowLiked ? '♥' : '♡';
+    });
   });
 
   /* ---------- Filters (shared by rows + explore grid) ---------- */

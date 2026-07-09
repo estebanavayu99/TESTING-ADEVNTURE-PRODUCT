@@ -43,6 +43,7 @@
       <a href="dashboard.html" class="is-current">Mi cuenta</a>
       <a href="panoramas.html" class="nav__panoramas">Panoramas</a>
       <a href="pickpoints.html">Pick Points</a>
+      <a href="favoritos.html">Favoritos</a>
       <a href="invita.html">Invita a un amig@</a>
     </nav>
     <div class="nav__actions">
@@ -58,6 +59,26 @@
       <h1 id="greetingName">Hola 👋</h1>
       <p class="dash__sub">Esto es lo que Pickmap armó para ti esta semana.</p>
     </div>
+
+    <section class="dcard dash__settings">
+      <h2 class="dcard__title">Configura tu cuenta</h2>
+      <form id="settingsForm" class="dash__settings-form">
+        <label class="dash__field">
+          <span>Nombre</span>
+          <input type="text" name="name" id="settingsName" autocomplete="name" required>
+        </label>
+        <label class="dash__field">
+          <span>Correo electrónico</span>
+          <input type="email" name="email" id="settingsEmail" autocomplete="email" required>
+        </label>
+        <label class="dash__field">
+          <span>Teléfono</span>
+          <input type="tel" name="phone" id="settingsPhone" autocomplete="tel" placeholder="+56 9 1234 5678">
+        </label>
+        <button type="submit" class="btn btn--primary dash__settings-save">Guardar cambios</button>
+        <p class="dash__settings-feedback" id="settingsFeedback">&nbsp;</p>
+      </form>
+    </section>
 
     <a href="pickpoints.html" class="dcard dash__points-teaser">
       <span class="dash__points-teaser-icon">⭐</span>
