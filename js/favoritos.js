@@ -66,6 +66,16 @@
     general: 'Te enviamos la dirección exacta y las indicaciones de acceso al confirmar tu reserva.',
   };
   function getArrival(category) { return ARRIVAL_BY_CATEGORY[category] || ARRIVAL_BY_CATEGORY.general; }
+  const COMPLEMENT_BY_CATEGORY = {
+    naturaleza: 'relax', extremo: 'gastronomia', nieve: 'relax', playa: 'gastronomia',
+    relax: 'gastronomia', gastronomia: 'vidanocturna', vidanocturna: 'gastronomia',
+    cultura: 'gastronomia', shopping: 'gastronomia', fotografia: 'naturaleza', musica: 'gastronomia',
+    pareja: 'gastronomia', familia: 'relax', amigos: 'vidanocturna', trabajo: 'relax', solo: 'naturaleza',
+    general: 'gastronomia',
+  };
+  function getComplementCategory(category) {
+    return COMPLEMENT_BY_CATEGORY[category] || COMPLEMENT_BY_CATEGORY.general;
+  }
 
   function cardHTML(item) {
     const whyBox = item.reason
@@ -123,10 +133,12 @@
   let modalTitle = null;
 
   function nearbyHTML(item) {
-    const nearby = getFavorites()
-      .filter((i) => i.title !== item.title)
-      .sort((a, b) => Math.abs(a.km - item.km) - Math.abs(b.km - item.km))
-      .slice(0, 3);
+    const pool = getFavorites().filter((i) => i.title !== item.title);
+    const complementCategory = getComplementCategory(item.category);
+    const byProximity = (a, b) => Math.abs(a.km - item.km) - Math.abs(b.km - item.km);
+    const complements = pool.filter((i) => i.category === complementCategory).sort(byProximity);
+    const rest = pool.filter((i) => i.category !== complementCategory).sort(byProximity);
+    const nearby = [...complements, ...rest].slice(0, 3);
     if (!nearby.length) return '';
     return `
       <div class="pano-modal__nearby">
@@ -135,13 +147,14 @@
           ${nearby.map((n) => {
             const dayLabel = DAY_LABELS[n.day] || 'Cualquier día';
             const nDifficulty = n.difficulty || 'suave';
+            const distFromPlace = Math.abs(n.km - item.km);
             return `
             <div class="pano-modal__nearby-row">
               <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
                 <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
                 <span class="pano-modal__nearby-info">
                   <b>${n.title}</b>
-                  <small>${n.km} km · desde $${n.price}</small>
+                  <small>A ${distFromPlace} km de ahí · desde $${n.price}</small>
                 </span>
               </button>
               <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false">+</button>
@@ -149,7 +162,7 @@
             <div class="pano-modal__nearby-details" hidden>
               <div class="pano-modal__nearby-fact"><span>⭐</span><div><b>${n.rating} (${n.reviews} reseñas)</b><small>Calificación</small></div></div>
               <div class="pano-modal__nearby-fact"><span>📍</span><div><b>${getZone(n.category)}</b><small>Dirección aproximada</small></div></div>
-              <div class="pano-modal__nearby-fact"><span>🚗</span><div><b>${n.km} km</b><small>Distancia desde tu ubicación</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>🚗</span><div><b>${distFromPlace} km</b><small>Distancia desde este panorama</small></div></div>
               <div class="pano-modal__nearby-fact"><span>🧭</span><div><b>${getArrival(n.category)}</b><small>Cómo llegar</small></div></div>
               <div class="pano-modal__nearby-fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
               <div class="pano-modal__nearby-fact"><span>${DIFFICULTY_ICONS[nDifficulty]}</span><div><b>${DIFFICULTY_LABELS[nDifficulty]}</b><small>Nivel de exigencia física</small></div></div>
