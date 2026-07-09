@@ -87,10 +87,31 @@
   const modalBody = modalOverlay.querySelector('#panoModalBody');
   let modalTitle = null;
 
+  function nearbyHTML(item) {
+    const nearby = getFavorites()
+      .filter((i) => i.title !== item.title)
+      .sort((a, b) => Math.abs(a.km - item.km) - Math.abs(b.km - item.km))
+      .slice(0, 3);
+    if (!nearby.length) return '';
+    return `
+      <div class="pano-modal__nearby">
+        <p class="pano-modal__nearby-title">Panoramas cerca de aquí</p>
+        <div class="pano-modal__nearby-list">
+          ${nearby.map((n) => `
+            <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
+              <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
+              <span class="pano-modal__nearby-info">
+                <b>${n.title}</b>
+                <small>${n.km} km · desde $${n.price}</small>
+              </span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function modalHTML(item) {
-    const whyBox = item.reason
-      ? `<p class="pano-modal__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
-      : `<p class="pano-modal__why pano-modal__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const categoryLabel = CATEGORY_LABELS[item.category] || 'Popular';
     const dayLabel = DAY_LABELS[item.day] || 'Cualquier día';
     return `
@@ -109,7 +130,7 @@
           <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
         </div>
         <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
-        ${whyBox}
+        ${nearbyHTML(item)}
         <div class="pano-modal__footer">
           <p class="pano-modal__price">Desde <b>$${item.price}</b> <span>por persona</span></p>
           <button type="button" class="btn btn--primary pano-modal__reserve">Reservar este panorama</button>
@@ -121,6 +142,7 @@
   function openModal(item) {
     modalTitle = item.title;
     modalBody.innerHTML = modalHTML(item);
+    modalOverlay.querySelector('.pano-modal').scrollTop = 0;
     modalOverlay.hidden = false;
     document.body.classList.add('pano-modal-open');
   }
@@ -137,6 +159,12 @@
   });
 
   document.addEventListener('click', (e) => {
+    const nearbyBtn = e.target.closest('.pano-modal__nearby-item');
+    if (nearbyBtn) {
+      const item = getFavorites().find((f) => f.title === nearbyBtn.dataset.title);
+      if (item) openModal(item);
+      return;
+    }
     const heart = e.target.closest('.pano-card__heart');
     if (heart) {
       const title = heart.dataset.title;
