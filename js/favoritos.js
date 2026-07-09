@@ -632,36 +632,36 @@
 
   function mapHTML(item) {
     const groups = computeDayGroups(item);
-    if (!groups.length) {
+    const entries = groups.reduce((acc, g) => acc.concat(g.entries), []);
+    if (!entries.length) {
       return '<p class="reserve-map__empty">Elige fecha y horario en tus actividades para ver la ruta sugerida.</p>';
     }
-    return `<p class="reserve-map__title">🗺️ Tu ruta</p>${groups.map((g) => {
-      const [y, m, d] = g.date.split('-').map(Number);
-      const dayLabel = `${d} de ${MONTH_LABELS[m - 1]}`;
-      const path = g.entries.map((e, i) => {
-        const stop = `
-          <div class="reserve-map__stop">
-            <span class="reserve-summary__icon reserve-summary__icon--${e.item.grad}">${e.item.icon}</span>
-            <span class="reserve-map__stop-label"><b>${e.item.title}</b><small>${e.slot}</small></span>
-          </div>`;
-        if (i === 0) return stop;
-        const r = routeBetween(g.entries[i - 1], e);
-        return `<div class="reserve-map__route"><span>🚗 ${r.km} km · ~${r.mins} min</span></div>${stop}`;
-      }).join('');
-      const routes = g.entries.slice(1).map((e, i) => {
-        const prev = g.entries[i];
-        const r = routeBetween(prev, e);
-        return `<li>De <b>${prev.item.title}</b> a <b>${e.item.title}</b>: ${r.km} km aprox. · ~${r.mins} min de traslado</li>`;
-      }).join('');
-      return `
-        <div class="reserve-map__day">
-          <p class="reserve-map__day-label">${dayLabel}</p>
-          <div class="reserve-map__path">${path}</div>
-          ${routes ? `<ul class="reserve-map__routes">${routes}</ul>` : ''}
-          ${schematicSvgHTML(g.entries)}
-        </div>
-      `;
-    }).join('')}`;
+    const path = entries.map((e, i) => {
+      const [y, m, d] = e.date.split('-').map(Number);
+      const dateLabel = `${d} de ${MONTH_LABELS[m - 1]}`;
+      const stop = `
+        <div class="reserve-map__stop">
+          <small class="reserve-map__stop-date">${dateLabel}</small>
+          <span class="reserve-summary__icon reserve-summary__icon--${e.item.grad}">${e.item.icon}</span>
+          <span class="reserve-map__stop-label"><b>${e.item.title}</b><small>${e.slot}</small></span>
+        </div>`;
+      if (i === 0) return stop;
+      const r = routeBetween(entries[i - 1], e);
+      return `<div class="reserve-map__route"><span>🚗 ${r.km} km · ~${r.mins} min</span></div>${stop}`;
+    }).join('');
+    const routes = entries.slice(1).map((e, i) => {
+      const prev = entries[i];
+      const r = routeBetween(prev, e);
+      return `<li>De <b>${prev.item.title}</b> a <b>${e.item.title}</b>: ${r.km} km aprox. · ~${r.mins} min de traslado</li>`;
+    }).join('');
+    return `
+      <p class="reserve-map__title">🗺️ Tu ruta</p>
+      <div class="reserve-map__day">
+        <div class="reserve-map__path">${path}</div>
+        ${routes ? `<ul class="reserve-map__routes">${routes}</ul>` : ''}
+        ${schematicSvgHTML(entries)}
+      </div>
+    `;
   }
 
   function renderBreakdown() {
