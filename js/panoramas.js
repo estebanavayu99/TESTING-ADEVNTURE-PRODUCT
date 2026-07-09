@@ -34,6 +34,17 @@
   function saveAddons(list) { localStorage.setItem(ADDONS_KEY, JSON.stringify(list)); }
   function addonKey(parent, child) { return `${parent}|||${child}`; }
   function isAddedOn(parent, child) { return getAddons().includes(addonKey(parent, child)); }
+  function parseAddonKey(key) {
+    const [parent, child] = key.split('|||');
+    return { parent, child };
+  }
+  function getAddonItemsFor(parentTitle) {
+    return getAddons()
+      .map(parseAddonKey)
+      .filter((k) => k.parent === parentTitle)
+      .map((k) => CATALOG.find((i) => i.title === k.child))
+      .filter(Boolean);
+  }
 
   const TASTE_POOL = [
     { taste: 'naturaleza', kind: 'simple', icon: '🌲', title: 'Canopy en el Cajón del Maipo', meta: 'A 40 min · Medio día', reason: 'te gusta la naturaleza y la aventura' },
@@ -417,7 +428,9 @@
     `;
   }
 
+  let currentModalItem = null;
   function openModal(item) {
+    currentModalItem = item;
     modalBody.innerHTML = modalHTML(item);
     modalOverlay.querySelector('.pano-modal').scrollTop = 0;
     modalOverlay.hidden = false;
@@ -425,6 +438,7 @@
   }
   function closeModal() {
     modalOverlay.hidden = true;
+    currentModalItem = null;
     document.body.classList.remove('pano-modal-open');
   }
 
@@ -432,8 +446,186 @@
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
   });
+
+  /* ---------- Reserve modal: date/time/contact/payment summary ---------- */
+  const reserveModalOverlay = document.createElement('div');
+  reserveModalOverlay.className = 'reserve-modal-overlay';
+  reserveModalOverlay.hidden = true;
+  reserveModalOverlay.innerHTML = `
+    <div class="reserve-modal" role="dialog" aria-modal="true" aria-labelledby="reserveModalTitle">
+      <button type="button" class="reserve-modal__close" aria-label="Cerrar">✕</button>
+      <div id="reserveModalBody"></div>
+    </div>
+  `;
+  document.body.appendChild(reserveModalOverlay);
+  const reserveModalBody = reserveModalOverlay.querySelector('#reserveModalBody');
+
+  function timeSlotsHTML() {
+    return ['09:00', '11:00', '13:00', '15:00', '17:00']
+      .map((s, i) => `<button type="button" class="reserve-slot${i === 0 ? ' is-selected' : ''}" data-slot="${s}">${s}</button>`)
+      .join('');
+  }
+
+  function reserveModalHTML(item) {
+    const addonItems = getAddonItemsFor(item.title);
+    const addonsTotal = addonItems.reduce((sum, a) => sum + a.priceNum, 0);
+    const total = item.priceNum + addonsTotal;
+    return `
+      <h2 class="reserve-modal__title" id="reserveModalTitle">Resumen de tu reserva</h2>
+      <div class="reserve-summary">
+        <div class="reserve-summary__row reserve-summary__row--main">
+          <span class="reserve-summary__icon reserve-summary__icon--${item.grad}">${item.icon}</span>
+          <div class="reserve-summary__info">
+            <b>${item.title}</b>
+            <small>${item.meta}</small>
+          </div>
+          <span class="reserve-summary__price">$${item.price}</span>
+        </div>
+        ${addonItems.map((a) => `
+          <div class="reserve-summary__row">
+            <span class="reserve-summary__icon reserve-summary__icon--${a.grad}">${a.icon}</span>
+            <div class="reserve-summary__info">
+              <b>${a.title}</b>
+              <small>Complemento agregado</small>
+            </div>
+            <span class="reserve-summary__price">$${a.price}</span>
+          </div>
+        `).join('')}
+        <div class="reserve-summary__total">
+          <span>Total estimado${addonItems.length ? ` · ${addonItems.length + 1} experiencias` : ''}</span>
+          <b>$${total.toLocaleString('es-CL')}</b>
+        </div>
+      </div>
+
+      <form id="reserveForm" class="reserve-form" novalidate>
+        <label class="reserve-field">
+          <span>Fecha</span>
+          <input type="date" name="date" required>
+        </label>
+        <div class="reserve-field">
+          <span>Horario disponible</span>
+          <div class="reserve-slots">${timeSlotsHTML()}</div>
+        </div>
+        <label class="reserve-field">
+          <span>Número de personas</span>
+          <input type="number" name="people" min="1" value="1" required>
+        </label>
+        <p class="reserve-form__section-title">Datos de contacto</p>
+        <label class="reserve-field">
+          <span>Nombre completo</span>
+          <input type="text" name="name" value="${user.name || ''}" required>
+        </label>
+        <label class="reserve-field">
+          <span>Correo</span>
+          <input type="email" name="email" value="${user.email || ''}" required>
+        </label>
+        <label class="reserve-field">
+          <span>Teléfono</span>
+          <input type="tel" name="phone" value="${user.phone || ''}" placeholder="+56 9 1234 5678">
+        </label>
+        <p class="reserve-form__section-title">Método de pago</p>
+        <label class="reserve-pay">
+          <input type="radio" name="pay" value="visa" checked>
+          <span>VISA •••• 4231</span>
+        </label>
+        <label class="reserve-pay">
+          <input type="radio" name="pay" value="mc">
+          <span>Mastercard •••• 8890</span>
+        </label>
+        <p class="reserve-form__feedback" id="reserveFeedback">&nbsp;</p>
+        <button type="submit" class="btn btn--primary reserve-form__submit">Confirmar reserva</button>
+      </form>
+    `;
+  }
+
+  function reserveSuccessHTML(item, data) {
+    const code = `PM-${(hashStr(item.title + data.date + data.slot) % 900000 + 100000)}`;
+    return `
+      <div class="reserve-success">
+        <span class="reserve-success__icon">✅</span>
+        <h2 class="reserve-modal__title">¡Reserva confirmada!</h2>
+        <p class="reserve-success__sub">Te enviamos los detalles a <b>${data.email}</b>.</p>
+        <div class="reserve-success__card">
+          <div class="reserve-success__row"><span>Código de reserva</span><b>${code}</b></div>
+          <div class="reserve-success__row"><span>Panorama</span><b>${item.title}</b></div>
+          <div class="reserve-success__row"><span>Fecha</span><b>${data.date}</b></div>
+          <div class="reserve-success__row"><span>Horario</span><b>${data.slot}</b></div>
+          <div class="reserve-success__row"><span>Personas</span><b>${data.people}</b></div>
+          <div class="reserve-success__row"><span>Total</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
+        </div>
+        <button type="button" class="btn btn--primary reserve-success__close">Listo</button>
+      </div>
+    `;
+  }
+
+  function openReserveModal(item) {
+    reserveModalBody.innerHTML = reserveModalHTML(item);
+    reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
+    modalOverlay.hidden = true;
+    reserveModalOverlay.hidden = false;
+    document.body.classList.add('pano-modal-open');
+  }
+  function closeReserveModal() {
+    reserveModalOverlay.hidden = true;
+    if (currentModalItem) modalOverlay.hidden = false;
+    else document.body.classList.remove('pano-modal-open');
+  }
+  function finishReserveModal() {
+    reserveModalOverlay.hidden = true;
+    modalOverlay.hidden = true;
+    currentModalItem = null;
+    document.body.classList.remove('pano-modal-open');
+  }
+
+  reserveModalOverlay.querySelector('.reserve-modal__close').addEventListener('click', closeReserveModal);
+  reserveModalOverlay.addEventListener('click', (e) => {
+    if (e.target === reserveModalOverlay) closeReserveModal();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.pano-modal__reserve')) {
+      if (currentModalItem) openReserveModal(currentModalItem);
+      return;
+    }
+    const slotBtn = e.target.closest('.reserve-slot');
+    if (slotBtn) {
+      slotBtn.parentElement.querySelectorAll('.reserve-slot').forEach((b) => b.classList.remove('is-selected'));
+      slotBtn.classList.add('is-selected');
+      return;
+    }
+    if (e.target.closest('.reserve-success__close')) {
+      finishReserveModal();
+    }
+  });
+
+  document.addEventListener('submit', (e) => {
+    if (e.target.id !== 'reserveForm' || !currentModalItem) return;
+    e.preventDefault();
+    const form = e.target;
+    const date = form.date.value;
+    const people = parseInt(form.people.value, 10) || 1;
+    const name = form.name.value.trim();
+    const emailVal = form.email.value.trim();
+    const phone = form.phone.value.trim();
+    const selectedSlotBtn = form.querySelector('.reserve-slot.is-selected');
+    const feedback = document.getElementById('reserveFeedback');
+    if (!date || !selectedSlotBtn || !name || !emailVal) {
+      feedback.textContent = 'Completa la fecha, el horario y tus datos de contacto.';
+      feedback.classList.add('is-error');
+      return;
+    }
+    const addonItems = getAddonItemsFor(currentModalItem.title);
+    const addonsTotal = addonItems.reduce((sum, a) => sum + a.priceNum, 0);
+    const total = (currentModalItem.priceNum + addonsTotal) * people;
+    const data = { date, slot: selectedSlotBtn.dataset.slot, people, name, email: emailVal, phone, total };
+    reserveModalBody.innerHTML = reserveSuccessHTML(currentModalItem, data);
+    reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
+  });
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modalOverlay.hidden) closeModal();
+    if (e.key !== 'Escape') return;
+    if (!reserveModalOverlay.hidden) { closeReserveModal(); return; }
+    if (!modalOverlay.hidden) closeModal();
   });
 
   document.addEventListener('click', (e) => {
