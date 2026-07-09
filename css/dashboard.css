@@ -20,6 +20,7 @@
   margin-bottom: 22px;
   align-items: start;
 }
+.dash__col-left { display: flex; flex-direction: column; gap: 22px; }
 .dcard {
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(18px) saturate(120%);
@@ -86,6 +87,33 @@
 .beto-card__points small { font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--slate); margin-left: 4px; }
 .beto-card__caption { margin: 0; font-size: 0.85rem; color: var(--navy-2); font-weight: 600; }
 
+/* Activity history (Pick Points ledger) */
+.dash__history {
+  list-style: none;
+  margin: 0;
+  padding: 2px 4px 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.dash__history li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.dash__history-icon { font-size: 1rem; flex-shrink: 0; }
+.dash__history-info { flex: 1; min-width: 0; }
+.dash__history-title { margin: 0; font-weight: 700; font-size: 0.85rem; color: var(--navy); }
+.dash__history-time { margin: 1px 0 0; font-size: 0.72rem; color: var(--slate); }
+.dash__history-pts { font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+.dash__history-pts.is-positive { color: #3f7a2c; }
+.dash__history-pts.is-negative { color: var(--deep-red); }
+
 /* Badges */
 .dash__badges { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .dash__badges li {
@@ -135,7 +163,6 @@
 .dash__reward.is-unlocked .dash__reward-req { color: #3f7a2c; }
 
 /* Payment methods */
-.dash__payments { margin-bottom: 22px; }
 .dash__payments-head { display: flex; align-items: center; justify-content: space-between; }
 .dash__payments-add {
   background: rgba(245, 94, 97, 0.1);
