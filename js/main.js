@@ -162,21 +162,21 @@
         points: '1.240',
         cardA: { icon: '🏔️', title: 'Canopy + termas', sub: 'A 40 min · Ideal con este sol' },
         cardB: { icon: '🛶', title: 'Cabaña junto al río', sub: 'Pareja · Escapada express' },
-        combo: '✨ Pickmap IA armó un combo para tu grupo',
+        combo: 'Pickmap IA armó un combo para tu grupo',
       },
       {
         weather: '🌧️ 15°',
         points: '1.310',
         cardA: { icon: '🎳', title: 'Bowling + pizza bar', sub: 'A 12 min · Plan bajo techo' },
         cardB: { icon: '🎪', title: 'Circo + chocolate caliente', sub: 'Familia · Ideal para la lluvia' },
-        combo: '✨ Pickmap IA cambió el plan por la lluvia',
+        combo: 'Pickmap IA cambió el plan por la lluvia',
       },
       {
         weather: '🌙 18°',
         points: '1.385',
         cardA: { icon: '🍷', title: 'Tour de vinos nocturno', sub: 'A 25 min · Grupo de amigos' },
         cardB: { icon: '🎡', title: 'Karting bajo las estrellas', sub: 'Viernes · Después de las 8pm' },
-        combo: '✨ Pickmap IA armó otro combo para ti',
+        combo: 'Pickmap IA armó otro combo para ti',
       },
     ];
 

@@ -83,41 +83,49 @@
       </div>
 
       <div class="hero__mock" aria-hidden="true">
-        <p class="hero__mock-label">📲 Descarga nuestra app</p>
+        <p class="hero__mock-label">📲 Descarga nuestra app y accede a beneficios y descuentos exclusivos</p>
         <div class="phone">
           <div class="phone__notch"></div>
           <div class="phone__screen">
             <div class="app__content" id="appContent">
-              <div class="app__topbar">
-                <span class="app__weather" id="appWeather">☀️ 22°</span>
-                <span class="app__greeting">Hola, Cami <span class="wave" id="appWave">👋</span></span>
-                <span class="app__points">⭐ <span id="appPoints">1.240</span></span>
+              <div class="app__header">
+                <div class="app__header-row">
+                  <span class="app__weather" id="appWeather">☀️ 22°</span>
+                  <span class="app__points">⭐ <span id="appPoints">1.240</span></span>
+                </div>
+                <p class="app__greeting">Hola, Cami <span class="wave" id="appWave">👋</span></p>
               </div>
+
               <p class="app__label">Panoramas para hoy</p>
               <div class="app__card app__card--a">
                 <div class="app__card-img" id="cardAIcon">🏔️</div>
-                <div>
+                <div class="app__card-body">
                   <p class="app__card-title" id="cardATitle">Canopy + termas</p>
                   <p class="app__card-sub" id="cardASub">A 40 min · Ideal con este sol</p>
                 </div>
+                <span class="app__card-tag">Simple</span>
               </div>
               <div class="app__card app__card--b">
                 <div class="app__card-img" id="cardBIcon">🛶</div>
-                <div>
+                <div class="app__card-body">
                   <p class="app__card-title" id="cardBTitle">Cabaña junto al río</p>
                   <p class="app__card-sub" id="cardBSub">Pareja · Escapada express</p>
                 </div>
+                <span class="app__card-tag app__card-tag--combo">Combo</span>
               </div>
+
               <div class="app__combo">
-                <span id="comboText">✨ Pickmap IA armó un combo para tu grupo</span>
+                <p class="app__combo-text"><span class="app__combo-spark">✨</span> <span id="comboText">Pickmap IA armó un combo para tu grupo</span></p>
                 <button type="button">Ver combo</button>
               </div>
+
               <div class="app__unlock">
                 <span class="app__unlock-icon">🎁</span>
-                <div>
-                  <p class="app__unlock-title">Descarga la app</p>
-                  <p class="app__unlock-sub">y desbloquea beneficios exclusivos</p>
-                </div>
+                <span class="app__unlock-text">
+                  <strong>Descarga la app</strong>
+                  <small>y desbloquea beneficios exclusivos</small>
+                </span>
+                <span class="app__unlock-arrow">→</span>
               </div>
             </div>
           </div>

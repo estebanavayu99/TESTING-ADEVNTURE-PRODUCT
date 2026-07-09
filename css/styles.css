@@ -68,23 +68,22 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: linear-gradient(180deg, #0B1220 0%, #16202E 30%, #1E2D31 58%, #2C2130 82%, #3A2233 100%);
   opacity: 0;
-  animation: nightFade 45s ease-in-out infinite;
+  animation: nightFade 15s ease-in-out infinite;
 }
 @keyframes nightFade {
-  0%    { opacity: 0; }
-  90%   { opacity: 0; }
-  95%   { opacity: 0.7; }
-  97%   { opacity: 1; }
-  98.5% { opacity: 1; }
-  99.6% { opacity: 0.2; }
-  100%  { opacity: 0; }
+  0%     { opacity: 0; }
+  33.33% { opacity: 0; }
+  40%    { opacity: 1; }
+  60%    { opacity: 1; }
+  66.67% { opacity: 0; }
+  100%   { opacity: 0; }
 }
 
 .stars {
   position: absolute;
   inset: 0 0 40% 0;
   opacity: 0;
-  animation: nightFade 45s ease-in-out infinite;
+  animation: nightFade 15s ease-in-out infinite;
   background-image:
     radial-gradient(1.6px 1.6px at 8% 18%, #fff, transparent),
     radial-gradient(1.4px 1.4px at 18% 32%, #fff, transparent),
@@ -109,18 +108,15 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: linear-gradient(180deg, rgba(94, 104, 112, 0.5), rgba(70, 80, 90, 0.62) 55%, rgba(45, 53, 61, 0.68) 100%);
   opacity: 0;
-  animation: weatherFade 45s ease-in-out infinite;
+  animation: weatherFade 15s ease-in-out infinite;
   pointer-events: none;
 }
 @keyframes weatherFade {
-  0%   { opacity: 0; }
-  38%  { opacity: 0; }
-  44%  { opacity: 0.5; }
-  50%  { opacity: 0.7; }
-  66%  { opacity: 0.7; }
-  73%  { opacity: 0.15; }
-  80%  { opacity: 0; }
-  100% { opacity: 0; }
+  0%     { opacity: 0; }
+  66.67% { opacity: 0; }
+  73%    { opacity: 0.7; }
+  93%    { opacity: 0.7; }
+  100%   { opacity: 0; }
 }
 
 /* Rain: real drops drawn on a canvas (js/main.js) rather than a CSS stripe
@@ -134,17 +130,14 @@ a { color: inherit; text-decoration: none; }
   height: 100%;
   opacity: 0;
   pointer-events: none;
-  animation: rainCycle 45s ease-in-out infinite;
+  animation: rainCycle 15s ease-in-out infinite;
 }
 @keyframes rainCycle {
-  0%   { opacity: 0; }
-  40%  { opacity: 0; }
-  46%  { opacity: 0.75; }
-  50%  { opacity: 0.9; }
-  64%  { opacity: 0.9; }
-  70%  { opacity: 0.2; }
-  74%  { opacity: 0; }
-  100% { opacity: 0; }
+  0%     { opacity: 0; }
+  66.67% { opacity: 0; }
+  73%    { opacity: 0.9; }
+  93%    { opacity: 0.9; }
+  100%   { opacity: 0; }
 }
 
 .cloud--storm {
@@ -153,19 +146,18 @@ a { color: inherit; text-decoration: none; }
   background: rgba(88, 97, 105, 0.8);
   filter: blur(2px);
   opacity: 0;
-  animation: driftRight 65s linear infinite, stormCloudFade 45s ease-in-out infinite;
+  animation: driftRight 65s linear infinite, stormCloudFade 15s ease-in-out infinite;
 }
 .cloud--storm::before { width: 130px; height: 130px; top: -60px; left: 30px; }
 .cloud--storm::after { width: 100px; height: 100px; top: -40px; left: 155px; }
 .cloud--storm-1 { top: 8%; left: -40%; }
 .cloud--storm-2 { top: 22%; left: -60%; animation-delay: -18s, 0s; opacity: 0; }
 @keyframes stormCloudFade {
-  0%   { opacity: 0; }
-  36%  { opacity: 0; }
-  44%  { opacity: 0.85; }
-  66%  { opacity: 0.85; }
-  76%  { opacity: 0; }
-  100% { opacity: 0; }
+  0%     { opacity: 0; }
+  63%    { opacity: 0; }
+  73%    { opacity: 0.85; }
+  93%    { opacity: 0.85; }
+  100%   { opacity: 0; }
 }
 
 .sun {
@@ -177,26 +169,22 @@ a { color: inherit; text-decoration: none; }
   left: 15%;
   background: radial-gradient(circle at 35% 35%, #FFF6D8, var(--sun) 60%, #F6B24C 100%);
   box-shadow: 0 0 60px 20px rgba(246, 205, 76, 0.55), 0 0 140px 60px rgba(245, 94, 97, 0.25);
-  animation: sunCycle 45s ease-in-out infinite;
+  animation: sunCycle 15s ease-in-out infinite;
 }
-/* One full weather cycle: sunrise -> clear morning -> clouds gather and it
-   pours (sun dims behind the overcast, 40-74%) -> skies clear again -> warm
-   sunset, dipping behind the mountain silhouette -> night -> sunrise once
-   more. Runs quickly (45s) so visitors see the whole day/weather story
-   without having to sit and wait for it. */
+/* One full weather cycle gives each state an even 5s in a 15s loop:
+   sunny day (0-33.33%) -> sunset into night (33.33-66.67%) -> pale sun
+   returns behind rain clouds (66.67-100%) -> back to a clear sunrise. */
 @keyframes sunCycle {
-  0%   { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
-  20%  { top: 8%;  left: 38%; opacity: 1;    transform: scale(1.08); }
-  40%  { top: 14%; left: 60%; opacity: 1;    transform: scale(1); }
-  46%  { top: 16%; left: 64%; opacity: 0.5;  transform: scale(0.95); }
-  55%  { top: 18%; left: 70%; opacity: 0.25; transform: scale(0.9); }
-  65%  { top: 18%; left: 75%; opacity: 0.3;  transform: scale(0.9); }
-  73%  { top: 16%; left: 79%; opacity: 0.7;  transform: scale(0.95); }
-  82%  { top: 22%; left: 85%; opacity: 1;    transform: scale(1); }
-  90%  { top: 55%; left: 91%; opacity: 1;    transform: scale(0.88); }
-  95%  { top: 80%; left: 93%; opacity: 0;    transform: scale(0.8); }
-  98%  { top: 80%; left: 6%;  opacity: 0;    transform: scale(0.8); }
-  100% { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
+  0%     { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
+  16%    { top: 10%; left: 30%; opacity: 1;    transform: scale(1.08); }
+  30%    { top: 8%;  left: 45%; opacity: 1;    transform: scale(1); }
+  33.33% { top: 20%; left: 55%; opacity: 0.6;  transform: scale(0.95); }
+  40%    { top: 60%; left: 60%; opacity: 0;    transform: scale(0.8); }
+  60%    { top: 68%; left: 68%; opacity: 0;    transform: scale(0.8); }
+  66.67% { top: 32%; left: 76%; opacity: 0.3;  transform: scale(0.9); }
+  80%    { top: 20%; left: 84%; opacity: 0.35; transform: scale(0.92); }
+  93%    { top: 18%; left: 90%; opacity: 0.6;  transform: scale(0.95); }
+  100%   { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
 }
 
 .cloud {
@@ -451,13 +439,16 @@ body.mode-business .nav__login { display: none; }
   position: relative;
   z-index: 2;
   margin: 0;
-  padding: 8px 18px;
+  max-width: 260px;
+  padding: 10px 20px;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
+  border-radius: 22px;
   font-weight: 700;
   font-size: 0.9rem;
+  line-height: 1.35;
+  text-align: center;
   color: var(--navy);
 }
 .hero__mock::before {
@@ -501,13 +492,22 @@ body.mode-business .nav__login { display: none; }
 }
 .app__content { flex: 1; display: flex; flex-direction: column; transition: opacity 0.5s ease; }
 .app__content.is-fading { opacity: 0; }
-.app__topbar { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; margin-bottom: 18px; }
-.app__greeting { font-family: var(--font-display); font-size: 1.1rem; }
+
+.app__header {
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  color: var(--white);
+}
+.app__header-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; }
 .app__weather { display: inline-block; animation: weatherPulse 4s ease-in-out infinite; }
 @keyframes weatherPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
 }
+.app__points { background: rgba(255,255,255,0.28); padding: 3px 10px; border-radius: 999px; }
+.app__greeting { font-family: var(--font-display); font-size: 1.15rem; margin: 10px 0 0; }
 .wave { display: inline-block; transform-origin: 70% 70%; }
 .wave.is-waving { animation: waveHand 0.7s ease-in-out; }
 @keyframes waveHand {
@@ -517,6 +517,7 @@ body.mode-business .nav__login { display: none; }
 }
 .app__label { font-size: 0.8rem; color: var(--slate); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px;}
 .app__card {
+  position: relative;
   display: flex;
   gap: 14px;
   align-items: center;
@@ -534,21 +535,34 @@ body.mode-business .nav__login { display: none; }
   font-size: 1.5rem;
   flex-shrink: 0;
 }
-.app__card-title { margin: 0; font-weight: 700; font-size: 0.98rem; }
-.app__card-sub { margin: 3px 0 0; font-size: 0.8rem; color: var(--slate); }
+.app__card-body { flex: 1; min-width: 0; padding-right: 56px; }
+.app__card-title { margin: 0; font-weight: 700; font-size: 0.94rem; line-height: 1.25; }
+.app__card-sub { margin: 3px 0 0; font-size: 0.78rem; color: var(--slate); }
+.app__card-tag {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  color: #3f7a2c;
+  background: rgba(131, 208, 97, 0.18);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+.app__card-tag--combo { color: var(--deep-red); background: rgba(245, 94, 97, 0.15); }
 .app__combo {
   background: var(--navy);
   color: var(--white);
   border-radius: 18px;
   padding: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-top: 14px;
+  margin-top: 6px;
 }
+.app__combo-spark { display: inline-block; animation: weatherPulse 2.2s ease-in-out infinite; }
+.app__combo-text { margin: 0; line-height: 1.35; }
 .app__unlock {
   margin-top: auto;
   padding-top: 18px;
@@ -564,8 +578,10 @@ body.mode-business .nav__login { display: none; }
   font-size: 1.2rem;
   flex-shrink: 0;
 }
-.app__unlock-title { margin: 0; font-weight: 800; font-size: 0.85rem; color: var(--navy); }
-.app__unlock-sub { margin: 1px 0 0; font-size: 0.78rem; color: var(--slate); }
+.app__unlock-text { flex: 1; display: flex; flex-direction: column; }
+.app__unlock-text strong { font-size: 0.85rem; color: var(--navy); }
+.app__unlock-text small { font-size: 0.76rem; color: var(--slate); margin-top: 1px; }
+.app__unlock-arrow { font-weight: 800; color: var(--coral); font-size: 1.1rem; }
 .app__combo button {
   background: var(--sun);
   border: none;
