@@ -35,18 +35,23 @@
     general: 'Populares',
   };
   const DAY_LABELS = { semana: 'Entre semana', finde: 'Fin de semana o feriado' };
+  const DIFFICULTY_LABELS = { suave: 'Suave', moderado: 'Moderado', extremo: 'Extremo' };
 
   function cardHTML(item) {
     const whyBox = item.reason
       ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
       : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
+    const difficulty = item.difficulty || 'suave';
     return `
       <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
         <div class="pano-card__photo pano-card__photo--${item.grad}">
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
           <span class="pano-card__heart is-liked" data-title="${item.title}">♥</span>
-          <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
+          <span class="pano-card__badges">
+            <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
+            <span class="pano-card__difficulty pano-card__difficulty--${difficulty}">${DIFFICULTY_LABELS[difficulty]}</span>
+          </span>
         </div>
         <div class="pano-card__body">
           <p class="pano-card__title">${item.title}</p>
@@ -97,15 +102,28 @@
       <div class="pano-modal__nearby">
         <p class="pano-modal__nearby-title">Panoramas cerca de ahí</p>
         <div class="pano-modal__nearby-list">
-          ${nearby.map((n) => `
-            <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
-              <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
-              <span class="pano-modal__nearby-info">
-                <b>${n.title}</b>
-                <small>${n.km} km · desde $${n.price}</small>
-              </span>
-            </button>
-          `).join('')}
+          ${nearby.map((n) => {
+            const dayLabel = DAY_LABELS[n.day] || 'Cualquier día';
+            const categoryLabel = CATEGORY_LABELS[n.category] || 'Popular';
+            return `
+            <div class="pano-modal__nearby-row">
+              <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
+                <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
+                <span class="pano-modal__nearby-info">
+                  <b>${n.title}</b>
+                  <small>${n.km} km · desde $${n.price}</small>
+                </span>
+              </button>
+              <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false">+</button>
+            </div>
+            <div class="pano-modal__nearby-details" hidden>
+              <span>⭐ ${n.rating} <em>(${n.reviews})</em></span>
+              <span>📍 ${n.meta}</span>
+              <span>📅 ${dayLabel}</span>
+              <span>🏷️ ${categoryLabel}</span>
+            </div>
+          `;
+          }).join('')}
         </div>
       </div>
     `;
@@ -114,10 +132,14 @@
   function modalHTML(item) {
     const categoryLabel = CATEGORY_LABELS[item.category] || 'Popular';
     const dayLabel = DAY_LABELS[item.day] || 'Cualquier día';
+    const difficulty = item.difficulty || 'suave';
     return `
       <div class="pano-modal__photo pano-modal__photo--${item.grad}">
         <span class="pano-modal__emoji">${item.icon}</span>
-        <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+        <span class="pano-modal__badges">
+          <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+          <span class="pano-card__difficulty pano-modal__difficulty pano-card__difficulty--${difficulty}">${DIFFICULTY_LABELS[difficulty]}</span>
+        </span>
         <span class="pano-card__heart is-liked pano-modal__heart" data-title="${item.title}">♥</span>
       </div>
       <div class="pano-modal__content">
@@ -128,6 +150,7 @@
           <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
           <div class="pano-modal__fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
           <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
+          <div class="pano-modal__fact pano-modal__fact--wide"><span>🎒</span><div><b>${item.gear || 'Ropa cómoda'}</b><small>Equipamiento / ropa ideal</small></div></div>
         </div>
         <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
         ${nearbyHTML(item)}
@@ -159,6 +182,15 @@
   });
 
   document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.pano-modal__nearby-toggle');
+    if (toggleBtn) {
+      const details = toggleBtn.closest('.pano-modal__nearby-row').nextElementSibling;
+      const expanded = details.hidden;
+      details.hidden = !expanded;
+      toggleBtn.textContent = expanded ? '−' : '+';
+      toggleBtn.setAttribute('aria-expanded', String(expanded));
+      return;
+    }
     const nearbyBtn = e.target.closest('.pano-modal__nearby-item');
     if (nearbyBtn) {
       const item = getFavorites().find((f) => f.title === nearbyBtn.dataset.title);

@@ -154,14 +154,27 @@
 }
 .pano-card__heart:hover { transform: scale(1.1); }
 .pano-card__heart.is-liked { color: var(--coral); }
-.pano-card__kind {
+.pano-card__badges {
   position: absolute; top: 10px; left: 10px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  max-width: calc(100% - 46px);
+}
+.pano-card__kind {
   font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 4px 9px; border-radius: 999px;
   background: rgba(255,255,255,0.9);
+  flex-shrink: 0;
 }
 .pano-card__kind--simple { color: #3f7a2c; }
 .pano-card__kind--paquete { color: var(--deep-red); }
+.pano-card__difficulty {
+  font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 4px 9px; border-radius: 999px;
+  flex-shrink: 0;
+}
+.pano-card__difficulty--suave { background: rgba(131, 208, 97, 0.85); color: #1E3A0F; }
+.pano-card__difficulty--moderado { background: rgba(246, 205, 76, 0.9); color: #5A3E00; }
+.pano-card__difficulty--extremo { background: rgba(245, 94, 97, 0.92); color: var(--white); }
 
 .pano-card__body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .pano-card__title { margin: 0; font-weight: 700; font-size: 1rem; color: var(--navy); line-height: 1.3; }
@@ -245,14 +258,15 @@ body.pano-modal-open { overflow: hidden; }
 .pano-modal__photo--g5 { background: linear-gradient(135deg, #C7A6F5, #6C4AA6); }
 .pano-modal__photo--g6 { background: linear-gradient(135deg, #FBD6A8, #C9757A); }
 .pano-modal__emoji { font-size: 4.5rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.2)); }
+.pano-modal__badges { position: absolute; top: 14px; left: 14px; display: flex; gap: 6px; }
 .pano-modal__kind {
-  position: absolute; top: 14px; left: 14px;
   font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 5px 11px; border-radius: 999px;
   background: rgba(255,255,255,0.9);
 }
 .pano-modal__kind--simple { color: #3f7a2c; }
 .pano-modal__kind--paquete { color: var(--deep-red); }
+.pano-modal__difficulty { font-size: 0.68rem; padding: 5px 11px; }
 .pano-modal__heart {
   position: absolute; top: 12px; right: 56px;
   width: 32px; height: 32px; border-radius: 50%;
@@ -273,6 +287,7 @@ body.pano-modal-open { overflow: hidden; }
 .pano-modal__fact span { font-size: 1.1rem; flex-shrink: 0; }
 .pano-modal__fact b { display: block; font-size: 0.85rem; color: var(--navy); }
 .pano-modal__fact small { display: block; font-size: 0.68rem; color: var(--slate); margin-top: 1px; }
+.pano-modal__fact--wide { grid-column: 1 / -1; }
 
 .pano-modal__desc { margin: 0 0 20px; font-size: 0.9rem; color: var(--navy-2); line-height: 1.6; }
 
@@ -283,11 +298,13 @@ body.pano-modal-open { overflow: hidden; }
   color: var(--slate);
 }
 .pano-modal__nearby-list { display: flex; flex-direction: column; gap: 8px; }
+.pano-modal__nearby-row { display: flex; align-items: center; gap: 8px; }
 .pano-modal__nearby-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: var(--bg);
   border: none;
   border-radius: 12px;
@@ -297,6 +314,33 @@ body.pano-modal-open { overflow: hidden; }
   transition: background .15s;
 }
 .pano-modal__nearby-item:hover { background: rgba(245, 94, 97, 0.1); }
+.pano-modal__nearby-toggle {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: var(--bg);
+  color: var(--coral);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s;
+}
+.pano-modal__nearby-toggle:hover { background: rgba(245, 94, 97, 0.1); }
+.pano-modal__nearby-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: -2px 0 0;
+  padding: 10px 12px;
+  background: rgba(30, 45, 49, 0.04);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--navy-2);
+}
+.pano-modal__nearby-details em { font-style: normal; color: var(--slate); }
+.pano-modal__nearby-details[hidden] { display: none; }
 .pano-modal__nearby-icon {
   flex-shrink: 0;
   width: 38px; height: 38px;

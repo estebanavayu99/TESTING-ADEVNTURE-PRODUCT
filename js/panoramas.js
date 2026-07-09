@@ -88,11 +88,55 @@
     if (/lunes|martes|mi[eé]rcoles|jueves/i.test(meta)) return 'semana';
     return h % 2 === 0 ? 'semana' : 'finde';
   }
+  const DIFFICULTY_OVERRIDES = {
+    'Salto en parapente': 'extremo',
+    'Downhill + almuerzo campestre': 'extremo',
+    'Canopy en el Cajón del Maipo': 'moderado',
+    'Trekking + cabaña con tinaja': 'moderado',
+    'Subida a la nieve por el día': 'moderado',
+    'Ski + arriendo de equipo + almuerzo': 'moderado',
+    'Ruta de senderismo autoguiada': 'moderado',
+    'Team building al aire libre': 'moderado',
+    'Canopy + termas': 'moderado',
+    'Karting bajo las estrellas': 'moderado',
+  };
+  function getDifficulty(title) {
+    return DIFFICULTY_OVERRIDES[title] || 'suave';
+  }
+  const GEAR_OVERRIDES = {
+    'Salto en parapente': 'Ropa deportiva, zapatillas cerradas y chaqueta cortavientos',
+    'Downhill + almuerzo campestre': 'Ropa deportiva, guantes y zapatillas cerradas',
+    'Subida a la nieve por el día': 'Ropa térmica, gorro, guantes y bloqueador solar',
+    'Ski + arriendo de equipo + almuerzo': 'Ropa térmica y bloqueador solar (equipo de ski incluido)',
+  };
+  const GEAR_BY_CATEGORY = {
+    naturaleza: 'Ropa cómoda, zapatillas cerradas y bloqueador solar',
+    extremo: 'Ropa deportiva y zapatillas cerradas',
+    playa: 'Traje de baño, toalla y bloqueador solar',
+    nieve: 'Ropa térmica, gorro y guantes',
+    gastronomia: 'Ropa casual',
+    relax: 'Ropa cómoda (traje de baño si hay tinaja o piscina)',
+    vidanocturna: 'Ropa de salida',
+    cultura: 'Ropa cómoda para caminar',
+    shopping: 'Ropa cómoda',
+    fotografia: 'Ropa cómoda y batería cargada para la cámara',
+    musica: 'Ropa cómoda para bailar',
+    pareja: 'Ropa casual',
+    familia: 'Ropa cómoda para toda la familia',
+    amigos: 'Ropa casual',
+    trabajo: 'Ropa cómoda para actividades al aire libre',
+    solo: 'Ropa cómoda y zapatillas de trekking',
+    general: 'Ropa cómoda',
+  };
+  function getGear(title, category) {
+    return GEAR_OVERRIDES[title] || GEAR_BY_CATEGORY[category] || 'Ropa cómoda';
+  }
   function enrich(item, i) {
     const h = hashStr(item.title);
     const rating = (4.3 + (h % 8) / 10).toFixed(1);
     const reviews = 60 + (h % 900);
     const priceNum = (8 + (h % 30)) * 1000;
+    const category = item.taste || item.company || 'general';
     return {
       ...item,
       rating,
@@ -101,7 +145,9 @@
       price: priceNum.toLocaleString('es-CL'),
       km: parseKm(item.meta, h),
       day: parseDay(item.meta, h),
-      category: item.taste || item.company || 'general',
+      difficulty: getDifficulty(item.title),
+      gear: getGear(item.title, category),
+      category,
       grad: GRADIENTS[i % GRADIENTS.length],
     };
   }
@@ -115,6 +161,7 @@
     if (priceNum <= 30000) return 'medio';
     return 'alto';
   }
+  const DIFFICULTY_LABELS = { suave: 'Suave', moderado: 'Moderado', extremo: 'Extremo' };
   const CATEGORY_LABELS = {
     naturaleza: 'Naturaleza', gastronomia: 'Gastronomía', relax: 'Relax', vidanocturna: 'Vida nocturna',
     cultura: 'Cultura', extremo: 'Extremo', playa: 'Playa', nieve: 'Nieve', shopping: 'Shopping',
@@ -174,7 +221,10 @@
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
           <span class="pano-card__heart${liked ? ' is-liked' : ''}" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
-          <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
+          <span class="pano-card__badges">
+            <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
+            <span class="pano-card__difficulty pano-card__difficulty--${item.difficulty}">${DIFFICULTY_LABELS[item.difficulty]}</span>
+          </span>
         </div>
         <div class="pano-card__body">
           <p class="pano-card__title">${item.title}</p>
@@ -244,15 +294,28 @@
       <div class="pano-modal__nearby">
         <p class="pano-modal__nearby-title">Panoramas cerca de ahí</p>
         <div class="pano-modal__nearby-list">
-          ${nearby.map((n) => `
-            <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
-              <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
-              <span class="pano-modal__nearby-info">
-                <b>${n.title}</b>
-                <small>${n.km} km · desde $${n.price}</small>
-              </span>
-            </button>
-          `).join('')}
+          ${nearby.map((n) => {
+            const dayLabel = DAY_LABELS[n.day] || 'Cualquier día';
+            const categoryLabel = CATEGORY_LABELS[n.category] || 'Popular';
+            return `
+            <div class="pano-modal__nearby-row">
+              <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
+                <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
+                <span class="pano-modal__nearby-info">
+                  <b>${n.title}</b>
+                  <small>${n.km} km · desde $${n.price}</small>
+                </span>
+              </button>
+              <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false">+</button>
+            </div>
+            <div class="pano-modal__nearby-details" hidden>
+              <span>⭐ ${n.rating} <em>(${n.reviews})</em></span>
+              <span>📍 ${n.meta}</span>
+              <span>📅 ${dayLabel}</span>
+              <span>🏷️ ${categoryLabel}</span>
+            </div>
+          `;
+          }).join('')}
         </div>
       </div>
     `;
@@ -265,7 +328,10 @@
     return `
       <div class="pano-modal__photo pano-modal__photo--${item.grad}">
         <span class="pano-modal__emoji">${item.icon}</span>
-        <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+        <span class="pano-modal__badges">
+          <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+          <span class="pano-card__difficulty pano-modal__difficulty pano-card__difficulty--${item.difficulty}">${DIFFICULTY_LABELS[item.difficulty]}</span>
+        </span>
         <span class="pano-card__heart${liked ? ' is-liked' : ''} pano-modal__heart" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
       </div>
       <div class="pano-modal__content">
@@ -276,6 +342,7 @@
           <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
           <div class="pano-modal__fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
           <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
+          <div class="pano-modal__fact pano-modal__fact--wide"><span>🎒</span><div><b>${item.gear}</b><small>Equipamiento / ropa ideal</small></div></div>
         </div>
         <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
         ${nearbyHTML(item)}
@@ -307,6 +374,15 @@
   });
 
   document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.pano-modal__nearby-toggle');
+    if (toggleBtn) {
+      const details = toggleBtn.closest('.pano-modal__nearby-row').nextElementSibling;
+      const expanded = details.hidden;
+      details.hidden = !expanded;
+      toggleBtn.textContent = expanded ? '−' : '+';
+      toggleBtn.setAttribute('aria-expanded', String(expanded));
+      return;
+    }
     const nearbyBtn = e.target.closest('.pano-modal__nearby-item');
     if (nearbyBtn) {
       const item = CATALOG.find((i) => i.title === nearbyBtn.dataset.title);
