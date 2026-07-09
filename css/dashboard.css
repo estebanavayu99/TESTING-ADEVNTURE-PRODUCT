@@ -32,7 +32,7 @@
 .dcard__title { font-family: var(--font-display); font-size: 1.1rem; margin: 0 0 18px; color: var(--navy); }
 
 /* Beto activity card: fun animated Pick Points bar */
-.dcard--beto { display: flex; flex-direction: column; gap: 22px; }
+.dcard--beto { display: flex; flex-direction: column; gap: 22px; scroll-margin-top: 100px; }
 .beto-card__head { display: flex; align-items: center; gap: 14px; }
 .beto-card__avatar {
   width: 52px; height: 52px; border-radius: 16px;

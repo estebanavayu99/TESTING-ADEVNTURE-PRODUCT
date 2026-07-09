@@ -292,7 +292,7 @@ a { color: inherit; text-decoration: none; }
 .nav__links a:hover { opacity: 1; }
 .nav__biz { color: var(--deep-red); }
 .nav__panoramas { color: var(--coral); }
-.nav__panoramas.is-current { opacity: 0.55; pointer-events: none; }
+.nav__links a.is-current { opacity: 0.55; pointer-events: none; }
 .nav__actions { display: flex; align-items: center; gap: 14px; }
 
 .nav__account { display: flex; flex-direction: column; align-items: center; gap: 6px; }

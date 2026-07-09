@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invita a un amig@ — Pickmap</title>
+<meta name="description" content="Comparte tu código de Pickmap: cada amigo que se una te suma Pick Points a ti y a él.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/invita.css">
+</head>
+<body class="mode-client dash-body">
+
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <div class="cloud cloud--storm cloud--storm-1"></div>
+  <div class="cloud cloud--storm cloud--storm-2"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+  <div class="weather-overlay"></div>
+  <canvas class="rain-canvas" id="rainCanvas"></canvas>
+</div>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.png" alt="" class="logo__mark">
+      Pick<span class="logo__map">Map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="dashboard.html">Mi cuenta</a>
+      <a href="panoramas.html" class="nav__panoramas">Panoramas</a>
+      <a href="dashboard.html#pick-points">Pick Points</a>
+      <a href="invita.html" class="is-current">Invita a un amig@</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__login" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="dash">
+  <div class="container">
+    <div class="dash__greeting">
+      <p class="eyebrow">Invita a un amig@</p>
+      <h1>Comparte Pickmap y gana Pick Points</h1>
+      <p class="dash__sub">Por cada amig@ que se una con tu código y viva su primer panorama, ambos suman <strong>+100 Pick Points</strong>.</p>
+    </div>
+
+    <div class="invita__grid">
+      <section class="dcard invita__code-card">
+        <p class="dash__subhead">Tu código de invitación</p>
+        <div class="invita__code" id="referralCode">CAMI-4F2K</div>
+        <div class="invita__actions">
+          <button type="button" class="btn btn--primary invita__copy" id="copyCodeBtn">Copiar código</button>
+          <a class="invita__share invita__share--wa" id="shareWhatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+          <button type="button" class="invita__share invita__share--link" id="copyLinkBtn">🔗 Copiar link</button>
+        </div>
+        <p class="invita__hint" id="copyFeedback">&nbsp;</p>
+      </section>
+
+      <section class="dcard invita__stats">
+        <p class="dash__subhead">Tus referidos</p>
+        <ul class="invita__stat-list">
+          <li><strong>3</strong><span>amig@s invitados</span></li>
+          <li><strong>2</strong><span>ya viven su primer panorama</span></li>
+          <li><strong>300</strong><span>Pick Points ganados invitando</span></li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="dcard invita__steps">
+      <p class="dash__subhead">Cómo funciona</p>
+      <div class="invita__steps-grid">
+        <div class="invita__step">
+          <span class="invita__step-icon">📤</span>
+          <h3>Comparte tu código</h3>
+          <p>Envíaselo a un amigo por WhatsApp, redes o donde quieras.</p>
+        </div>
+        <div class="invita__step">
+          <span class="invita__step-icon">✍️</span>
+          <h3>Se registra con tu código</h3>
+          <p>Tu amigo crea su cuenta en Pickmap e ingresa tu código al onboarding.</p>
+        </div>
+        <div class="invita__step">
+          <span class="invita__step-icon">🎁</span>
+          <h3>Ambos ganan Pick Points</h3>
+          <p>Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.</p>
+        </div>
+      </div>
+    </section>
+
+    <a href="dashboard.html#pick-points" class="dash__cta">
+      <span class="dash__cta-icon">⭐</span>
+      <span class="dash__cta-text">
+        <strong>Ver mis Pick Points</strong>
+        <small>Revisa tu actividad y tus premios por logros</small>
+      </span>
+      <span class="dash__cta-arrow">→</span>
+    </a>
+  </div>
+</main>
+
+<script src="js/skyline.js"></script>
+<script src="js/invita.js"></script>
+</body>
+</html>
