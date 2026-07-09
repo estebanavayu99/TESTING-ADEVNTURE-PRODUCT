@@ -60,6 +60,42 @@
       <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
     </div>
 
+    <div class="pano-advfilters">
+      <div class="pano-advfilter">
+        <label for="filterCategory">Tipo de experiencia</label>
+        <select id="filterCategory">
+          <option value="todas">Cualquiera</option>
+        </select>
+      </div>
+      <div class="pano-advfilter">
+        <label for="filterDistance">Distancia</label>
+        <select id="filterDistance">
+          <option value="todas">Cualquier distancia</option>
+          <option value="cerca">Cerca · hasta 20 km</option>
+          <option value="media">Media · 20-45 km</option>
+          <option value="lejos">Lejos · 45+ km</option>
+        </select>
+      </div>
+      <div class="pano-advfilter">
+        <label for="filterPrice">Precio</label>
+        <select id="filterPrice">
+          <option value="todos">Cualquier precio</option>
+          <option value="bajo">Hasta $15.000</option>
+          <option value="medio">$15.000 - $30.000</option>
+          <option value="alto">Más de $30.000</option>
+        </select>
+      </div>
+      <div class="pano-advfilter">
+        <label for="filterDay">Día</label>
+        <select id="filterDay">
+          <option value="todos">Cualquier día</option>
+          <option value="semana">Entre semana</option>
+          <option value="finde">Fin de semana</option>
+        </select>
+      </div>
+      <button type="button" class="pano-advfilter__reset" id="resetFilters">Limpiar filtros</button>
+    </div>
+
     <section class="pano-row">
       <div class="pano-row__header">
         <h2>Simples</h2>
@@ -93,42 +129,6 @@
         <button type="button" class="pano-filter is-active" data-filter="todos">Todos</button>
         <button type="button" class="pano-filter" data-filter="simple">Simples</button>
         <button type="button" class="pano-filter" data-filter="paquete">Paquetes</button>
-      </div>
-
-      <div class="pano-advfilters">
-        <div class="pano-advfilter">
-          <label for="filterCategory">Tipo de experiencia</label>
-          <select id="filterCategory">
-            <option value="todas">Cualquiera</option>
-          </select>
-        </div>
-        <div class="pano-advfilter">
-          <label for="filterDistance">Distancia</label>
-          <select id="filterDistance">
-            <option value="todas">Cualquier distancia</option>
-            <option value="cerca">Cerca · hasta 20 km</option>
-            <option value="media">Media · 20-45 km</option>
-            <option value="lejos">Lejos · 45+ km</option>
-          </select>
-        </div>
-        <div class="pano-advfilter">
-          <label for="filterPrice">Precio</label>
-          <select id="filterPrice">
-            <option value="todos">Cualquier precio</option>
-            <option value="bajo">Hasta $15.000</option>
-            <option value="medio">$15.000 - $30.000</option>
-            <option value="alto">Más de $30.000</option>
-          </select>
-        </div>
-        <div class="pano-advfilter">
-          <label for="filterDay">Día</label>
-          <select id="filterDay">
-            <option value="todos">Cualquier día</option>
-            <option value="semana">Entre semana</option>
-            <option value="finde">Fin de semana</option>
-          </select>
-        </div>
-        <button type="button" class="pano-advfilter__reset" id="resetFilters">Limpiar filtros</button>
       </div>
 
       <div class="pano-grid" id="panoGrid"></div>

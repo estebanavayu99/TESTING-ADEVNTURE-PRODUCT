@@ -181,7 +181,9 @@
   function renderRow(elId, list) {
     const el = document.getElementById(elId);
     if (!el) return;
-    el.innerHTML = list.map((item) => cardHTML(item)).join('');
+    el.innerHTML = list.length
+      ? list.map((item) => cardHTML(item)).join('')
+      : '<p class="pano-empty pano-empty--row">Sin resultados con estos filtros.</p>';
   }
 
   document.addEventListener('click', (e) => {
@@ -191,11 +193,7 @@
     heart.textContent = liked ? '♥' : '♡';
   });
 
-  renderRow('rowSimple', recommended.filter((i) => i.kind === 'simple').slice(0, 8));
-  renderRow('rowPaquete', recommended.filter((i) => i.kind === 'paquete').slice(0, 8));
-  renderRow('rowTodos', recommended.slice(0, 8));
-
-  /* ---------- Explore section: tabs + filters ---------- */
+  /* ---------- Filters (shared by rows + explore grid) ---------- */
   const grid = document.getElementById('panoGrid');
   let activeTab = 'recomendado';
   let activeFilter = 'todos';
@@ -217,18 +215,36 @@
       });
   }
 
-  function renderExplore() {
-    const source = activeTab === 'recomendado' ? recommended : general;
-    let filtered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
+  function applyAdvFilters(list) {
+    let filtered = list;
     if (activeCategory !== 'todas') filtered = filtered.filter((i) => i.category === activeCategory);
     if (activeDistance !== 'todas') filtered = filtered.filter((i) => distanceBucket(i.km) === activeDistance);
     if (activePrice !== 'todos') filtered = filtered.filter((i) => priceBucket(i.priceNum) === activePrice);
     if (activeDay !== 'todos') filtered = filtered.filter((i) => i.day === activeDay);
+    return filtered;
+  }
+
+  function renderRows() {
+    const filteredRecommended = applyAdvFilters(recommended);
+    renderRow('rowSimple', filteredRecommended.filter((i) => i.kind === 'simple').slice(0, 8));
+    renderRow('rowPaquete', filteredRecommended.filter((i) => i.kind === 'paquete').slice(0, 8));
+    renderRow('rowTodos', filteredRecommended.slice(0, 8));
+  }
+
+  function renderExplore() {
+    const source = activeTab === 'recomendado' ? recommended : general;
+    const kindFiltered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
+    const filtered = applyAdvFilters(kindFiltered);
     if (filtered.length === 0) {
       grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
       return;
     }
     grid.innerHTML = filtered.map((item) => cardHTML(item)).join('');
+  }
+
+  function renderAll() {
+    renderRows();
+    renderExplore();
   }
 
   document.querySelectorAll('.pano-tab').forEach((btn) => {
@@ -265,15 +281,15 @@
       document.getElementById('filterDistance').value = 'todas';
       document.getElementById('filterPrice').value = 'todos';
       document.getElementById('filterDay').value = 'todos';
-      renderExplore();
+      renderAll();
       document.getElementById('explorar').scrollIntoView({ behavior: 'smooth' });
     });
   });
 
-  if (categorySelect) categorySelect.addEventListener('change', (e) => { activeCategory = e.target.value; renderExplore(); });
-  document.getElementById('filterDistance').addEventListener('change', (e) => { activeDistance = e.target.value; renderExplore(); });
-  document.getElementById('filterPrice').addEventListener('change', (e) => { activePrice = e.target.value; renderExplore(); });
-  document.getElementById('filterDay').addEventListener('change', (e) => { activeDay = e.target.value; renderExplore(); });
+  if (categorySelect) categorySelect.addEventListener('change', (e) => { activeCategory = e.target.value; renderAll(); });
+  document.getElementById('filterDistance').addEventListener('change', (e) => { activeDistance = e.target.value; renderAll(); });
+  document.getElementById('filterPrice').addEventListener('change', (e) => { activePrice = e.target.value; renderAll(); });
+  document.getElementById('filterDay').addEventListener('change', (e) => { activeDay = e.target.value; renderAll(); });
   document.getElementById('resetFilters').addEventListener('click', () => {
     activeCategory = 'todas';
     activeDistance = 'todas';
@@ -283,10 +299,10 @@
     document.getElementById('filterDistance').value = 'todas';
     document.getElementById('filterPrice').value = 'todos';
     document.getElementById('filterDay').value = 'todos';
-    renderExplore();
+    renderAll();
   });
 
-  renderExplore();
+  renderAll();
 
   if (window.location.hash === '#explorar') {
     document.getElementById('explorar').scrollIntoView();
