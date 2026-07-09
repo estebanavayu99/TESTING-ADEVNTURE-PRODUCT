@@ -87,6 +87,50 @@
 .beto-card__points small { font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--slate); margin-left: 4px; }
 .beto-card__caption { margin: 0; font-size: 0.85rem; color: var(--navy-2); font-weight: 600; }
 
+/* Cashback tier (Pick Points level) */
+.cashback {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(30, 45, 49, 0.08);
+}
+.cashback__head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cashback__tier-badge {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  color: var(--white);
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+.cashback__title { margin: 0; font-size: 0.92rem; color: var(--navy-2); }
+.cashback__title strong { color: var(--navy); }
+
+.cashback__ladder { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.cashback__tier {
+  text-align: center;
+  border-radius: 12px;
+  padding: 10px 6px;
+  background: var(--bg);
+  border: 1px solid transparent;
+}
+.cashback__tier-name { display: block; font-size: 0.68rem; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.02em; }
+.cashback__tier-pct { display: block; margin-top: 3px; font-family: var(--font-display); font-size: 1.05rem; color: var(--navy); }
+.cashback__tier.is-done { opacity: 0.75; }
+.cashback__tier.is-done .cashback__tier-pct { color: #3f7a2c; }
+.cashback__tier.is-current {
+  background: rgba(245, 94, 97, 0.12);
+  border-color: var(--coral);
+}
+.cashback__tier.is-current .cashback__tier-pct { color: var(--coral); }
+.cashback__tier.is-next { border: 1px dashed rgba(30, 45, 49, 0.2); background: transparent; opacity: 0.6; }
+
+.cashback__note { margin: 0; font-size: 0.8rem; color: var(--navy-2); background: rgba(246, 205, 76, 0.18); border-radius: 10px; padding: 10px 12px; }
+
+@media (max-width: 480px) {
+  .cashback__ladder { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* Activity history (Pick Points ledger) */
 .dash__history {
   list-style: none;
