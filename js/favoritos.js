@@ -36,6 +36,36 @@
   };
   const DAY_LABELS = { semana: 'Entre semana', finde: 'Fin de semana o feriado' };
   const DIFFICULTY_LABELS = { suave: 'Suave', moderado: 'Moderado', extremo: 'Extremo' };
+  const DIFFICULTY_ICONS = { suave: '🟢', moderado: '🟡', extremo: '🔴' };
+  const ZONE_BY_CATEGORY = {
+    naturaleza: 'Cajón del Maipo', extremo: 'Cajón del Maipo', nieve: 'Farellones, Lo Barnechea',
+    playa: 'Algarrobo, Litoral Central', relax: 'Valle de Colina', gastronomia: 'Barrio Italia, Providencia',
+    vidanocturna: 'Barrio Bellavista', cultura: 'Barrio Lastarria', shopping: 'Providencia',
+    fotografia: 'Cerro San Cristóbal', musica: "Parque O'Higgins", pareja: 'Providencia',
+    familia: 'La Reina', amigos: 'Ñuñoa', trabajo: 'Las Condes', solo: 'Cajón del Maipo',
+    general: 'Región Metropolitana',
+  };
+  function getZone(category) { return ZONE_BY_CATEGORY[category] || ZONE_BY_CATEGORY.general; }
+  const ARRIVAL_BY_CATEGORY = {
+    naturaleza: 'En auto por camino pavimentado hasta el sector; Pickmap también ofrece transporte compartido opcional.',
+    extremo: 'Punto de encuentro con el operador; se recomienda auto propio o combi compartida coordinada al reservar.',
+    nieve: 'En auto con cadenas (obligatorias en invierno) o bus de acceso a la montaña; estacionamiento pagado en el lugar.',
+    playa: 'En auto por ruta costera o en buses directos desde el centro de Santiago.',
+    relax: 'En auto propio; el recinto cuenta con estacionamiento gratuito para huéspedes.',
+    gastronomia: 'A pie o en auto dentro del barrio; hay estacionamientos públicos cercanos.',
+    vidanocturna: 'Se recomienda llegar en Uber/taxi; el barrio tiene alta demanda de estacionamiento los fines de semana.',
+    cultura: 'A pie desde el metro más cercano o en auto; zona con buena conectividad de transporte público.',
+    shopping: 'En metro o en auto; hay estacionamiento disponible en el sector.',
+    fotografia: 'Acceso peatonal o en auto hasta el mirador; hay estacionamiento en la base del cerro.',
+    musica: 'Según el recinto del evento; revisa tu entrada para conocer accesos y estacionamiento.',
+    pareja: 'En auto o Uber/taxi; se recomienda reservar con anticipación.',
+    familia: 'En auto propio; el lugar cuenta con estacionamiento y acceso apto para niños.',
+    amigos: 'En auto o transporte compartido con el grupo; hay estacionamiento cercano.',
+    trabajo: 'Transporte coordinado por la empresa o en auto propio hasta el recinto.',
+    solo: 'Acceso en auto o transporte público hasta el punto de inicio del sendero.',
+    general: 'Te enviamos la dirección exacta y las indicaciones de acceso al confirmar tu reserva.',
+  };
+  function getArrival(category) { return ARRIVAL_BY_CATEGORY[category] || ARRIVAL_BY_CATEGORY.general; }
 
   function cardHTML(item) {
     const whyBox = item.reason
@@ -50,7 +80,7 @@
           <span class="pano-card__heart is-liked" data-title="${item.title}">♥</span>
           <span class="pano-card__badges">
             <span class="pano-card__kind pano-card__kind--${item.kind}">${kindLabel[item.kind]}</span>
-            <span class="pano-card__difficulty pano-card__difficulty--${difficulty}">${DIFFICULTY_LABELS[difficulty]}</span>
+            <span class="pano-card__difficulty pano-card__difficulty--${difficulty}" title="Nivel de exigencia física: ${DIFFICULTY_LABELS[difficulty]}">${DIFFICULTY_ICONS[difficulty]} ${DIFFICULTY_LABELS[difficulty]}</span>
           </span>
         </div>
         <div class="pano-card__body">
@@ -104,7 +134,7 @@
         <div class="pano-modal__nearby-list">
           ${nearby.map((n) => {
             const dayLabel = DAY_LABELS[n.day] || 'Cualquier día';
-            const categoryLabel = CATEGORY_LABELS[n.category] || 'Popular';
+            const nDifficulty = n.difficulty || 'suave';
             return `
             <div class="pano-modal__nearby-row">
               <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
@@ -117,10 +147,13 @@
               <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false">+</button>
             </div>
             <div class="pano-modal__nearby-details" hidden>
-              <span>⭐ ${n.rating} <em>(${n.reviews})</em></span>
-              <span>📍 ${n.meta}</span>
-              <span>📅 ${dayLabel}</span>
-              <span>🏷️ ${categoryLabel}</span>
+              <div class="pano-modal__nearby-fact"><span>⭐</span><div><b>${n.rating} (${n.reviews} reseñas)</b><small>Calificación</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>📍</span><div><b>${getZone(n.category)}</b><small>Dirección aproximada</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>🚗</span><div><b>${n.km} km</b><small>Distancia desde tu ubicación</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>🧭</span><div><b>${getArrival(n.category)}</b><small>Cómo llegar</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>${DIFFICULTY_ICONS[nDifficulty]}</span><div><b>${DIFFICULTY_LABELS[nDifficulty]}</b><small>Nivel de exigencia física</small></div></div>
+              <div class="pano-modal__nearby-fact"><span>🎒</span><div><b>${n.gear || 'Ropa cómoda'}</b><small>Vestimenta / equipamiento ideal</small></div></div>
             </div>
           `;
           }).join('')}
@@ -138,7 +171,7 @@
         <span class="pano-modal__emoji">${item.icon}</span>
         <span class="pano-modal__badges">
           <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
-          <span class="pano-card__difficulty pano-modal__difficulty pano-card__difficulty--${difficulty}">${DIFFICULTY_LABELS[difficulty]}</span>
+          <span class="pano-card__difficulty pano-modal__difficulty pano-card__difficulty--${difficulty}" title="Nivel de exigencia física: ${DIFFICULTY_LABELS[difficulty]}">${DIFFICULTY_ICONS[difficulty]} ${DIFFICULTY_LABELS[difficulty]}</span>
         </span>
         <span class="pano-card__heart is-liked pano-modal__heart" data-title="${item.title}">♥</span>
       </div>
@@ -150,9 +183,11 @@
           <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
           <div class="pano-modal__fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
           <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
+          <div class="pano-modal__fact"><span>${DIFFICULTY_ICONS[difficulty]}</span><div><b>${DIFFICULTY_LABELS[difficulty]}</b><small>Nivel de exigencia física</small></div></div>
+          <div class="pano-modal__fact"><span>🧭</span><div><b>${getZone(item.category)}</b><small>Zona / cómo llegar</small></div></div>
           <div class="pano-modal__fact pano-modal__fact--wide"><span>🎒</span><div><b>${item.gear || 'Ropa cómoda'}</b><small>Equipamiento / ropa ideal</small></div></div>
         </div>
-        <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
+        <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación. ${getArrival(item.category)}</p>
         ${nearbyHTML(item)}
         <div class="pano-modal__footer">
           <p class="pano-modal__price">Desde <b>$${item.price}</b> <span>por persona</span></p>
