@@ -118,7 +118,7 @@
   const sub = document.getElementById('panoramasSub');
   if (sub && (taste.length || company.length)) {
     const firstName = user.name ? user.name.trim().split(' ')[0] : 'viajero';
-    sub.textContent = `Beto, la IA de Pickmap, cruzó tu edad, con quién sueles ir y tus gustos con su algoritmo, y encontró que esto es justo lo ideal para ti, ${firstName}.`;
+    sub.textContent = `Beto procesó tu edad, tu compañía y tus gustos en tiempo real junto con el clima y la hora, y su algoritmo decidió que esto es justo lo ideal para ti, ${firstName}.`;
   }
 
   const kindLabel = { simple: 'Simple', paquete: 'Paquete' };
