@@ -95,7 +95,7 @@
     if (!nearby.length) return '';
     return `
       <div class="pano-modal__nearby">
-        <p class="pano-modal__nearby-title">Panoramas cerca de aquí</p>
+        <p class="pano-modal__nearby-title">Panoramas cerca de ahí</p>
         <div class="pano-modal__nearby-list">
           ${nearby.map((n) => `
             <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
