@@ -159,15 +159,17 @@
             const added = isAddedOn(item.title, n.title);
             return `
             <div class="pano-modal__nearby-row">
-              <button type="button" class="pano-modal__nearby-item" data-title="${n.title}">
-                <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
-                <span class="pano-modal__nearby-info">
-                  <b>${n.title}</b>
-                  <small>A ${distFromPlace} km de ahí · desde $${n.price}</small>
-                </span>
-              </button>
+              <div class="pano-modal__nearby-item">
+                <button type="button" class="pano-modal__nearby-open" data-title="${n.title}">
+                  <span class="pano-modal__nearby-icon pano-modal__nearby-icon--${n.grad}">${n.icon}</span>
+                  <span class="pano-modal__nearby-info">
+                    <b>${n.title}</b>
+                    <small>A ${distFromPlace} km de ahí · desde $${n.price}</small>
+                  </span>
+                </button>
+                <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false"><span class="pano-modal__nearby-chevron">⌄</span></button>
+              </div>
               <button type="button" class="pano-modal__nearby-add${added ? ' is-added' : ''}" data-parent="${item.title}" data-title="${n.title}" aria-pressed="${added}" aria-label="${added ? 'Quitar de tu panorama' : 'Agregar a tu panorama'}">${added ? '✓' : '+'}</button>
-              <button type="button" class="pano-modal__nearby-toggle" aria-label="Ver más info" aria-expanded="false"><span class="pano-modal__nearby-chevron">⌄</span></button>
             </div>
             <div class="pano-modal__nearby-details" hidden>
               <div class="pano-modal__nearby-fact"><span>⭐</span><div><b>${n.rating} (${n.reviews} reseñas)</b><small>Calificación</small></div></div>
@@ -264,7 +266,7 @@
       toggleBtn.setAttribute('aria-expanded', String(expanded));
       return;
     }
-    const nearbyBtn = e.target.closest('.pano-modal__nearby-item');
+    const nearbyBtn = e.target.closest('.pano-modal__nearby-open');
     if (nearbyBtn) {
       const item = getFavorites().find((f) => f.title === nearbyBtn.dataset.title);
       if (item) openModal(item);

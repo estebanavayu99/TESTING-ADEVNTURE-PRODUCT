@@ -302,18 +302,27 @@ body.pano-modal-open { overflow: hidden; }
 .pano-modal__nearby-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   flex: 1;
   min-width: 0;
   background: var(--bg);
-  border: none;
   border-radius: 12px;
-  padding: 9px 12px;
-  cursor: pointer;
-  text-align: left;
+  padding: 9px 6px 9px 12px;
   transition: background .15s;
 }
 .pano-modal__nearby-item:hover { background: rgba(245, 94, 97, 0.1); }
+.pano-modal__nearby-open {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
 .pano-modal__nearby-add {
   flex-shrink: 0;
   width: 34px; height: 34px;
@@ -331,17 +340,17 @@ body.pano-modal-open { overflow: hidden; }
 .pano-modal__nearby-add.is-added { background: #3f7a2c; }
 .pano-modal__nearby-toggle {
   flex-shrink: 0;
-  width: 34px; height: 34px;
-  border-radius: 10px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
   border: none;
-  background: var(--bg);
+  background: transparent;
   color: var(--navy-2);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
   transition: background .15s;
 }
-.pano-modal__nearby-toggle:hover { background: rgba(245, 94, 97, 0.1); }
+.pano-modal__nearby-toggle:hover { background: rgba(245, 94, 97, 0.15); }
 .pano-modal__nearby-chevron { display: inline-block; transition: transform .2s; }
 .pano-modal__nearby-toggle[aria-expanded="true"] .pano-modal__nearby-chevron { transform: rotate(180deg); }
 .pano-modal__nearby-details {
