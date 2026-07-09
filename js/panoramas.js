@@ -791,32 +791,17 @@
     return { km, mins: travelBufferMinutes(km) };
   }
 
-  function schematicSvgHTML(entries) {
+  function mapsEmbedHTML(entries) {
     if (entries.length < 2) return '';
-    const width = 260;
-    const height = 90;
-    const marginX = 26;
-    const marginY = 22;
-    const kms = entries.map((e) => e.item.km);
-    const minKm = Math.min(...kms);
-    const spread = Math.max(...kms) - minKm;
-    const pts = entries.map((e, i) => {
-      const t = spread ? (e.item.km - minKm) / spread : (entries.length > 1 ? i / (entries.length - 1) : 0.5);
-      const x = marginX + t * (width - marginX * 2);
-      const y = marginY + ((hashStr(e.item.title) % 100) / 100) * (height - marginY * 2);
-      return { x, y };
-    });
-    const linePoints = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    const dots = pts.map((p, i) => `
-      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="#F55E61" stroke="#fff" stroke-width="2"></circle>
-      <text x="${p.x.toFixed(1)}" y="${(p.y + 4).toFixed(1)}" text-anchor="middle" font-size="11">${entries[i].item.icon}</text>
-    `).join('');
+    const stops = entries.map((e) => encodeURIComponent(`${getZone(e.item.category)}, Chile`));
+    const saddr = stops[0];
+    const daddr = stops.slice(1).join('+to:');
+    const url = `https://www.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
     return `
-      <svg class="reserve-map__svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" preserveAspectRatio="xMidYMid meet">
-        <polyline points="${linePoints}" fill="none" stroke="#F55E61" stroke-width="2" stroke-dasharray="5 5" opacity="0.6"></polyline>
-        ${dots}
-      </svg>
-      <p class="reserve-map__svg-caption">Ruta esquemática (no a escala real)</p>
+      <div class="reserve-map__embed">
+        <iframe src="${url}" width="100%" height="220" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ruta en Google Maps"></iframe>
+      </div>
+      <p class="reserve-map__embed-caption">📍 Vista referencial en Google Maps entre las zonas de tus actividades</p>
     `;
   }
 
@@ -849,7 +834,7 @@
       <div class="reserve-map__day">
         <div class="reserve-map__path">${path}</div>
         ${routes ? `<ul class="reserve-map__routes">${routes}</ul>` : ''}
-        ${schematicSvgHTML(entries)}
+        ${mapsEmbedHTML(entries)}
       </div>
     `;
   }
