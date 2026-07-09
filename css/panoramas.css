@@ -115,6 +115,13 @@
   box-shadow: 0 20px 46px rgba(15, 20, 22, 0.1);
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.pano-card:hover, .pano-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 26px 54px rgba(15, 20, 22, 0.16);
+  outline: none;
 }
 .pano-card__photo {
   position: relative;
@@ -189,6 +196,108 @@
 .fav-empty__icon { display: block; font-size: 2.6rem; margin-bottom: 14px; }
 .fav-empty__title { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.15rem; color: var(--navy); }
 .fav-empty__sub { margin: 0 0 20px; font-size: 0.9rem; color: var(--slate); }
+
+/* ========== Panorama detail modal ========== */
+.pano-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 20, 22, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.pano-modal-overlay[hidden] { display: none; }
+body.pano-modal-open { overflow: hidden; }
+.pano-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: 28px;
+  box-shadow: 0 40px 90px rgba(15, 20, 22, 0.4);
+}
+.pano-modal__close {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 2;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  font-size: 1rem;
+  color: var(--navy);
+  cursor: pointer;
+}
+.pano-modal__photo {
+  position: relative;
+  height: 200px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pano-modal__photo--g1 { background: linear-gradient(135deg, #F6CD4C, #F55E61); }
+.pano-modal__photo--g2 { background: linear-gradient(135deg, #83D061, #3f7a2c); }
+.pano-modal__photo--g3 { background: linear-gradient(135deg, #7FC8E8, #3A6EA5); }
+.pano-modal__photo--g4 { background: linear-gradient(135deg, #F58F8F, #AF4345); }
+.pano-modal__photo--g5 { background: linear-gradient(135deg, #C7A6F5, #6C4AA6); }
+.pano-modal__photo--g6 { background: linear-gradient(135deg, #FBD6A8, #C9757A); }
+.pano-modal__emoji { font-size: 4.5rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.2)); }
+.pano-modal__kind {
+  position: absolute; top: 14px; left: 14px;
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 5px 11px; border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+}
+.pano-modal__kind--simple { color: #3f7a2c; }
+.pano-modal__kind--paquete { color: var(--deep-red); }
+.pano-modal__heart {
+  position: absolute; top: 12px; right: 56px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--deep-red);
+  cursor: pointer;
+}
+.pano-modal__heart.is-liked { color: var(--coral); }
+
+.pano-modal__content { padding: 24px 26px 28px; }
+.pano-modal__title { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.4rem; color: var(--navy); line-height: 1.25; }
+.pano-modal__rating { margin: 0 0 18px; font-size: 0.92rem; font-weight: 700; color: var(--navy-2); }
+.pano-modal__rating span { font-weight: 500; color: var(--slate); }
+
+.pano-modal__facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.pano-modal__fact { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+.pano-modal__fact span { font-size: 1.1rem; flex-shrink: 0; }
+.pano-modal__fact b { display: block; font-size: 0.85rem; color: var(--navy); }
+.pano-modal__fact small { display: block; font-size: 0.68rem; color: var(--slate); margin-top: 1px; }
+
+.pano-modal__desc { margin: 0 0 16px; font-size: 0.9rem; color: var(--navy-2); line-height: 1.6; }
+.pano-modal__why {
+  margin: 0 0 20px;
+  background: rgba(30, 45, 49, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  color: var(--navy-2);
+  line-height: 1.5;
+}
+.pano-modal__why--general { background: rgba(246, 205, 76, 0.16); }
+.pano-modal__why b { color: var(--navy); }
+
+.pano-modal__footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.pano-modal__price { margin: 0; font-size: 1rem; color: var(--navy-2); }
+.pano-modal__price b { font-family: var(--font-display); font-size: 1.3rem; color: var(--navy); }
+.pano-modal__price span { font-size: 0.8rem; }
+.pano-modal__reserve { padding: 12px 26px; }
+
+@media (max-width: 560px) {
+  .pano-modal__facts { grid-template-columns: 1fr; }
+  .pano-modal__footer { flex-direction: column; align-items: stretch; }
+  .pano-modal__reserve { width: 100%; }
+}
 
 @media (max-width: 640px) {
   .pano-filters, .pano-tabs { flex-wrap: wrap; }

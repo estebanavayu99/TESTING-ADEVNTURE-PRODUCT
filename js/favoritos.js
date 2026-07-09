@@ -27,13 +27,21 @@
   function saveFavorites(list) { localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); }
 
   const kindLabel = { simple: 'Simple', paquete: 'Paquete' };
+  const CATEGORY_LABELS = {
+    naturaleza: 'Naturaleza', gastronomia: 'Gastronomía', relax: 'Relax', vidanocturna: 'Vida nocturna',
+    cultura: 'Cultura', extremo: 'Extremo', playa: 'Playa', nieve: 'Nieve', shopping: 'Shopping',
+    fotografia: 'Fotografía', musica: 'Música',
+    pareja: 'En pareja', familia: 'En familia', amigos: 'Con amigos', trabajo: 'De trabajo', solo: 'Solo/a',
+    general: 'Populares',
+  };
+  const DAY_LABELS = { semana: 'Entre semana', finde: 'Fin de semana o feriado' };
 
   function cardHTML(item) {
     const whyBox = item.reason
       ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
       : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     return `
-      <article class="pano-card">
+      <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
         <div class="pano-card__photo pano-card__photo--${item.grad}">
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
@@ -65,12 +73,91 @@
     grid.innerHTML = favorites.map((item) => cardHTML(item)).join('');
   }
 
+  /* ---------- Detail modal ---------- */
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'pano-modal-overlay';
+  modalOverlay.hidden = true;
+  modalOverlay.innerHTML = `
+    <div class="pano-modal" role="dialog" aria-modal="true" aria-labelledby="panoModalTitle">
+      <button type="button" class="pano-modal__close" aria-label="Cerrar">✕</button>
+      <div id="panoModalBody"></div>
+    </div>
+  `;
+  document.body.appendChild(modalOverlay);
+  const modalBody = modalOverlay.querySelector('#panoModalBody');
+  let modalTitle = null;
+
+  function modalHTML(item) {
+    const whyBox = item.reason
+      ? `<p class="pano-modal__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
+      : `<p class="pano-modal__why pano-modal__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
+    const categoryLabel = CATEGORY_LABELS[item.category] || 'Popular';
+    const dayLabel = DAY_LABELS[item.day] || 'Cualquier día';
+    return `
+      <div class="pano-modal__photo pano-modal__photo--${item.grad}">
+        <span class="pano-modal__emoji">${item.icon}</span>
+        <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+        <span class="pano-card__heart is-liked pano-modal__heart" data-title="${item.title}">♥</span>
+      </div>
+      <div class="pano-modal__content">
+        <h2 class="pano-modal__title" id="panoModalTitle">${item.title}</h2>
+        <p class="pano-modal__rating">⭐ ${item.rating} <span>(${item.reviews} reseñas)</span></p>
+        <div class="pano-modal__facts">
+          <div class="pano-modal__fact"><span>📍</span><div><b>${item.meta}</b><small>Ubicación / duración</small></div></div>
+          <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
+          <div class="pano-modal__fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
+          <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
+        </div>
+        <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
+        ${whyBox}
+        <div class="pano-modal__footer">
+          <p class="pano-modal__price">Desde <b>$${item.price}</b> <span>por persona</span></p>
+          <button type="button" class="btn btn--primary pano-modal__reserve">Reservar este panorama</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function openModal(item) {
+    modalTitle = item.title;
+    modalBody.innerHTML = modalHTML(item);
+    modalOverlay.hidden = false;
+    document.body.classList.add('pano-modal-open');
+  }
+  function closeModal() {
+    modalOverlay.hidden = true;
+    modalTitle = null;
+    document.body.classList.remove('pano-modal-open');
+  }
+
+  modalOverlay.querySelector('.pano-modal__close').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modalOverlay.hidden) closeModal();
+  });
+
   document.addEventListener('click', (e) => {
     const heart = e.target.closest('.pano-card__heart');
-    if (!heart) return;
-    const title = heart.dataset.title;
-    saveFavorites(getFavorites().filter((f) => f.title !== title));
-    render();
+    if (heart) {
+      const title = heart.dataset.title;
+      saveFavorites(getFavorites().filter((f) => f.title !== title));
+      if (title === modalTitle) closeModal();
+      render();
+      return;
+    }
+    const card = e.target.closest('.pano-card');
+    if (!card) return;
+    const item = getFavorites().find((f) => f.title === card.dataset.title);
+    if (item) openModal(item);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.pano-card');
+    if (!card || modalOverlay.contains(card)) return;
+    e.preventDefault();
+    const item = getFavorites().find((f) => f.title === card.dataset.title);
+    if (item) openModal(item);
   });
 
   render();

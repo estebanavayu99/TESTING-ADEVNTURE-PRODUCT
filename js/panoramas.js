@@ -169,7 +169,7 @@
       : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const liked = isFavorited(item.title);
     return `
-      <article class="pano-card">
+      <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
         <div class="pano-card__photo pano-card__photo--${item.grad}">
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
@@ -212,6 +212,89 @@
       h.classList.toggle('is-liked', nowLiked);
       h.textContent = nowLiked ? '♥' : '♡';
     });
+  });
+
+  /* ---------- Detail modal: what you see after clicking a card ---------- */
+  const DAY_LABELS = { semana: 'Entre semana', finde: 'Fin de semana o feriado' };
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'pano-modal-overlay';
+  modalOverlay.id = 'panoModalOverlay';
+  modalOverlay.hidden = true;
+  modalOverlay.innerHTML = `
+    <div class="pano-modal" role="dialog" aria-modal="true" aria-labelledby="panoModalTitle">
+      <button type="button" class="pano-modal__close" id="panoModalClose" aria-label="Cerrar">✕</button>
+      <div id="panoModalBody"></div>
+    </div>
+  `;
+  document.body.appendChild(modalOverlay);
+  const modalBody = document.getElementById('panoModalBody');
+
+  function modalHTML(item) {
+    const liked = isFavorited(item.title);
+    const whyBox = item.reason
+      ? `<p class="pano-modal__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
+      : `<p class="pano-modal__why pano-modal__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
+    const categoryLabel = CATEGORY_LABELS[item.category] || 'Popular';
+    const dayLabel = DAY_LABELS[item.day] || 'Cualquier día';
+    return `
+      <div class="pano-modal__photo pano-modal__photo--${item.grad}">
+        <span class="pano-modal__emoji">${item.icon}</span>
+        <span class="pano-modal__kind pano-modal__kind--${item.kind}">${kindLabel[item.kind]}</span>
+        <span class="pano-card__heart${liked ? ' is-liked' : ''} pano-modal__heart" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
+      </div>
+      <div class="pano-modal__content">
+        <h2 class="pano-modal__title" id="panoModalTitle">${item.title}</h2>
+        <p class="pano-modal__rating">⭐ ${item.rating} <span>(${item.reviews} reseñas)</span></p>
+        <div class="pano-modal__facts">
+          <div class="pano-modal__fact"><span>📍</span><div><b>${item.meta}</b><small>Ubicación / duración</small></div></div>
+          <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
+          <div class="pano-modal__fact"><span>📅</span><div><b>${dayLabel}</b><small>Cuándo</small></div></div>
+          <div class="pano-modal__fact"><span>🏷️</span><div><b>${categoryLabel}</b><small>Tipo de experiencia</small></div></div>
+        </div>
+        <p class="pano-modal__desc">Un panorama tipo <b>${kindLabel[item.kind].toLowerCase()}</b>, pensado para quienes disfrutan ${categoryLabel.toLowerCase()}. ${item.meta} y a unos ${item.km} km de tu ubicación.</p>
+        ${whyBox}
+        <div class="pano-modal__footer">
+          <p class="pano-modal__price">Desde <b>$${item.price}</b> <span>por persona</span></p>
+          <button type="button" class="btn btn--primary pano-modal__reserve">Reservar este panorama</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function openModal(item) {
+    modalBody.innerHTML = modalHTML(item);
+    modalOverlay.hidden = false;
+    document.body.classList.add('pano-modal-open');
+  }
+  function closeModal() {
+    modalOverlay.hidden = true;
+    document.body.classList.remove('pano-modal-open');
+  }
+
+  document.getElementById('panoModalClose').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modalOverlay.hidden) closeModal();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.pano-card__heart')) return;
+    const card = e.target.closest('.pano-card');
+    if (!card) return;
+    const item = CATALOG.find((i) => i.title === card.dataset.title);
+    if (item) openModal(item);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.pano-card');
+    if (!card) return;
+    e.preventDefault();
+    const item = CATALOG.find((i) => i.title === card.dataset.title);
+    if (item) openModal(item);
   });
 
   /* ---------- Filters (shared by rows + explore grid) ---------- */
