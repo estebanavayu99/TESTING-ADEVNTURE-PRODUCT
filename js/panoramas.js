@@ -62,26 +62,59 @@
     { kind: 'paquete', icon: '🏕️', title: 'Camping + noche de fogata', meta: 'Paquete de 2 días', reason: 'es de los paquetes más pedidos del mes' },
   ];
 
-  // Deterministic "real-looking" rating/reviews/price + a photo-card gradient per item.
+  // Deterministic "real-looking" rating/reviews/price/km/day + a photo-card gradient per item.
   const GRADIENTS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
   function hashStr(str) {
     let h = 0;
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
     return h;
   }
+  function parseKm(meta, h) {
+    const hourMatch = meta.match(/(\d+(\.\d+)?)\s*hora/i);
+    if (hourMatch) return Math.round(parseFloat(hourMatch[1]) * 45);
+    const minMatch = meta.match(/(\d+)\s*min/i);
+    if (minMatch) return Math.round(parseInt(minMatch[1], 10) * 0.7);
+    return 8 + (h % 40);
+  }
+  function parseDay(meta, h) {
+    if (/viernes|s[aá]bado|domingo|fin de semana/i.test(meta)) return 'finde';
+    if (/lunes|martes|mi[eé]rcoles|jueves/i.test(meta)) return 'semana';
+    return h % 2 === 0 ? 'semana' : 'finde';
+  }
   function enrich(item, i) {
     const h = hashStr(item.title);
     const rating = (4.3 + (h % 8) / 10).toFixed(1);
     const reviews = 60 + (h % 900);
-    const price = (8 + (h % 30)) * 1000;
+    const priceNum = (8 + (h % 30)) * 1000;
     return {
       ...item,
       rating,
       reviews,
-      price: price.toLocaleString('es-CL'),
+      priceNum,
+      price: priceNum.toLocaleString('es-CL'),
+      km: parseKm(item.meta, h),
+      day: parseDay(item.meta, h),
+      category: item.taste || item.company || 'general',
       grad: GRADIENTS[i % GRADIENTS.length],
     };
   }
+  function distanceBucket(km) {
+    if (km <= 20) return 'cerca';
+    if (km <= 45) return 'media';
+    return 'lejos';
+  }
+  function priceBucket(priceNum) {
+    if (priceNum <= 15000) return 'bajo';
+    if (priceNum <= 30000) return 'medio';
+    return 'alto';
+  }
+  const CATEGORY_LABELS = {
+    naturaleza: 'Naturaleza', gastronomia: 'Gastronomía', relax: 'Relax', vidanocturna: 'Vida nocturna',
+    cultura: 'Cultura', extremo: 'Extremo', playa: 'Playa', nieve: 'Nieve', shopping: 'Shopping',
+    fotografia: 'Fotografía', musica: 'Música',
+    pareja: 'En pareja', familia: 'En familia', amigos: 'Con amigos', trabajo: 'De trabajo', solo: 'Solo/a',
+    general: 'Populares',
+  };
 
   const ALL_TASTE = TASTE_POOL.map(enrich);
   const ALL_COMPANY = COMPANY_POOL.map(enrich);
@@ -166,12 +199,33 @@
   const grid = document.getElementById('panoGrid');
   let activeTab = 'recomendado';
   let activeFilter = 'todos';
+  let activeCategory = 'todas';
+  let activeDistance = 'todas';
+  let activePrice = 'todos';
+  let activeDay = 'todos';
+
+  const categorySelect = document.getElementById('filterCategory');
+  if (categorySelect) {
+    const seenCats = new Set(CATALOG.map((i) => i.category));
+    [...seenCats]
+      .sort((a, b) => (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b))
+      .forEach((cat) => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = CATEGORY_LABELS[cat] || cat;
+        categorySelect.appendChild(opt);
+      });
+  }
 
   function renderExplore() {
     const source = activeTab === 'recomendado' ? recommended : general;
-    const filtered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
+    let filtered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
+    if (activeCategory !== 'todas') filtered = filtered.filter((i) => i.category === activeCategory);
+    if (activeDistance !== 'todas') filtered = filtered.filter((i) => distanceBucket(i.km) === activeDistance);
+    if (activePrice !== 'todos') filtered = filtered.filter((i) => priceBucket(i.priceNum) === activePrice);
+    if (activeDay !== 'todos') filtered = filtered.filter((i) => i.day === activeDay);
     if (filtered.length === 0) {
-      grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas de este tipo. Prueba otro filtro.</p>';
+      grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
       return;
     }
     grid.innerHTML = filtered.map((item) => cardHTML(item)).join('');
@@ -201,11 +255,35 @@
       const filter = link.dataset.targetFilter;
       activeFilter = filter;
       activeTab = 'recomendado';
+      activeCategory = 'todas';
+      activeDistance = 'todas';
+      activePrice = 'todos';
+      activeDay = 'todos';
       document.querySelectorAll('.pano-filter').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === filter));
       document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === 'recomendado'));
+      if (categorySelect) categorySelect.value = 'todas';
+      document.getElementById('filterDistance').value = 'todas';
+      document.getElementById('filterPrice').value = 'todos';
+      document.getElementById('filterDay').value = 'todos';
       renderExplore();
       document.getElementById('explorar').scrollIntoView({ behavior: 'smooth' });
     });
+  });
+
+  if (categorySelect) categorySelect.addEventListener('change', (e) => { activeCategory = e.target.value; renderExplore(); });
+  document.getElementById('filterDistance').addEventListener('change', (e) => { activeDistance = e.target.value; renderExplore(); });
+  document.getElementById('filterPrice').addEventListener('change', (e) => { activePrice = e.target.value; renderExplore(); });
+  document.getElementById('filterDay').addEventListener('change', (e) => { activeDay = e.target.value; renderExplore(); });
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    activeCategory = 'todas';
+    activeDistance = 'todas';
+    activePrice = 'todos';
+    activeDay = 'todos';
+    if (categorySelect) categorySelect.value = 'todas';
+    document.getElementById('filterDistance').value = 'todas';
+    document.getElementById('filterPrice').value = 'todos';
+    document.getElementById('filterDay').value = 'todos';
+    renderExplore();
   });
 
   renderExplore();
