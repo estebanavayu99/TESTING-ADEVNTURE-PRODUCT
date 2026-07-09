@@ -736,20 +736,22 @@
 
   function reserveSuccessHTML(item, data) {
     const code = `PM-${(hashStr(item.title + data.schedule.map((s) => s.date + s.slot).join('')) % 900000 + 100000)}`;
+    const firstName = (data.name || '').trim().split(' ')[0] || 'viajero';
     return `
       <div class="reserve-success">
-        <span class="reserve-success__icon">✅</span>
-        <h2 class="reserve-modal__title">¡Reserva confirmada!</h2>
-        <p class="reserve-success__sub">Te enviamos los detalles a <b>${data.email}</b>.</p>
+        <span class="reserve-success__icon">🎉</span>
+        <h2 class="reserve-modal__title">¡Todo listo, ${firstName}!</h2>
+        <p class="reserve-success__sub">Tu aventura con Pickmap ya quedó confirmada. Te enviamos todos los detalles a <b>${data.email}</b> 💌</p>
         <div class="reserve-success__card">
-          <div class="reserve-success__row"><span>Código de reserva</span><b>${code}</b></div>
-          ${data.schedule.map((s) => `<div class="reserve-success__row"><span>${s.title}</span><b>${s.date} · ${s.slot}</b></div>`).join('')}
-          <div class="reserve-success__row"><span>Pasajeros</span><b>${data.passengers.join(', ')}</b></div>
+          <div class="reserve-success__row reserve-success__row--code"><span>🎫 Código de reserva</span><b>${code}</b></div>
+          ${data.schedule.map((s) => `<div class="reserve-success__row"><span>${s.icon || '📍'} ${s.title}</span><b>${s.date} · ${s.slot}</b></div>`).join('')}
+          <div class="reserve-success__row"><span>👥 Pasajeros</span><b>${data.passengers.join(', ')}</b></div>
           ${data.redeemed > 0 ? `
-          <div class="reserve-success__row"><span>Pick Points canjeados</span><b>${data.redeemed.toLocaleString('es-CL')} (-$${data.discount.toLocaleString('es-CL')})</b></div>
-          <div class="reserve-success__row"><span>Nuevo saldo Pick Points</span><b>${data.newBalance.toLocaleString('es-CL')}</b></div>` : ''}
-          <div class="reserve-success__row"><span>Total</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
+          <div class="reserve-success__row"><span>💎 Pick Points canjeados</span><b>${data.redeemed.toLocaleString('es-CL')} (-$${data.discount.toLocaleString('es-CL')})</b></div>
+          <div class="reserve-success__row"><span>💎 Nuevo saldo Pick Points</span><b>${data.newBalance.toLocaleString('es-CL')}</b></div>` : ''}
+          <div class="reserve-success__row"><span>💰 Total pagado</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
         </div>
+        <p class="reserve-success__note">¡Que lo disfrutes muchísimo! Beto ya te está preparando la mejor experiencia 🌟🧳</p>
         <button type="button" class="btn btn--primary reserve-success__close">Listo</button>
       </div>
     `;
@@ -789,6 +791,35 @@
     return { km, mins: travelBufferMinutes(km) };
   }
 
+  function schematicSvgHTML(entries) {
+    if (entries.length < 2) return '';
+    const width = 260;
+    const height = 90;
+    const marginX = 26;
+    const marginY = 22;
+    const kms = entries.map((e) => e.item.km);
+    const minKm = Math.min(...kms);
+    const spread = Math.max(...kms) - minKm;
+    const pts = entries.map((e, i) => {
+      const t = spread ? (e.item.km - minKm) / spread : (entries.length > 1 ? i / (entries.length - 1) : 0.5);
+      const x = marginX + t * (width - marginX * 2);
+      const y = marginY + ((hashStr(e.item.title) % 100) / 100) * (height - marginY * 2);
+      return { x, y };
+    });
+    const linePoints = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const dots = pts.map((p, i) => `
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="#F55E61" stroke="#fff" stroke-width="2"></circle>
+      <text x="${p.x.toFixed(1)}" y="${(p.y + 4).toFixed(1)}" text-anchor="middle" font-size="11">${entries[i].item.icon}</text>
+    `).join('');
+    return `
+      <svg class="reserve-map__svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" preserveAspectRatio="xMidYMid meet">
+        <polyline points="${linePoints}" fill="none" stroke="#F55E61" stroke-width="2" stroke-dasharray="5 5" opacity="0.6"></polyline>
+        ${dots}
+      </svg>
+      <p class="reserve-map__svg-caption">Ruta esquemática (no a escala real)</p>
+    `;
+  }
+
   function mapHTML(item) {
     const groups = computeDayGroups(item);
     if (!groups.length) {
@@ -817,6 +848,7 @@
           <p class="reserve-map__day-label">${dayLabel}</p>
           <div class="reserve-map__path">${path}</div>
           ${routes ? `<ul class="reserve-map__routes">${routes}</ul>` : ''}
+          ${schematicSvgHTML(g.entries)}
         </div>
       `;
     }).join('')}`;
@@ -1036,6 +1068,7 @@
       const slotBtn = el.querySelector('.reserve-slot.is-selected');
       return {
         title: allItems[idx].title,
+        icon: allItems[idx].icon,
         date: dateInput.value,
         slot: (slotBtn && slotBtn.dataset.slot) || '09:00',
       };
