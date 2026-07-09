@@ -65,7 +65,11 @@
       <form id="settingsForm" class="dash__settings-form">
         <label class="dash__field">
           <span>Nombre</span>
-          <input type="text" name="name" id="settingsName" autocomplete="name" required>
+          <input type="text" name="firstName" id="settingsFirstName" autocomplete="given-name" required>
+        </label>
+        <label class="dash__field">
+          <span>Apellido</span>
+          <input type="text" name="lastName" id="settingsLastName" autocomplete="family-name" required>
         </label>
         <label class="dash__field">
           <span>Correo electrónico</span>
@@ -75,7 +79,7 @@
           <span>Teléfono</span>
           <input type="tel" name="phone" id="settingsPhone" autocomplete="tel" placeholder="+56 9 1234 5678">
         </label>
-        <button type="submit" class="btn btn--primary dash__settings-save">Guardar cambios</button>
+        <button type="submit" class="btn btn--primary dash__settings-save">Solicitar cambio de datos</button>
         <p class="dash__settings-feedback" id="settingsFeedback">&nbsp;</p>
       </form>
     </section>

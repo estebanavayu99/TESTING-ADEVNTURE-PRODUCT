@@ -45,7 +45,9 @@
 
   const settingsForm = document.getElementById('settingsForm');
   if (settingsForm) {
-    document.getElementById('settingsName').value = user.name || '';
+    const [existingFirst, ...existingRest] = (user.name || '').trim().split(' ');
+    document.getElementById('settingsFirstName').value = existingFirst || '';
+    document.getElementById('settingsLastName').value = existingRest.join(' ');
     document.getElementById('settingsEmail').value = user.email || '';
     document.getElementById('settingsPhone').value = user.phone || '';
 
@@ -53,12 +55,14 @@
 
     settingsForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const newName = document.getElementById('settingsName').value.trim();
+      const newFirstName = document.getElementById('settingsFirstName').value.trim();
+      const newLastName = document.getElementById('settingsLastName').value.trim();
       const newEmail = document.getElementById('settingsEmail').value.trim().toLowerCase();
       const newPhone = document.getElementById('settingsPhone').value.trim();
+      const newName = `${newFirstName} ${newLastName}`.trim();
 
-      if (!newName || !newEmail) {
-        feedback.textContent = 'El nombre y el correo no pueden estar vacíos.';
+      if (!newFirstName || !newLastName || !newEmail) {
+        feedback.textContent = 'El nombre, el apellido y el correo no pueden estar vacíos.';
         feedback.classList.add('is-error');
         return;
       }
@@ -82,8 +86,8 @@
       }
 
       feedback.classList.remove('is-error');
-      feedback.textContent = '¡Cambios guardados!';
-      document.getElementById('greetingName').textContent = `Hola, ${newName.split(' ')[0]} 👋`;
+      feedback.textContent = '¡Solicitud enviada! Actualizaremos tus datos en breve.';
+      document.getElementById('greetingName').textContent = `Hola, ${newFirstName} 👋`;
     });
   }
 
