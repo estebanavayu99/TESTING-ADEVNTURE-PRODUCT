@@ -1,4 +1,40 @@
 /* ========== Dashboard ========== */
+body.dash-body .nav__links { gap: 8px; }
+body.dash-body .nav__links a {
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(30, 45, 49, 0.05);
+  color: var(--navy-2);
+  opacity: 1;
+  transition: background .2s, color .2s;
+}
+body.dash-body .nav__links a.nav__panoramas { color: var(--coral); }
+body.dash-body .nav__links a:hover { background: rgba(245, 94, 97, 0.14); color: var(--navy); }
+body.dash-body .nav__links a.is-current {
+  background: var(--coral);
+  color: var(--white);
+  opacity: 1;
+  pointer-events: none;
+}
+body.dash-body .nav__login {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--coral);
+  background: rgba(245, 94, 97, 0.1);
+  border: 1.5px solid rgba(245, 94, 97, 0.35);
+  border-radius: 999px;
+  padding: 9px 20px;
+  cursor: pointer;
+  opacity: 1;
+  transition: background .2s, border-color .2s, color .2s;
+}
+body.dash-body .nav__login:hover {
+  background: var(--coral);
+  color: var(--white);
+  border-color: var(--coral);
+  text-decoration: none;
+}
+
 .dash { padding: 48px 0 96px; }
 .dash__greeting {
   margin-bottom: 36px;
