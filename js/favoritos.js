@@ -81,6 +81,24 @@
     general: 'Región Metropolitana',
   };
   function getZone(category) { return ZONE_BY_CATEGORY[category] || ZONE_BY_CATEGORY.general; }
+  const ZONE_COORDS = {
+    naturaleza: [-33.6944, -70.3049], extremo: [-33.6944, -70.3049], nieve: [-33.3510, -70.2952],
+    playa: [-33.3617, -71.6706], relax: [-33.5289, -70.4894], gastronomia: [-33.4372, -70.6304],
+    vidanocturna: [-33.4300, -70.6330], cultura: [-33.4372, -70.6403], shopping: [-33.4166, -70.6062],
+    fotografia: [-33.4257, -70.6329], musica: [-33.4628, -70.6483], pareja: [-33.4166, -70.6062],
+    familia: [-33.4470, -70.5382], amigos: [-33.4558, -70.5980], trabajo: [-33.4152, -70.5675],
+    solo: [-33.6944, -70.3049], general: [-33.4489, -70.6693],
+  };
+  function jitterCoord([lat, lng], seed) {
+    const h = hashStr(seed);
+    const dLat = ((h % 1000) / 1000 - 0.5) * 0.02;
+    const dLng = (((h >> 8) % 1000) / 1000 - 0.5) * 0.02;
+    return [lat + dLat, lng + dLng];
+  }
+  function getZoneCoords(item) {
+    const base = ZONE_COORDS[item.category] || ZONE_COORDS.general;
+    return jitterCoord(base, item.title);
+  }
   const ARRIVAL_BY_CATEGORY = {
     naturaleza: 'En auto por camino pavimentado hasta el sector; Pickmap también ofrece transporte compartido opcional.',
     extremo: 'Punto de encuentro con el operador; se recomienda auto propio o combi compartida coordinada al reservar.',
@@ -346,7 +364,6 @@
     `;
   }
 
-  const ACTIVITY_DURATION_MIN = 120;
   function minutesOf(slot) { const [h, m] = slot.split(':').map(Number); return h * 60 + m; }
   function travelBufferMinutes(km) { return Math.max(30, Math.round(km * 2)); }
   function addDaysToDate(ds, n) {
@@ -355,8 +372,23 @@
     return d.toISOString().slice(0, 10);
   }
 
-  // Auto-suggests a date/time per activity respecting each day's availability and
-  // leaving enough travel buffer (scaled by distance) between same-day activities.
+  // Some activities are naturally an evening/overnight add-on (best scheduled
+  // late in the day, same day as something else), others quietly eat the whole day.
+  function isOvernightActivity(it) {
+    return /alojamiento|hospedaje|noche/i.test(`${it.title} ${it.meta}`);
+  }
+  function estimateDurationMinutes(it) {
+    const meta = (it.meta || '').toLowerCase();
+    if (isOvernightActivity(it)) return 240;
+    if (meta.includes('fin de semana') || meta.includes('2 días')) return 60 * 24 * 2;
+    if (meta.includes('paquete de un día')) return 480;
+    if (meta.includes('medio día')) return 240;
+    if (it.category === 'relax') return 600;
+    return 120;
+  }
+
+  // Auto-suggests a date/time per activity respecting each day's availability,
+  // each activity's estimated duration, and a travel buffer scaled by distance.
   function autoPlanSchedule(item) {
     const addonItems = getAddonItemsFor(item.title);
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -371,28 +403,32 @@
     }
     plan.push({ idx: 0, title: item.title, date: mainDate, slot: mainSlot });
     let lastDate = mainDate;
-    let lastSlotEnd = mainSlot ? minutesOf(mainSlot) + ACTIVITY_DURATION_MIN : 0;
+    let lastSlotEnd = mainSlot ? minutesOf(mainSlot) + estimateDurationMinutes(item) : 0;
 
     addonItems.forEach((add, i) => {
       const idx = i + 1;
       const buffer = travelBufferMinutes(Math.abs(add.km - item.km));
+      const duration = estimateDurationMinutes(add);
+      const overnight = isOvernightActivity(add);
       let placed = false;
       if (lastDate) {
-        const sameDayAvail = SLOT_TIMES.filter((s) => isSlotAvailable(add.title, lastDate, s) && minutesOf(s) >= lastSlotEnd + buffer);
+        let sameDayAvail = SLOT_TIMES.filter((s) => isSlotAvailable(add.title, lastDate, s) && minutesOf(s) >= lastSlotEnd + buffer);
+        if (overnight) sameDayAvail = sameDayAvail.slice().reverse();
         if (sameDayAvail.length) {
           plan.push({ idx, title: add.title, date: lastDate, slot: sameDayAvail[0] });
-          lastSlotEnd = minutesOf(sameDayAvail[0]) + ACTIVITY_DURATION_MIN;
+          lastSlotEnd = minutesOf(sameDayAvail[0]) + duration;
           placed = true;
         }
       }
       if (!placed) {
         for (let attempt = 1; attempt < 30 && !placed; attempt++) {
           const ds = addDaysToDate(lastDate || todayStr, attempt);
-          const avail = SLOT_TIMES.filter((s) => isSlotAvailable(add.title, ds, s));
+          let avail = SLOT_TIMES.filter((s) => isSlotAvailable(add.title, ds, s));
+          if (overnight) avail = avail.slice().reverse();
           if (avail.length) {
             plan.push({ idx, title: add.title, date: ds, slot: avail[0] });
             lastDate = ds;
-            lastSlotEnd = minutesOf(avail[0]) + ACTIVITY_DURATION_MIN;
+            lastSlotEnd = minutesOf(avail[0]) + duration;
             placed = true;
           }
         }
@@ -603,7 +639,10 @@
 
   function mapsEmbedHTML(entries) {
     if (entries.length < 2) return '';
-    const stops = entries.map((e) => encodeURIComponent(`${getZone(e.item.category)}, Chile`));
+    const stops = entries.map((e) => {
+      const [lat, lng] = getZoneCoords(e.item);
+      return `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    });
     const saddr = stops[0];
     const daddr = stops.slice(1).join('+to:');
     const url = `https://www.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
@@ -632,7 +671,7 @@
         </div>`;
       if (i === 0) return stop;
       const r = routeBetween(entries[i - 1], e);
-      return `<div class="reserve-map__route"><span>🚗 ${r.km} km · ~${r.mins} min</span></div>${stop}`;
+      return `<div class="reserve-map__route"><span class="reserve-map__route-chip"><span>🚗 ${r.km} km</span><span>~${r.mins} min</span></span></div>${stop}`;
     }).join('');
     const routes = entries.slice(1).map((e, i) => {
       const prev = entries[i];
@@ -735,6 +774,12 @@
     if (e.target.closest('#reserveAutoPlanBtn')) {
       if (!currentModalItem) return;
       applyAutoPlan(currentModalItem);
+      reserveModalBody.querySelectorAll('.reserve-activity').forEach((el) => {
+        const details = el.querySelector('.reserve-activity__details');
+        const toggle = el.querySelector('.reserve-activity__toggle');
+        details.hidden = false;
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      });
       return;
     }
     if (e.target.closest('#reserveNextBtn')) {

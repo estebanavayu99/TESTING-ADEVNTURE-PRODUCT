@@ -577,10 +577,11 @@ body.pano-modal-open { overflow: hidden; }
 .reserve-map__stop-label { display: flex; flex-direction: column; }
 .reserve-map__stop-label b { font-size: 0.66rem; color: var(--navy); line-height: 1.25; }
 .reserve-map__stop-label small { font-size: 0.6rem; color: var(--slate); }
-.reserve-map__route { flex: 1; min-width: 46px; display: flex; align-items: center; justify-content: center; }
-.reserve-map__route span {
-  font-size: 0.62rem; font-weight: 700; color: var(--navy-2);
-  background: var(--white); padding: 3px 8px; border-radius: 999px;
+.reserve-map__route { flex: 1; min-width: 54px; display: flex; align-items: center; justify-content: center; }
+.reserve-map__route-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  font-size: 0.6rem; font-weight: 700; color: var(--navy-2);
+  background: var(--white); padding: 4px 9px; border-radius: 10px;
   border: 1px dashed rgba(30, 45, 49, 0.25);
   white-space: nowrap;
 }
