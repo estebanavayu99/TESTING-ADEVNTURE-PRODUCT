@@ -47,16 +47,18 @@
     <p class="eyebrow">Antes de empezar</p>
     <h1 class="onboarding-title" id="onboardingTitle">¡Bienvenida! Cuéntanos un poco de ti</h1>
     <p class="onboarding-lead">Con esto armamos panoramas pensados de verdad para ti — mientras más nos cuentes, más precisas son las recomendaciones.</p>
+    <p class="onboarding-callout">🤖 <b>Esta es toda la información que Beto, nuestra IA, usa para armar tus panoramas.</b> Es literalmente su única fuente de datos sobre ti — mientras más completa y honesta sea, mejor va a poder elegir por ti.</p>
 
     <form id="formOnboarding" class="onboarding-form">
       <div class="onboarding-field">
         <label for="age">¿Qué edad tienes?</label>
+        <p class="onboarding-hint">Beto ajusta el ritmo y el tipo de actividad según tu etapa de vida.</p>
         <input type="number" id="age" name="age" min="12" max="99" placeholder="Ej: 28" required>
       </div>
 
       <div class="onboarding-field">
         <label>¿Con quién sueles ir a tus panoramas?</label>
-        <p class="onboarding-hint">Puedes elegir más de una</p>
+        <p class="onboarding-hint">Puedes elegir más de una — Beto arma combos pensados para ese tipo de compañía.</p>
         <div class="chip-group" id="groupCompany" data-name="company">
           <button type="button" class="chip" data-value="pareja">💑 Pareja</button>
           <button type="button" class="chip" data-value="familia">👨‍👩‍👧 Familia</button>
@@ -68,7 +70,7 @@
 
       <div class="onboarding-field">
         <label>¿Qué tipo de panoramas te gustan más?</label>
-        <p class="onboarding-hint">Elige todos los que apliquen</p>
+        <p class="onboarding-hint">Elige todos los que apliquen — esta es la base de todas tus recomendaciones.</p>
         <div class="chip-group" id="groupTastes" data-name="tastes">
           <button type="button" class="chip" data-value="naturaleza">🌲 Naturaleza y aventura</button>
           <button type="button" class="chip" data-value="gastronomia">🍽️ Gastronomía</button>
@@ -86,7 +88,48 @@
       </div>
 
       <div class="onboarding-field">
+        <label>¿Qué nivel de exigencia física prefieres? <span class="onboarding-optional">(opcional)</span></label>
+        <p class="onboarding-hint">Así evitamos ofrecerte un trekking extremo si buscas algo tranquilo, o algo muy suave si buscas adrenalina.</p>
+        <div class="chip-group" id="groupDifficulty" data-name="difficulty">
+          <button type="button" class="chip" data-value="suave">🟢 Suave</button>
+          <button type="button" class="chip" data-value="moderado">🟡 Moderado</button>
+          <button type="button" class="chip" data-value="extremo">🔴 Extremo</button>
+        </div>
+      </div>
+
+      <div class="onboarding-field">
+        <label>¿Cuánto sueles gastar en un panorama? <span class="onboarding-optional">(opcional)</span></label>
+        <p class="onboarding-hint">Para no mostrarte opciones muy por fuera de tu rango habitual.</p>
+        <div class="chip-group" id="groupBudget" data-name="budget">
+          <button type="button" class="chip" data-value="bajo">💰 Económico</button>
+          <button type="button" class="chip" data-value="medio">💰💰 Rango medio</button>
+          <button type="button" class="chip" data-value="alto">💰💰💰 Sin mucho límite</button>
+        </div>
+      </div>
+
+      <div class="onboarding-field">
+        <label>¿Qué tan lejos estás dispuesto/a a moverte? <span class="onboarding-optional">(opcional)</span></label>
+        <p class="onboarding-hint">Priorizamos panoramas a la distancia con la que te sientes cómodo/a.</p>
+        <div class="chip-group" id="groupDistance" data-name="travelDistance">
+          <button type="button" class="chip" data-value="cerca">📍 Cerca (menos de 20 km)</button>
+          <button type="button" class="chip" data-value="media">🚗 Media distancia</button>
+          <button type="button" class="chip" data-value="lejos">🧭 Me da lo mismo viajar lejos</button>
+        </div>
+      </div>
+
+      <div class="onboarding-field">
+        <label>¿Cuándo prefieres salir? <span class="onboarding-optional">(opcional)</span></label>
+        <p class="onboarding-hint">Para sugerirte planes que calcen con tu semana.</p>
+        <div class="chip-group" id="groupDay" data-name="preferredDay">
+          <button type="button" class="chip" data-value="semana">📅 Entre semana</button>
+          <button type="button" class="chip" data-value="finde">🎉 Fines de semana y feriados</button>
+          <button type="button" class="chip" data-value="cualquiera">🤷 Cualquier día</button>
+        </div>
+      </div>
+
+      <div class="onboarding-field">
         <label for="city">¿Desde dónde te mueves? <span class="onboarding-optional">(opcional)</span></label>
+        <p class="onboarding-hint">Nos ayuda a calcular distancias y tiempos de traslado más reales.</p>
         <input type="text" id="city" name="city" placeholder="Ej: Providencia, Santiago">
       </div>
 

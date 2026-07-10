@@ -291,6 +291,27 @@
     }
   }
 
+  // Beto also weighs the finer preferences from onboarding (exigencia física,
+  // presupuesto, distancia y día) to bubble the closest matches to the top.
+  const difficultyPrefs = user.difficulty || [];
+  const budgetPrefs = user.budget || [];
+  const distancePrefs = user.travelDistance || [];
+  const dayPrefs = user.preferredDay || [];
+  if (difficultyPrefs.length || budgetPrefs.length || distancePrefs.length || dayPrefs.length) {
+    function matchScore(item) {
+      let score = 0;
+      if (difficultyPrefs.includes(item.difficulty)) score++;
+      if (budgetPrefs.includes(priceBucket(item.priceNum))) score++;
+      if (distancePrefs.includes(distanceBucket(item.km))) score++;
+      if (dayPrefs.includes(item.day) || dayPrefs.includes('cualquiera')) score++;
+      return score;
+    }
+    recommended = recommended
+      .map((item, idx) => ({ item, idx, score: matchScore(item) }))
+      .sort((a, b) => b.score - a.score || a.idx - b.idx)
+      .map((x) => x.item);
+  }
+
   // General catalog: everything, deduplicated, generic Beto blurb instead of a personal one.
   const seenTitles = new Set();
   const general = CATALOG.filter((i) => {

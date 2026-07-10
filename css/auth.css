@@ -95,7 +95,18 @@
   color: var(--navy);
   margin: 4px 0 10px;
 }
-.onboarding-lead { color: var(--navy-2); margin: 0 0 28px; line-height: 1.55; }
+.onboarding-lead { color: var(--navy-2); margin: 0 0 16px; line-height: 1.55; }
+.onboarding-callout {
+  margin: 0 0 28px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(246, 205, 76, 0.16);
+  border: 1px solid rgba(246, 205, 76, 0.4);
+  color: var(--navy-2);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.onboarding-callout b { color: var(--navy); }
 .onboarding-form { display: flex; flex-direction: column; gap: 26px; }
 .onboarding-field label { font-weight: 700; color: var(--navy); display: block; margin-bottom: 6px; }
 .onboarding-optional { font-weight: 400; color: var(--slate); font-size: 0.85rem; }

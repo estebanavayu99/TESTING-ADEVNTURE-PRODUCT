@@ -32,6 +32,22 @@
       const chip = document.querySelector(`#groupTastes .chip[data-value="${val}"]`);
       if (chip) chip.classList.add('is-selected');
     });
+    (user.difficulty || []).forEach((val) => {
+      const chip = document.querySelector(`#groupDifficulty .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
+    (user.budget || []).forEach((val) => {
+      const chip = document.querySelector(`#groupBudget .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
+    (user.travelDistance || []).forEach((val) => {
+      const chip = document.querySelector(`#groupDistance .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
+    (user.preferredDay || []).forEach((val) => {
+      const chip = document.querySelector(`#groupDay .chip[data-value="${val}"]`);
+      if (chip) chip.classList.add('is-selected');
+    });
   } else {
     document.getElementById('onboardingTitle').textContent = `¡Bienvenido/a, ${firstName}! Cuéntanos un poco de ti`;
   }
@@ -60,6 +76,10 @@
     const age = document.getElementById('age').value;
     const company = getSelected('groupCompany');
     const tastes = getSelected('groupTastes');
+    const difficulty = getSelected('groupDifficulty');
+    const budget = getSelected('groupBudget');
+    const travelDistance = getSelected('groupDistance');
+    const preferredDay = getSelected('groupDay');
     const city = document.getElementById('city').value.trim();
 
     if (!age || company.length === 0 || tastes.length === 0) {
@@ -68,7 +88,7 @@
       return;
     }
 
-    saveProfile({ age: Number(age), company, tastes, city });
+    saveProfile({ age: Number(age), company, tastes, difficulty, budget, travelDistance, preferredDay, city });
   });
 
   document.getElementById('skipOnboarding').addEventListener('click', () => {
