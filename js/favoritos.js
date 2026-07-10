@@ -81,23 +81,28 @@
     general: 'Región Metropolitana',
   };
   function getZone(category) { return ZONE_BY_CATEGORY[category] || ZONE_BY_CATEGORY.general; }
-  const ZONE_COORDS = {
-    naturaleza: [-33.6944, -70.3049], extremo: [-33.6944, -70.3049], nieve: [-33.3510, -70.2952],
-    playa: [-33.3617, -71.6706], relax: [-33.5289, -70.4894], gastronomia: [-33.4372, -70.6304],
-    vidanocturna: [-33.4300, -70.6330], cultura: [-33.4372, -70.6403], shopping: [-33.4166, -70.6062],
-    fotografia: [-33.4257, -70.6329], musica: [-33.4628, -70.6483], pareja: [-33.4166, -70.6062],
-    familia: [-33.4470, -70.5382], amigos: [-33.4558, -70.5980], trabajo: [-33.4152, -70.5675],
-    solo: [-33.6944, -70.3049], general: [-33.4489, -70.6693],
+  const ZONE_LANDMARKS = {
+    naturaleza: ['Cajón del Maipo', 'San José de Maipo', 'El Ingenio, Cajón del Maipo'],
+    extremo: ['Cajón del Maipo', 'San José de Maipo', 'El Ingenio, Cajón del Maipo'],
+    nieve: ['Farellones', 'La Parva', 'Valle Nevado'],
+    playa: ['Algarrobo', 'El Quisco', 'El Tabo'],
+    relax: ['Termas de Colina', 'Valle de Colina'],
+    gastronomia: ['Barrio Italia, Providencia', 'Av. Italia, Providencia', 'Condell, Providencia'],
+    vidanocturna: ['Barrio Bellavista', 'Pío Nono, Providencia', 'Constitución, Providencia'],
+    cultura: ['Barrio Lastarria', 'Villavicencio, Santiago', 'Merced, Santiago'],
+    shopping: ['Providencia', 'Av. Providencia', 'Av. 11 de Septiembre, Providencia'],
+    fotografia: ['Cerro San Cristóbal', 'Pedro de Valdivia Norte, Providencia'],
+    musica: ["Parque O'Higgins", 'Matucana, Santiago'],
+    pareja: ['Providencia', 'Manuel Montt, Providencia', 'Av. Providencia'],
+    familia: ['La Reina', 'Príncipe de Gales, La Reina'],
+    amigos: ['Ñuñoa', 'Plaza Ñuñoa', 'Irarrázaval, Ñuñoa'],
+    trabajo: ['Las Condes', 'Apoquindo, Las Condes', 'El Golf, Las Condes'],
+    solo: ['San José de Maipo', 'El Ingenio, Cajón del Maipo'],
+    general: ['Santiago Centro', 'Providencia'],
   };
-  function jitterCoord([lat, lng], seed) {
-    const h = hashStr(seed);
-    const dLat = ((h % 1000) / 1000 - 0.5) * 0.02;
-    const dLng = (((h >> 8) % 1000) / 1000 - 0.5) * 0.02;
-    return [lat + dLat, lng + dLng];
-  }
-  function getZoneCoords(item) {
-    const base = ZONE_COORDS[item.category] || ZONE_COORDS.general;
-    return jitterCoord(base, item.title);
+  function getZoneLandmark(item) {
+    const pool = ZONE_LANDMARKS[item.category] || ZONE_LANDMARKS.general;
+    return pool[hashStr(item.title) % pool.length];
   }
   const ARRIVAL_BY_CATEGORY = {
     naturaleza: 'En auto por camino pavimentado hasta el sector; Pickmap también ofrece transporte compartido opcional.',
@@ -637,21 +642,27 @@
     return { km, mins: travelBufferMinutes(km) };
   }
 
-  function mapsEmbedHTML(entries) {
-    if (entries.length < 2) return '';
-    const stops = entries.map((e) => {
-      const [lat, lng] = getZoneCoords(e.item);
-      return `${lat.toFixed(5)},${lng.toFixed(5)}`;
-    });
-    const saddr = stops[0];
-    const daddr = stops.slice(1).join('+to:');
+  // Google's key-less embed only reliably draws a single origin→destination
+  // route (multi-stop "+to:" waypoints get dropped in the embedded view), so
+  // every consecutive leg gets its own small, real, connected map.
+  function legEmbedHTML(a, b) {
+    const saddr = encodeURIComponent(`${getZoneLandmark(a.item)}, Santiago, Chile`);
+    const daddr = encodeURIComponent(`${getZoneLandmark(b.item)}, Santiago, Chile`);
     const url = `https://www.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
     return `
-      <div class="reserve-map__embed">
-        <iframe src="${url}" width="100%" height="220" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ruta en Google Maps"></iframe>
+      <div class="reserve-map__embed-leg">
+        <p class="reserve-map__embed-leg-label">${a.item.icon} ${a.item.title} → ${b.item.icon} ${b.item.title}</p>
+        <div class="reserve-map__embed">
+          <iframe src="${url}" width="100%" height="180" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ruta de ${a.item.title} a ${b.item.title}"></iframe>
+        </div>
       </div>
-      <p class="reserve-map__embed-caption">📍 Vista referencial en Google Maps entre las zonas de tus actividades</p>
     `;
+  }
+
+  function mapsEmbedHTML(entries) {
+    if (entries.length < 2) return '';
+    const legs = entries.slice(1).map((e, i) => legEmbedHTML(entries[i], e)).join('');
+    return `${legs}<p class="reserve-map__embed-caption">📍 Vista referencial en Google Maps entre las zonas de tus actividades</p>`;
   }
 
   function mapHTML(item) {

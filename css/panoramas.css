@@ -586,9 +586,12 @@ body.pano-modal-open { overflow: hidden; }
   white-space: nowrap;
 }
 .reserve-map__routes { margin: 10px 0 0; padding-left: 18px; font-size: 0.74rem; color: var(--navy-2); line-height: 1.6; }
-.reserve-map__embed { margin-top: 12px; border-radius: 14px; overflow: hidden; }
+.reserve-map__embed-leg { margin-top: 14px; }
+.reserve-map__embed-leg:first-child { margin-top: 12px; }
+.reserve-map__embed-leg-label { margin: 0 0 6px; font-size: 0.74rem; font-weight: 700; color: var(--navy); }
+.reserve-map__embed { border-radius: 14px; overflow: hidden; }
 .reserve-map__embed iframe { display: block; }
-.reserve-map__embed-caption { margin: 6px 0 0; font-size: 0.68rem; color: var(--slate); text-align: center; }
+.reserve-map__embed-caption { margin: 8px 0 0; font-size: 0.68rem; color: var(--slate); text-align: center; }
 
 .reserve-breakdown { margin-bottom: 24px; border: 1px solid rgba(30, 45, 49, 0.08); border-radius: 16px; overflow: hidden; }
 .reserve-breakdown__row {
