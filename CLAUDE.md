@@ -64,3 +64,16 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - Flujo normal: editar → levantar server local + Playwright para verificar
   → `git add` de los archivos tocados → commit descriptivo → push directo
   a esa rama (no se abren PRs a menos que el usuario lo pida explícitamente).
+- Repo tiene una sola rama (no hay `main` separado), así que no cabe abrir
+  PR salvo que el usuario pida explícitamente crear una rama base nueva.
+
+## Instrucción permanente del usuario: código blindado + todo registrado
+
+- **Blindar el código**: antes de dar por hecho un cambio, verificarlo
+  (Playwright local cuando aplica) y no dejar código a medio hacer. Evitar
+  regresiones: si se toca una función/CSS compartida, revisar qué otras
+  páginas la usan (grep) antes de modificarla o borrarla.
+- **Registrar todo**: cada sesión que agregue una convención nueva, un
+  gotcha nuevo, o cambie el flujo de trabajo, debe reflejarlo en este
+  archivo (`CLAUDE.md`) como parte del mismo commit, no como tarea aparte.
+  Este archivo es la memoria persistente del proyecto entre sesiones.
