@@ -332,7 +332,10 @@ body.mode-business .nav__biz-auth { display: flex; }
   height: 8px;
   background: var(--coral);
   transform: translateX(-50%);
+  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
 }
+body.mode-client .nav__auth-connector-stem { transform: translateX(calc(-50% - 16px)); }
+body.mode-business .nav__auth-connector-stem { transform: translateX(calc(-50% + 16px)); }
 .nav__auth-connector-branch {
   position: absolute;
   top: 8px;
