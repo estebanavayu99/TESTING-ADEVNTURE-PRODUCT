@@ -171,7 +171,6 @@
 .onboarding-callout b { color: var(--navy); }
 .onboarding-form { display: flex; flex-direction: column; gap: 26px; }
 .onboarding-field label { font-weight: 700; color: var(--navy); display: block; margin-bottom: 6px; }
-.onboarding-optional { font-weight: 400; color: var(--slate); font-size: 0.85rem; }
 .onboarding-hint { margin: 0 0 10px; font-size: 0.8rem; color: var(--slate); }
 .onboarding-field input {
   width: 100%;

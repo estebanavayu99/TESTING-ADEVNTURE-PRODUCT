@@ -82,8 +82,13 @@
     const preferredDay = getSelected('groupDay');
     const city = document.getElementById('city').value.trim();
 
-    if (!age || company.length === 0 || tastes.length === 0) {
-      errorBox.textContent = 'Cuéntanos al menos tu edad, con quién sueles ir y qué te gusta — así armamos algo a tu pinta.';
+    if (!age || company.length === 0 || difficulty.length === 0 || budget.length === 0 || travelDistance.length === 0 || preferredDay.length === 0 || !city) {
+      errorBox.textContent = 'Todos los campos son obligatorios — así Beto arma algo realmente a tu pinta.';
+      errorBox.hidden = false;
+      return;
+    }
+    if (tastes.length < 5) {
+      errorBox.textContent = 'Elige al menos 5 tipos de panorama que te gusten.';
       errorBox.hidden = false;
       return;
     }
