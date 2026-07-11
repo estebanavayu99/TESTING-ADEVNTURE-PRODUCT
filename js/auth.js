@@ -73,22 +73,38 @@
   const formLogin = document.getElementById('formLogin');
   const formSignup = document.getElementById('formSignup');
   const formVerify = document.getElementById('formVerify');
+  const formForgotRequest = document.getElementById('formForgotRequest');
+  const formForgotReset = document.getElementById('formForgotReset');
   const errorBox = document.getElementById('authError');
+  const successBox = document.getElementById('authSuccess');
+  const kicker = document.getElementById('authKicker');
+
+  const KICKERS = {
+    login: '🧭 Iniciando sesión como viajero',
+    signup: '🧭 Creando tu cuenta de viajero',
+    verify: '🧭 Verifica tu correo',
+    'forgot-request': '🧭 Recupera tu contraseña',
+    'forgot-reset': '🧭 Recupera tu contraseña',
+  };
 
   function showForm(which) {
     const isLogin = which === 'login';
-    const isVerify = which === 'verify';
+    const showsTabs = which === 'login' || which === 'signup';
     formLogin.hidden = which !== 'login';
     formSignup.hidden = which !== 'signup';
-    formVerify.hidden = !isVerify;
-    authTabs.hidden = isVerify;
-    if (!isVerify) {
+    formVerify.hidden = which !== 'verify';
+    formForgotRequest.hidden = which !== 'forgot-request';
+    formForgotReset.hidden = which !== 'forgot-reset';
+    authTabs.hidden = !showsTabs;
+    if (showsTabs) {
       tabLogin.classList.toggle('is-active', isLogin);
       tabSignup.classList.toggle('is-active', !isLogin);
       tabLogin.setAttribute('aria-selected', String(isLogin));
       tabSignup.setAttribute('aria-selected', String(!isLogin));
     }
+    kicker.textContent = KICKERS[which];
     errorBox.hidden = true;
+    successBox.hidden = true;
   }
 
   function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
@@ -135,6 +151,75 @@
     if (pendingEmail) startVerification(pendingEmail, pendingRedirect);
   });
   document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
+
+  /* ---------- Recuperar contraseña ---------- */
+  let pendingForgotEmail = null;
+
+  function showSuccess(message) {
+    successBox.textContent = message;
+    successBox.hidden = false;
+  }
+
+  function startForgotReset(email) {
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.email === email);
+    if (idx === -1) return;
+    const code = genCode();
+    users[idx].resetCode = code;
+    saveUsers(users);
+    pendingForgotEmail = email;
+    document.getElementById('forgotEmailLabel').textContent = email;
+    document.getElementById('forgotCodeDisplay').textContent = code;
+    document.getElementById('forgotCodeInput').value = '';
+    document.getElementById('forgotNewPassword').value = '';
+    showForm('forgot-reset');
+  }
+
+  document.getElementById('forgotLink').addEventListener('click', () => {
+    document.getElementById('forgotEmail').value = '';
+    showForm('forgot-request');
+  });
+  document.getElementById('forgotBackToLogin1').addEventListener('click', () => showForm('login'));
+  document.getElementById('forgotBackToLogin2').addEventListener('click', () => showForm('login'));
+  document.getElementById('forgotResend').addEventListener('click', () => {
+    if (pendingForgotEmail) startForgotReset(pendingForgotEmail);
+  });
+
+  formForgotRequest.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    const users = getUsers();
+    if (!users.some((u) => u.email === email)) {
+      showError('No encontramos una cuenta con ese correo.');
+      return;
+    }
+    startForgotReset(email);
+  });
+
+  formForgotReset.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = document.getElementById('forgotCodeInput').value.trim();
+    const newPassword = document.getElementById('forgotNewPassword').value;
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.email === pendingForgotEmail);
+    if (idx === -1) {
+      showForm('login');
+      return;
+    }
+    if (users[idx].resetCode !== code) {
+      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
+      return;
+    }
+    if (newPassword.length < 4) {
+      showError('La nueva contraseña necesita al menos 4 caracteres.');
+      return;
+    }
+    users[idx].password = newPassword;
+    delete users[idx].resetCode;
+    saveUsers(users);
+    showForm('login');
+    showSuccess('Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
+  });
 
   tabLogin.addEventListener('click', () => showForm('login'));
   tabSignup.addEventListener('click', () => showForm('signup'));

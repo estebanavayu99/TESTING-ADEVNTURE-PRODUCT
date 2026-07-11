@@ -47,12 +47,15 @@
 
 <main class="auth-main">
   <div class="auth-card">
+    <p class="auth-kicker" id="authKicker">🧭 Iniciando sesión como viajero</p>
+
     <div class="auth-tabs" role="tablist">
       <button type="button" class="auth-tab is-active" id="tabLogin" role="tab" aria-selected="true">Iniciar sesión</button>
       <button type="button" class="auth-tab" id="tabSignup" role="tab" aria-selected="false">Crear cuenta</button>
     </div>
 
     <p class="auth-error" id="authError" hidden></p>
+    <p class="auth-success" id="authSuccess" hidden></p>
 
     <form class="auth-form" id="formLogin">
       <label class="auth-field">
@@ -64,6 +67,7 @@
         <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
       </label>
       <button type="submit" class="btn btn--primary auth-submit">Entrar</button>
+      <p class="auth-switch"><button type="button" class="auth-link" id="forgotLink">¿Olvidaste tu contraseña?</button></p>
       <p class="auth-switch">¿Primera vez por acá? <button type="button" class="auth-link" id="goSignup">Crea tu cuenta</button></p>
     </form>
 
@@ -98,6 +102,32 @@
       <button type="submit" class="btn btn--primary auth-submit">Verificar y continuar</button>
       <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="resendCode">Reenviar código</button></p>
       <p class="auth-switch"><button type="button" class="auth-link" id="verifyBack">← Volver</button></p>
+    </form>
+
+    <form class="auth-form" id="formForgotRequest" hidden>
+      <p class="auth-verify-note">Ingresa tu correo y te mostramos un código para recuperar tu contraseña (en producción llegaría a tu correo).</p>
+      <label class="auth-field">
+        <span>Correo</span>
+        <input type="email" name="email" id="forgotEmail" placeholder="tu@correo.com" required autocomplete="email">
+      </label>
+      <button type="submit" class="btn btn--primary auth-submit">Enviar código</button>
+      <p class="auth-switch"><button type="button" class="auth-link" id="forgotBackToLogin1">← Volver</button></p>
+    </form>
+
+    <form class="auth-form" id="formForgotReset" hidden>
+      <p class="auth-verify-note">Código para <strong id="forgotEmailLabel"></strong>:</p>
+      <p class="auth-verify-code" id="forgotCodeDisplay">••••••</p>
+      <label class="auth-field">
+        <span>Código</span>
+        <input type="text" id="forgotCodeInput" placeholder="123456" required inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      </label>
+      <label class="auth-field">
+        <span>Nueva contraseña</span>
+        <input type="password" id="forgotNewPassword" placeholder="Mínimo 4 caracteres" required minlength="4" autocomplete="new-password">
+      </label>
+      <button type="submit" class="btn btn--primary auth-submit">Cambiar contraseña</button>
+      <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="forgotResend">Reenviar código</button></p>
+      <p class="auth-switch"><button type="button" class="auth-link" id="forgotBackToLogin2">← Volver</button></p>
     </form>
 
     <p class="auth-note">Demo de Pickmap: tu cuenta se guarda solo en este navegador, no uses una contraseña real.</p>

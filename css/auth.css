@@ -94,6 +94,16 @@
   border-radius: 12px;
   margin: 0 0 18px;
 }
+.auth-success {
+  background: rgba(131, 208, 97, 0.16);
+  border: 1px solid rgba(131, 208, 97, 0.4);
+  color: #3f7a2c;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin: 0 0 18px;
+}
 .auth-note {
   text-align: center;
   font-size: 0.75rem;
