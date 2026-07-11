@@ -5,6 +5,62 @@
   const modeToggle = document.getElementById('modeToggle');
   const modeElements = document.querySelectorAll('[data-client]');
 
+  /* ---------- Business hero mock: animated earnings chart ---------- */
+  const BIZ_TOAST_MESSAGES = [
+    '🎉 Nueva reserva confirmada +$45.000',
+    '💸 Pago recibido +$69.000',
+    '📅 Cabaña reservada para el finde',
+    '⭐ Nueva reseña de 5 estrellas',
+  ];
+  let bizToastInterval = null;
+
+  function animateBizChart() {
+    const bars = document.querySelectorAll('.biz-chart-card__bars span');
+    bars.forEach((bar, i) => {
+      const h = bar.style.getPropertyValue('--h');
+      bar.style.height = '0';
+      setTimeout(() => { bar.style.height = h; }, i * 80);
+    });
+
+    const totalEl = document.getElementById('bizChartTotal');
+    if (totalEl) {
+      const target = parseInt(totalEl.dataset.target, 10);
+      const duration = 1400;
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        totalEl.textContent = '$' + Math.round(eased * target).toLocaleString('es-CL');
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+
+  function startBizToast() {
+    const toast = document.getElementById('bizChartToast');
+    if (!toast || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let i = 0;
+    function showNext() {
+      toast.textContent = BIZ_TOAST_MESSAGES[i % BIZ_TOAST_MESSAGES.length];
+      toast.classList.add('is-visible');
+      setTimeout(() => toast.classList.remove('is-visible'), 2600);
+      i++;
+    }
+    showNext();
+    if (bizToastInterval) clearInterval(bizToastInterval);
+    bizToastInterval = setInterval(showNext, 4200);
+  }
+
+  function stopBizToast() {
+    if (bizToastInterval) {
+      clearInterval(bizToastInterval);
+      bizToastInterval = null;
+    }
+    const toast = document.getElementById('bizChartToast');
+    if (toast) toast.classList.remove('is-visible');
+  }
+
   function setMode(mode) {
     const isBusiness = mode === 'business';
     body.classList.toggle('mode-business', isBusiness);
@@ -32,6 +88,13 @@
       widgetCounter.dataset.target = target;
       widgetCounter.textContent = prefix + Number(target).toLocaleString('es-CL');
     }
+
+    if (isBusiness) {
+      animateBizChart();
+      startBizToast();
+    } else {
+      stopBizToast();
+    }
   }
 
   modeToggle.addEventListener('click', () => {
@@ -42,6 +105,24 @@
   document.querySelectorAll('[data-mode-link]').forEach(link => {
     link.addEventListener('click', () => setMode(link.dataset.modeLink));
   });
+
+  /* Point the auth-buttons connector stem at the exact center of each toggle pill */
+  function updateStemOffsets() {
+    const toggleBox = modeToggle.getBoundingClientRect();
+    const toggleCenter = toggleBox.left + toggleBox.width / 2;
+    const clientOpt = modeToggle.querySelector('.mode-toggle__opt[data-mode="client"]');
+    const bizOpt = modeToggle.querySelector('.mode-toggle__opt[data-mode="business"]');
+    if (!clientOpt || !bizOpt) return;
+    const clientBox = clientOpt.getBoundingClientRect();
+    const bizBox = bizOpt.getBoundingClientRect();
+    const clientOffset = (clientBox.left + clientBox.width / 2) - toggleCenter;
+    const bizOffset = (bizBox.left + bizBox.width / 2) - toggleCenter;
+    document.documentElement.style.setProperty('--stem-client-x', `${clientOffset}px`);
+    document.documentElement.style.setProperty('--stem-business-x', `${bizOffset}px`);
+  }
+  updateStemOffsets();
+  window.addEventListener('load', updateStemOffsets);
+  window.addEventListener('resize', updateStemOffsets, { passive: true });
 
   /* ---------- "Quiero ser aliado" CTA: switch to empresa + reveal login/signup ---------- */
   const aliadoCtaBtn = document.getElementById('aliadoCtaBtn');
