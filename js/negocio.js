@@ -122,6 +122,20 @@
     return r.estado === 'completada';
   }
 
+  function startOfWeek(d) {
+    const x = new Date(d);
+    const day = x.getDay();
+    x.setDate(x.getDate() - ((day + 6) % 7));
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+
+  function getPaymentDate(r) {
+    const paidOn = startOfWeek(r.fecha);
+    paidOn.setDate(paidOn.getDate() + 9);
+    return paidOn;
+  }
+
   /* ---------- Shared reservation detail modal ---------- */
   const bizModal = document.getElementById('bizModal');
   const bizModalRows = document.getElementById('bizModalRows');
@@ -130,14 +144,19 @@
   function openReservationModal(r) {
     if (!bizModal) return;
     const estadoLabel = { confirmada: 'Confirmada', pendiente: 'Pendiente', completada: 'Completada', cancelada: 'Cancelada' }[r.estado];
+    const isCancelled = r.estado === 'cancelada';
+    const paymentDateLabel = isCancelled
+      ? 'No aplica (cancelada)'
+      : `${fmtDate(getPaymentDate(r))}${isPaid(r) ? '' : ' (estimada)'}`;
     bizModalRows.innerHTML = `
+      <div class="biz-modal__row"><span>N° reserva</span><span>#${r.id}</span></div>
       <div class="biz-modal__row"><span>Cliente</span><span>${r.cliente}</span></div>
       <div class="biz-modal__row"><span>Actividad</span><span>${r.actividad}</span></div>
-      <div class="biz-modal__row"><span>Fecha</span><span>${fmtDate(r.fecha)}</span></div>
+      <div class="biz-modal__row"><span>Día de la actividad</span><span>${fmtDate(r.fecha)}</span></div>
+      <div class="biz-modal__row"><span>Fecha de pago</span><span>${paymentDateLabel}</span></div>
       <div class="biz-modal__row"><span>Personas</span><span>${r.personas}</span></div>
       <div class="biz-modal__row"><span>Estado</span><span>${estadoLabel}</span></div>
       <div class="biz-modal__row"><span>Monto</span><span>${fmtMoney(r.estado === 'cancelada' ? r.montoOriginal : r.monto)}${r.estado === 'cancelada' ? ' (no cobrado)' : ''}</span></div>
-      <div class="biz-modal__row"><span>N° reserva</span><span>#${r.id}</span></div>
     `;
     bizModal.hidden = false;
   }
