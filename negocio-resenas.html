@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reservas — Panel de aliado Pickmap</title>
-<meta name="description" content="Revisa tus reservas activas y tu historial completo como aliado Pickmap.">
+<title>Reseñas — Panel de aliado Pickmap</title>
+<meta name="description" content="Revisa las reseñas que han dejado los viajeros sobre tu experiencia en Pickmap.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -42,9 +42,9 @@
     </a>
     <nav class="nav__links">
       <a href="negocio.html">Resumen</a>
-      <a href="negocio-reservas.html" class="is-current">Reservas</a>
+      <a href="negocio-reservas.html">Reservas</a>
       <a href="negocio-pagos.html">Pagos</a>
-      <a href="negocio-resenas.html">Reseñas</a>
+      <a href="negocio-resenas.html" class="is-current">Reseñas</a>
       <a href="negocio-referidos.html">Referidos</a>
       <a href="negocio-calendario.html">Calendario</a>
     </nav>
@@ -58,32 +58,40 @@
   <div class="container">
     <div class="biz__greeting">
       <p class="eyebrow">Panel de aliado</p>
-      <h1>Reservas</h1>
-      <p class="biz__sub">Tus próximas reservas y el historial completo.</p>
+      <h1>Reseñas</h1>
+      <p class="biz__sub">Lo que los viajeros están diciendo sobre tu experiencia.</p>
+    </div>
+
+    <div class="biz__stats">
+      <div class="biz-stat biz-stat--accent">
+        <p class="biz-stat__label">Calificación promedio</p>
+        <p class="biz-stat__value" id="reviewAvg">—</p>
+      </div>
+      <div class="biz-stat">
+        <p class="biz-stat__label">Total de reseñas</p>
+        <p class="biz-stat__value" id="reviewTotal">—</p>
+      </div>
+      <div class="biz-stat">
+        <p class="biz-stat__label">Reseñas positivas</p>
+        <p class="biz-stat__value" id="reviewPositive">—</p>
+        <p class="biz-stat__note">4 y 5 estrellas</p>
+      </div>
     </div>
 
     <section class="dcard">
-      <div class="biz-res-tabs">
-        <button type="button" class="biz-res-tab is-active" id="tabActivas">Activas <span class="biz-res-count" id="countActivas"></span></button>
-        <button type="button" class="biz-res-tab" id="tabHistorial">Historial <span class="biz-res-count" id="countHistorial"></span></button>
-      </div>
-      <ul class="biz-res-list" id="bizResList"></ul>
+      <h2 class="dcard__title">Distribución de calificaciones</h2>
+      <div class="biz-rating-bars" id="reviewBreakdown"></div>
+    </section>
+
+    <section class="dcard">
+      <h2 class="dcard__title">Todas las reseñas</h2>
+      <ul class="biz-review-list" id="reviewList"></ul>
     </section>
   </div>
 </main>
 
-<div class="biz-modal" id="bizModal" hidden>
-  <div class="biz-modal__panel">
-    <div class="biz-modal__head">
-      <h3>Detalle de la reserva</h3>
-      <button type="button" class="biz-modal__close" id="bizModalClose">✕</button>
-    </div>
-    <div class="biz-modal__rows" id="bizModalRows"></div>
-  </div>
-</div>
-
 <script src="js/skyline.js"></script>
 <script src="js/negocio.js"></script>
-<script src="js/negocio-reservas.js"></script>
+<script src="js/negocio-resenas.js"></script>
 </body>
 </html>

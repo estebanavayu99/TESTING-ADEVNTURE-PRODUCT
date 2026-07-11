@@ -213,3 +213,126 @@
   .biz-res { flex-wrap: wrap; }
   .biz-res__status { order: 3; margin-left: 68px; }
 }
+
+/* Reseñas */
+.biz-rating-bars { display: flex; flex-direction: column; gap: 10px; }
+.biz-rating-row { display: flex; align-items: center; gap: 12px; }
+.biz-rating-row__label { flex-shrink: 0; width: 42px; font-size: 0.82rem; font-weight: 700; color: var(--navy-2); }
+.biz-rating-row__track { flex: 1; height: 10px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.biz-rating-row__fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--sun), var(--coral)); }
+.biz-rating-row__count { flex-shrink: 0; width: 24px; text-align: right; font-size: 0.82rem; font-weight: 700; color: var(--slate); }
+
+.biz-review-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.biz-review { background: var(--bg); border-radius: 14px; padding: 14px 16px; }
+.biz-review__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.biz-review__client { margin: 0; font-weight: 800; color: var(--navy); font-size: 0.9rem; }
+.biz-review__stars { font-size: 0.85rem; flex-shrink: 0; }
+.biz-review__meta { margin: 3px 0 8px; font-size: 0.76rem; color: var(--slate); }
+.biz-review__comment { margin: 0; font-size: 0.88rem; color: var(--navy-2); line-height: 1.5; }
+
+/* Referidos */
+.biz-referral-card {
+  display: flex;
+  gap: 18px;
+  padding: 24px 26px;
+  border-radius: 22px;
+  background: linear-gradient(120deg, rgba(246, 205, 76, 0.28), rgba(245, 94, 97, 0.16));
+  margin-bottom: 22px;
+}
+.biz-referral-card__icon {
+  flex-shrink: 0;
+  width: 54px; height: 54px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+}
+.biz-referral-card__body { flex: 1; min-width: 0; }
+.biz-referral-card__title { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.15rem; color: var(--navy); }
+.biz-referral-card__text { margin: 0 0 16px; font-size: 0.88rem; color: var(--navy-2); line-height: 1.5; max-width: 560px; }
+.biz-referral-card__code-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.biz-referral-card__code {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 9px 16px;
+  border-radius: 999px;
+  color: var(--navy);
+}
+.biz-referral-card__copy {
+  background: var(--coral);
+  color: var(--white);
+  border: none;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.biz-referral-card__copy:hover { background: var(--deep-red); }
+.biz-referral-card__hint { margin: 8px 0 0; font-size: 0.8rem; color: #3f7a2c; font-weight: 700; min-height: 1.1em; }
+
+.biz-referral-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.biz-referral {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 13px 16px;
+}
+.biz-referral__icon { font-size: 1.2rem; flex-shrink: 0; }
+.biz-referral__info { flex: 1; min-width: 0; }
+.biz-referral__name { margin: 0; font-weight: 800; color: var(--navy); font-size: 0.9rem; }
+.biz-referral__meta { margin: 2px 0 0; font-size: 0.78rem; color: var(--slate); }
+.biz-referral__amt { font-weight: 800; color: var(--navy); font-size: 0.9rem; flex-shrink: 0; white-space: nowrap; }
+
+/* Calendario */
+.biz-cal__toolbar { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 18px; }
+.biz-cal__month { margin: 0; font-family: var(--font-display); font-size: 1.15rem; color: var(--navy); min-width: 180px; text-align: center; }
+.biz-cal__nav {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(245, 94, 97, 0.12);
+  color: var(--coral);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.biz-cal__nav:hover { background: var(--coral); color: var(--white); }
+.biz-cal__legend { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-bottom: 18px; font-size: 0.8rem; color: var(--navy-2); font-weight: 600; }
+.biz-cal__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.biz-cal__weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+.biz-cal__weekdays span { text-align: center; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate); letter-spacing: 0.03em; }
+.biz-cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.biz-cal__cell {
+  min-height: 78px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.biz-cal__cell--empty { background: transparent; }
+.biz-cal__cell.is-today { box-shadow: inset 0 0 0 2px var(--coral); }
+.biz-cal__day { font-size: 0.78rem; font-weight: 800; color: var(--navy-2); }
+.biz-cal__dots { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.biz-cal__more { font-size: 0.65rem; font-weight: 800; color: var(--slate); }
+.biz-cal__dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.biz-cal__dot--confirmada { background: #83D061; }
+.biz-cal__dot--pendiente { background: var(--sun); }
+.biz-cal__dot--completada { background: var(--slate); }
+.biz-cal__dot--cancelada { background: var(--deep-red); }
+
+@media (max-width: 640px) {
+  .biz-cal__cell { min-height: 56px; padding: 6px; }
+  .biz-cal__day { font-size: 0.68rem; }
+  .biz-referral-card { flex-direction: column; }
+}

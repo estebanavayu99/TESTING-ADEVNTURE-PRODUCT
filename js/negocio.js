@@ -109,6 +109,101 @@
     return raw.map((r) => ({ ...r, fecha: new Date(r.fecha) }));
   }
 
+  /* ---------- Reseñas ---------- */
+  const REVIEW_COMMENTS = {
+    5: ['Increíble experiencia, todo impecable.', 'Superó nuestras expectativas, volveremos seguro.', 'Atención espectacular y el lugar hermoso.', 'Perfecto para una escapada en pareja.', 'Todo salió tal cual se ofrecía, muy recomendable.'],
+    4: ['Muy buena experiencia, solo el check-in fue un poco lento.', 'Nos encantó, aunque esperábamos un poco más de privacidad.', 'Buena relación precio-calidad.'],
+    3: ['Estuvo bien pero nada espectacular.', 'Cumplió, aunque el lugar necesita algunas mejoras.'],
+    2: ['No cumplió del todo lo que ofrecía la publicación.'],
+    1: ['No fue lo que esperaba, tuvimos varios problemas.'],
+  };
+
+  function pickRating(rand) {
+    const r = rand();
+    if (r < 0.55) return 5;
+    if (r < 0.80) return 4;
+    if (r < 0.92) return 3;
+    if (r < 0.97) return 2;
+    return 1;
+  }
+
+  const REVIEWS_KEY = `pickmap_business_reviews_${bizEmail}`;
+
+  function generateReviews() {
+    const rand = seedRandom(88213 + hashStr(bizEmail));
+    const now = new Date('2026-07-11T12:00:00');
+    const list = [];
+    let id = 5001;
+    const count = 22 + Math.floor(rand() * 8);
+    for (let i = 0; i < count; i++) {
+      const rating = pickRating(rand);
+      const daysAgo = 2 + Math.floor(rand() * 150);
+      const date = new Date(now);
+      date.setDate(date.getDate() - daysAgo);
+      const comments = REVIEW_COMMENTS[rating];
+      list.push({
+        id: id++,
+        cliente: CLIENTES[Math.floor(rand() * CLIENTES.length)],
+        actividad: ACTIVIDADES[Math.floor(rand() * ACTIVIDADES.length)],
+        rating,
+        comentario: comments[Math.floor(rand() * comments.length)],
+        fecha: date,
+      });
+    }
+    list.sort((a, b) => b.fecha - a.fecha);
+    return list;
+  }
+
+  function getReviews() {
+    let raw = JSON.parse(localStorage.getItem(REVIEWS_KEY) || 'null');
+    if (!raw) {
+      raw = generateReviews();
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify(raw));
+    }
+    return raw.map((r) => ({ ...r, fecha: new Date(r.fecha) }));
+  }
+
+  /* ---------- Referidos ---------- */
+  function getReferralCode() {
+    const base = (bizAccount.bizName || 'PICKMAP').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PICKMAP';
+    const suffix = String(100 + (hashStr(bizEmail) % 900));
+    return `${base}${suffix}`;
+  }
+
+  const REFERRED_BIZ_NAMES = ['Termas del Bosque', 'Cabañas Vista Volcán', 'Kayak Aventura Sur', 'Glamping Los Coigües', 'Bike Tour Pucón', 'Spa Rural Curarrehue', 'Cabalgatas Andinas'];
+  const REFERRALS_KEY = `pickmap_business_referrals_${bizEmail}`;
+
+  function generateReferrals() {
+    const rand = seedRandom(53071 + hashStr(bizEmail));
+    const now = new Date('2026-07-11T12:00:00');
+    const count = 2 + Math.floor(rand() * 4);
+    const shuffled = [...REFERRED_BIZ_NAMES].sort(() => rand() - 0.5);
+    const list = [];
+    for (let i = 0; i < count; i++) {
+      const daysAgo = 5 + Math.floor(rand() * 120);
+      const date = new Date(now);
+      date.setDate(date.getDate() - daysAgo);
+      const isActiveReferral = rand() < 0.6;
+      list.push({
+        nombre: shuffled[i % shuffled.length],
+        fecha: date,
+        estado: isActiveReferral ? 'activo' : 'invitado',
+        recompensa: isActiveReferral ? 20000 + Math.floor(rand() * 4) * 5000 : 0,
+      });
+    }
+    list.sort((a, b) => b.fecha - a.fecha);
+    return list;
+  }
+
+  function getReferrals() {
+    let raw = JSON.parse(localStorage.getItem(REFERRALS_KEY) || 'null');
+    if (!raw) {
+      raw = generateReferrals();
+      localStorage.setItem(REFERRALS_KEY, JSON.stringify(raw));
+    }
+    return raw.map((r) => ({ ...r, fecha: new Date(r.fecha) }));
+  }
+
   const NOW = new Date('2026-07-11T12:00:00');
   const fmtMoney = (n) => '$' + Math.round(n).toLocaleString('es-CL');
   const fmtDate = (d) => d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -168,6 +263,7 @@
 
   window.PickmapNegocio = {
     getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal,
+    getReviews, getReferrals, getReferralCode,
   };
 
   /* ---------- Shared nav / logout ---------- */

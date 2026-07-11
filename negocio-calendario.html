@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reservas — Panel de aliado Pickmap</title>
-<meta name="description" content="Revisa tus reservas activas y tu historial completo como aliado Pickmap.">
+<title>Calendario — Panel de aliado Pickmap</title>
+<meta name="description" content="Mira todas tus reservas activas, históricas y canceladas en un calendario.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -42,11 +42,11 @@
     </a>
     <nav class="nav__links">
       <a href="negocio.html">Resumen</a>
-      <a href="negocio-reservas.html" class="is-current">Reservas</a>
+      <a href="negocio-reservas.html">Reservas</a>
       <a href="negocio-pagos.html">Pagos</a>
       <a href="negocio-resenas.html">Reseñas</a>
       <a href="negocio-referidos.html">Referidos</a>
-      <a href="negocio-calendario.html">Calendario</a>
+      <a href="negocio-calendario.html" class="is-current">Calendario</a>
     </nav>
     <div class="nav__actions">
       <button type="button" class="nav__login" id="bizLogoutBtn">Cerrar sesión</button>
@@ -58,16 +58,26 @@
   <div class="container">
     <div class="biz__greeting">
       <p class="eyebrow">Panel de aliado</p>
-      <h1>Reservas</h1>
-      <p class="biz__sub">Tus próximas reservas y el historial completo.</p>
+      <h1>Calendario</h1>
+      <p class="biz__sub">Todas tus reservas activas, históricas y canceladas, mes a mes.</p>
     </div>
 
     <section class="dcard">
-      <div class="biz-res-tabs">
-        <button type="button" class="biz-res-tab is-active" id="tabActivas">Activas <span class="biz-res-count" id="countActivas"></span></button>
-        <button type="button" class="biz-res-tab" id="tabHistorial">Historial <span class="biz-res-count" id="countHistorial"></span></button>
+      <div class="biz-cal__toolbar">
+        <button type="button" class="biz-cal__nav" id="calPrev" aria-label="Mes anterior">←</button>
+        <h2 class="biz-cal__month" id="calMonthLabel">—</h2>
+        <button type="button" class="biz-cal__nav" id="calNext" aria-label="Mes siguiente">→</button>
       </div>
-      <ul class="biz-res-list" id="bizResList"></ul>
+      <div class="biz-cal__legend">
+        <span><span class="biz-cal__dot biz-cal__dot--confirmada"></span> Confirmada</span>
+        <span><span class="biz-cal__dot biz-cal__dot--pendiente"></span> Pendiente</span>
+        <span><span class="biz-cal__dot biz-cal__dot--completada"></span> Completada</span>
+        <span><span class="biz-cal__dot biz-cal__dot--cancelada"></span> Cancelada</span>
+      </div>
+      <div class="biz-cal__weekdays">
+        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="biz-cal__grid" id="calGrid"></div>
     </section>
   </div>
 </main>
@@ -84,6 +94,6 @@
 
 <script src="js/skyline.js"></script>
 <script src="js/negocio.js"></script>
-<script src="js/negocio-reservas.js"></script>
+<script src="js/negocio-calendario.js"></script>
 </body>
 </html>
