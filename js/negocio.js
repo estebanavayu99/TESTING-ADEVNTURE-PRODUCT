@@ -233,17 +233,17 @@
 
   /* ---------- Shared reservation detail modal ---------- */
   const bizModal = document.getElementById('bizModal');
+  const bizModalTitle = document.getElementById('bizModalTitle');
   const bizModalRows = document.getElementById('bizModalRows');
   const bizModalClose = document.getElementById('bizModalClose');
 
-  function openReservationModal(r) {
-    if (!bizModal) return;
+  function reservationRowsHTML(r) {
     const estadoLabel = { confirmada: 'Confirmada', pendiente: 'Pendiente', completada: 'Completada', cancelada: 'Cancelada' }[r.estado];
     const isCancelled = r.estado === 'cancelada';
     const paymentDateLabel = isCancelled
       ? 'No aplica (cancelada)'
       : `${fmtDate(getPaymentDate(r))}${isPaid(r) ? '' : ' (estimada)'}`;
-    bizModalRows.innerHTML = `
+    return `
       <div class="biz-modal__row"><span>N° reserva</span><span>#${r.id}</span></div>
       <div class="biz-modal__row"><span>Cliente</span><span>${r.cliente}</span></div>
       <div class="biz-modal__row"><span>Actividad</span><span>${r.actividad}</span></div>
@@ -253,6 +253,27 @@
       <div class="biz-modal__row"><span>Estado</span><span>${estadoLabel}</span></div>
       <div class="biz-modal__row"><span>Monto</span><span>${fmtMoney(r.estado === 'cancelada' ? r.montoOriginal : r.monto)}${r.estado === 'cancelada' ? ' (no cobrado)' : ''}</span></div>
     `;
+  }
+
+  function openReservationModal(r) {
+    if (!bizModal) return;
+    if (bizModalTitle) bizModalTitle.textContent = 'Detalle de la reserva';
+    bizModalRows.innerHTML = reservationRowsHTML(r);
+    bizModal.hidden = false;
+  }
+
+  function openDayModal(dayReservations) {
+    if (!bizModal || !dayReservations.length) return;
+    if (bizModalTitle) {
+      bizModalTitle.textContent = dayReservations.length === 1
+        ? 'Detalle de la reserva'
+        : `Reservas del ${fmtDate(dayReservations[0].fecha)} (${dayReservations.length})`;
+    }
+    bizModalRows.innerHTML = dayReservations.map((r, i) => `
+      ${i > 0 ? '<div class="biz-modal__divider"></div>' : ''}
+      ${dayReservations.length > 1 ? `<p class="biz-modal__group-label">${r.cliente} · ${r.actividad}</p>` : ''}
+      ${reservationRowsHTML(r)}
+    `).join('');
     bizModal.hidden = false;
   }
 
@@ -262,7 +283,7 @@
   }
 
   window.PickmapNegocio = {
-    getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal,
+    getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal,
     getReviews, getReferrals, getReferralCode,
   };
 

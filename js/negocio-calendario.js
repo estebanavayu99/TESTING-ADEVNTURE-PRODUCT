@@ -31,25 +31,26 @@
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
     while (cells.length % 7 !== 0) cells.push(null);
 
-    grid.innerHTML = cells.map((day) => {
+    grid.innerHTML = cells.map((day, idx) => {
       if (!day) return '<div class="biz-cal__cell biz-cal__cell--empty"></div>';
       const key = `${viewYear}-${viewMonth}-${day}`;
       const dayReservations = byDay.get(key) || [];
       const isToday = isCurrentMonth && day === NOW.getDate();
-      const dots = dayReservations.slice(0, 4).map((r) => `<span class="biz-cal__dot biz-cal__dot--${r.estado}" data-id="${r.id}" title="${r.cliente} · ${r.actividad}"></span>`).join('');
+      const dots = dayReservations.slice(0, 4).map((r) => `<span class="biz-cal__dot biz-cal__dot--${r.estado}" title="${r.cliente} · ${r.actividad}"></span>`).join('');
       const extra = dayReservations.length > 4 ? `<span class="biz-cal__more">+${dayReservations.length - 4}</span>` : '';
+      const hasReservations = dayReservations.length > 0;
       return `
-        <div class="biz-cal__cell ${isToday ? 'is-today' : ''}">
+        <div class="biz-cal__cell ${isToday ? 'is-today' : ''} ${hasReservations ? 'has-reservations' : ''}" data-day-key="${key}">
           <span class="biz-cal__day">${day}</span>
           <div class="biz-cal__dots">${dots}${extra}</div>
         </div>
       `;
     }).join('');
 
-    grid.querySelectorAll('.biz-cal__dot[data-id]').forEach((dot) => {
-      dot.addEventListener('click', () => {
-        const r = reservations.find((x) => x.id === Number(dot.dataset.id));
-        if (r) N.openReservationModal(r);
+    grid.querySelectorAll('.biz-cal__cell.has-reservations').forEach((cell) => {
+      cell.addEventListener('click', () => {
+        const dayReservations = byDay.get(cell.dataset.dayKey) || [];
+        N.openDayModal(dayReservations);
       });
     });
   }

@@ -153,15 +153,19 @@
   padding: 28px;
   max-width: 420px;
   width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
   box-shadow: 0 30px 70px rgba(15, 20, 22, 0.3);
 }
-.biz-modal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.biz-modal__head h3 { margin: 0; font-family: var(--font-display); color: var(--navy); }
-.biz-modal__close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--slate); line-height: 1; }
+.biz-modal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; position: sticky; top: -28px; background: var(--white); padding-top: 4px; margin-top: -4px; }
+.biz-modal__head h3 { margin: 0; font-family: var(--font-display); color: var(--navy); font-size: 1.1rem; }
+.biz-modal__close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--slate); line-height: 1; flex-shrink: 0; }
 .biz-modal__rows { display: flex; flex-direction: column; gap: 10px; }
 .biz-modal__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
 .biz-modal__row span:first-child { color: var(--slate); font-weight: 600; }
 .biz-modal__row span:last-child { color: var(--navy); font-weight: 800; text-align: right; }
+.biz-modal__group-label { margin: 4px 0 10px; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--coral); }
+.biz-modal__divider { height: 1px; background: rgba(30, 45, 49, 0.1); margin: 20px 0; }
 
 /* Pagos page */
 .biz-period-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
@@ -314,8 +318,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: background .15s, transform .15s;
 }
 .biz-cal__cell--empty { background: transparent; }
+.biz-cal__cell.has-reservations { cursor: pointer; }
+.biz-cal__cell.has-reservations:hover { background: rgba(245, 94, 97, 0.12); transform: translateY(-1px); }
 .biz-cal__cell.is-today { box-shadow: inset 0 0 0 2px var(--coral); }
 .biz-cal__day { font-size: 0.78rem; font-weight: 800; color: var(--navy-2); }
 .biz-cal__dots { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
