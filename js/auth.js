@@ -2,6 +2,43 @@
   const USERS_KEY = 'pickmap_users';
   const SESSION_KEY = 'pickmap_current_user';
 
+  function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
+  function formatRut(v) {
+    const clean = cleanRut(v);
+    if (clean.length <= 1) return clean;
+    const body = clean.slice(0, -1);
+    const dv = clean.slice(-1);
+    let formatted = '';
+    for (let i = 0; i < body.length; i++) {
+      const posFromEnd = body.length - i;
+      formatted += body[i];
+      if (posFromEnd > 1 && (posFromEnd - 1) % 3 === 0) formatted += '.';
+    }
+    return `${formatted}-${dv}`;
+  }
+  function isValidRut(v) {
+    const clean = cleanRut(v);
+    if (clean.length < 2) return false;
+    const body = clean.slice(0, -1);
+    const dv = clean.slice(-1);
+    if (!/^\d+$/.test(body)) return false;
+    let sum = 0;
+    let mul = 2;
+    for (let i = body.length - 1; i >= 0; i--) {
+      sum += parseInt(body[i], 10) * mul;
+      mul = mul === 7 ? 2 : mul + 1;
+    }
+    const res = 11 - (sum % 11);
+    const expectedDv = res === 11 ? '0' : res === 10 ? 'K' : String(res);
+    return dv === expectedDv;
+  }
+  const signupRutInput = document.getElementById('signupRut');
+  if (signupRutInput) {
+    signupRutInput.addEventListener('blur', (e) => {
+      if (e.target.value.trim()) e.target.value = formatRut(e.target.value);
+    });
+  }
+
   function getUsers() {
     try {
       return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
@@ -65,11 +102,16 @@
     e.preventDefault();
     const data = new FormData(formSignup);
     const name = data.get('name').trim();
+    const rut = formatRut(data.get('rut'));
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
     if (!name || !email || password.length < 4) {
       showError('Revisa los datos: el nombre no puede estar vacío y la contraseña necesita al menos 4 caracteres.');
+      return;
+    }
+    if (!isValidRut(rut)) {
+      showError('El RUT ingresado no es válido. Revísalo e intenta de nuevo.');
       return;
     }
 
@@ -79,7 +121,7 @@
       return;
     }
 
-    users.push({ name, email, password, onboarded: false });
+    users.push({ name, rut, email, password, onboarded: false });
     saveUsers(users);
     setSession(email);
     window.location.href = 'onboarding.html';

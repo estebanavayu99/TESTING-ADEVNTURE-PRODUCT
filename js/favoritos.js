@@ -49,6 +49,36 @@
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
     return h;
   }
+  function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
+  function formatRut(v) {
+    const clean = cleanRut(v);
+    if (clean.length <= 1) return clean;
+    const body = clean.slice(0, -1);
+    const dv = clean.slice(-1);
+    let formatted = '';
+    for (let i = 0; i < body.length; i++) {
+      const posFromEnd = body.length - i;
+      formatted += body[i];
+      if (posFromEnd > 1 && (posFromEnd - 1) % 3 === 0) formatted += '.';
+    }
+    return `${formatted}-${dv}`;
+  }
+  function isValidRut(v) {
+    const clean = cleanRut(v);
+    if (clean.length < 2) return false;
+    const body = clean.slice(0, -1);
+    const dv = clean.slice(-1);
+    if (!/^\d+$/.test(body)) return false;
+    let sum = 0;
+    let mul = 2;
+    for (let i = body.length - 1; i >= 0; i--) {
+      sum += parseInt(body[i], 10) * mul;
+      mul = mul === 7 ? 2 : mul + 1;
+    }
+    const res = 11 - (sum % 11);
+    const expectedDv = res === 11 ? '0' : res === 10 ? 'K' : String(res);
+    return dv === expectedDv;
+  }
 
   const POINTS_KEY = `pickmap_points_${user.email}`;
   const DEFAULT_POINTS = 1240;
@@ -562,6 +592,10 @@
             <input type="text" name="name" value="${user.name || ''}" required>
           </label>
           <label class="reserve-field">
+            <span>RUT</span>
+            <input type="text" name="rut" id="reserveContactRut" value="${user.rut || ''}" placeholder="12.345.678-9" required>
+          </label>
+          <label class="reserve-field">
             <span>Correo</span>
             <input type="email" name="email" value="${user.email || ''}" required>
           </label>
@@ -861,9 +895,13 @@
     if (!container) return;
     const count = Math.max(1, parseInt(peopleInput.value, 10) || 1);
     const prevValues = Array.from(container.querySelectorAll('.reserve-passenger-name')).map((i) => i.value);
+    const prevRuts = Array.from(container.querySelectorAll('.reserve-passenger-rut')).map((i) => i.value);
     let html = '';
     for (let i = 2; i <= count; i++) {
-      html += `<label class="reserve-field"><span>Nombre pasajero ${i}</span><input type="text" class="reserve-passenger-name" value="${prevValues[i - 2] || ''}" required></label>`;
+      html += `
+        <label class="reserve-field"><span>Nombre pasajero ${i}</span><input type="text" class="reserve-passenger-name" value="${prevValues[i - 2] || ''}" required></label>
+        <label class="reserve-field"><span>RUT pasajero ${i}</span><input type="text" class="reserve-passenger-rut" value="${prevRuts[i - 2] || ''}" placeholder="12.345.678-9" required></label>
+      `;
     }
     container.innerHTML = html;
   }
@@ -879,12 +917,19 @@
     }
   });
 
+  document.addEventListener('focusout', (e) => {
+    if (e.target.id === 'reserveContactRut' || e.target.classList.contains('reserve-passenger-rut')) {
+      if (e.target.value.trim()) e.target.value = formatRut(e.target.value);
+    }
+  });
+
   document.addEventListener('submit', (e) => {
     if (e.target.id !== 'reserveForm' || !currentModalItem) return;
     e.preventDefault();
     const form = e.target;
     const people = parseInt(form.people.value, 10) || 1;
     const name = form.name.value.trim();
+    const rut = formatRut(form.rut.value);
     const emailVal = form.email.value.trim();
     const phone = form.phone.value.trim();
     const feedback = document.getElementById('reserveFeedback');
@@ -896,9 +941,15 @@
     const mainDate = mainDateInput ? mainDateInput.value : '';
     const passengerInputs = Array.from(form.querySelectorAll('.reserve-passenger-name'));
     const passengerNames = passengerInputs.map((i) => i.value.trim());
+    const passengerRuts = Array.from(form.querySelectorAll('.reserve-passenger-rut')).map((i) => formatRut(i.value));
 
     if (!mainDate || !name || !emailVal || passengerNames.some((n) => !n)) {
       feedback.textContent = 'Completa la fecha de la actividad principal, tus datos de contacto y el nombre de cada pasajero.';
+      feedback.classList.add('is-error');
+      return;
+    }
+    if (!isValidRut(rut) || passengerRuts.some((r) => !isValidRut(r))) {
+      feedback.textContent = 'Revisa el RUT del contacto y el de cada pasajero — alguno no es válido.';
       feedback.classList.add('is-error');
       return;
     }
