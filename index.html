@@ -495,6 +495,29 @@
   </div>
 </footer>
 
+<div class="beto-chat" id="betoChat">
+  <div class="beto-chat__panel" id="betoChatPanel" hidden>
+    <div class="beto-chat__header">
+      <span class="beto-chat__avatar">🤖</span>
+      <div class="beto-chat__header-text">
+        <p class="beto-chat__name">Beto</p>
+        <p class="beto-chat__status"><span class="beto-chat__dot"></span> Asistente Pickmap · en línea</p>
+      </div>
+      <button type="button" class="beto-chat__close" id="betoChatClose" aria-label="Cerrar chat">✕</button>
+    </div>
+    <div class="beto-chat__messages" id="betoChatMessages"></div>
+    <form class="beto-chat__form" id="betoChatForm">
+      <input type="text" id="betoChatInput" placeholder="Escríbele a Beto..." autocomplete="off">
+      <button type="submit" aria-label="Enviar">➤</button>
+    </form>
+  </div>
+  <button type="button" class="beto-chat__fab" id="betoChatFab" aria-label="Abrir chat con Beto" aria-expanded="false">
+    <span class="beto-chat__fab-icon">🤖</span>
+    <span class="beto-chat__fab-badge" id="betoChatBadge">1</span>
+  </button>
+</div>
+
 <script src="js/main.js"></script>
+<script src="js/beto-chat.js"></script>
 </body>
 </html>

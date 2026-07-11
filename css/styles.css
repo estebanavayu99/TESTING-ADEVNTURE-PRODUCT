@@ -1162,11 +1162,182 @@ body.mode-business .hero__biz-mock { display: flex; }
   .nav__actions { gap: 6px; }
 }
 
+/* ========== Beto chat widget ========== */
+.beto-chat { position: fixed; right: 22px; bottom: 22px; z-index: 60; }
+.beto-chat__fab {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  box-shadow: 0 14px 30px rgba(245, 94, 97, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: betoFabBounce 2.6s ease-in-out infinite;
+}
+.beto-chat__fab-icon { font-size: 1.7rem; }
+.beto-chat__fab-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--deep-red);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg);
+}
+.beto-chat__fab-badge[hidden] { display: none; }
+@keyframes betoFabBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.beto-chat__panel {
+  position: absolute;
+  right: 0;
+  bottom: 76px;
+  width: 330px;
+  max-width: calc(100vw - 44px);
+  height: 440px;
+  max-height: 70vh;
+  background: var(--white);
+  border-radius: 24px;
+  box-shadow: 0 30px 70px rgba(15, 20, 22, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.beto-chat__panel[hidden] { display: none; }
+.beto-chat__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--navy);
+  flex-shrink: 0;
+}
+.beto-chat__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sun), var(--coral));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.beto-chat__header-text { flex: 1; min-width: 0; }
+.beto-chat__name { margin: 0; font-weight: 800; color: var(--white); font-size: 0.9rem; }
+.beto-chat__status { margin: 2px 0 0; font-size: 0.72rem; color: rgba(255,255,255,0.75); display: flex; align-items: center; gap: 5px; }
+.beto-chat__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.beto-chat__close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.beto-chat__close:hover { color: var(--white); }
+
+.beto-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+.beto-chat__msg {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.beto-chat__msg--bot {
+  align-self: flex-start;
+  background: var(--white);
+  color: var(--navy);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 3px 10px rgba(15, 20, 22, 0.08);
+}
+.beto-chat__msg--user {
+  align-self: flex-end;
+  background: var(--coral);
+  color: var(--white);
+  border-bottom-right-radius: 4px;
+}
+.beto-chat__msg--typing { display: flex; gap: 4px; align-items: center; padding: 12px 14px; }
+.beto-chat__typing-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--slate);
+  animation: betoTypingBlink 1.2s infinite;
+}
+.beto-chat__typing-dot:nth-child(2) { animation-delay: .2s; }
+.beto-chat__typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes betoTypingBlink {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
+
+.beto-chat__form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(30, 45, 49, 0.08);
+  background: var(--white);
+  flex-shrink: 0;
+}
+.beto-chat__form input {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 45, 49, 0.15);
+  background: var(--bg);
+  color: var(--navy);
+  min-width: 0;
+}
+.beto-chat__form input:focus { outline: none; border-color: var(--coral); }
+.beto-chat__form button {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--coral);
+  color: var(--white);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.beto-chat__form button:hover { background: var(--deep-red); }
+
+@media (max-width: 480px) {
+  .beto-chat { right: 14px; bottom: 14px; }
+  .beto-chat__panel { width: calc(100vw - 28px); bottom: 72px; }
+}
+
 /* ========== Reduced motion: keep a pleasant static day scene ========== */
 @media (prefers-reduced-motion: reduce) {
   .sun, .sky-night, .stars, .weather-overlay, .rain-canvas,
   .cloud, .bird, .mountains--back, .mountains--mid, .mountains--front,
-  .app__weather, .wave {
+  .app__weather, .wave, .beto-chat__fab, .beto-chat__typing-dot {
     animation: none !important;
   }
   .sun { top: 10%; left: 50%; opacity: 1; transform: scale(1.05); }
