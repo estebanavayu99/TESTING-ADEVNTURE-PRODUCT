@@ -307,7 +307,7 @@ a { color: inherit; text-decoration: none; }
 }
 .nav__actions { display: flex; align-items: center; gap: 14px; }
 
-.nav__account { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.nav__account { display: flex; flex-direction: column; align-items: center; gap: 30px; margin-top: 16px; }
 
 .nav__client-auth,
 .nav__biz-auth { position: relative; display: flex; align-items: flex-start; gap: 8px; }
@@ -318,10 +318,10 @@ body.mode-business .nav__biz-auth { display: flex; }
 /* Connector diagram: one stem from the toggle, forking into an arrow per button */
 .nav__auth-connector {
   position: absolute;
-  top: -20px;
+  top: -26px;
   left: 0;
   right: 0;
-  height: 20px;
+  height: 26px;
   pointer-events: none;
 }
 .nav__auth-connector-stem {
@@ -329,7 +329,7 @@ body.mode-business .nav__biz-auth { display: flex; }
   top: 0;
   left: 50%;
   width: 2px;
-  height: 8px;
+  height: 14px;
   background: var(--coral);
   transform: translateX(-50%);
   transition: transform .35s cubic-bezier(.4, 0, .2, 1);
@@ -338,7 +338,7 @@ body.mode-client .nav__auth-connector-stem { transform: translateX(calc(-50% + v
 body.mode-business .nav__auth-connector-stem { transform: translateX(calc(-50% + var(--stem-business-x, 16px))); }
 .nav__auth-connector-branch {
   position: absolute;
-  top: 8px;
+  top: 14px;
   left: 25%;
   right: 25%;
   height: 2px;
@@ -346,9 +346,9 @@ body.mode-business .nav__auth-connector-stem { transform: translateX(calc(-50% +
 }
 .nav__auth-connector-drop {
   position: absolute;
-  top: 8px;
+  top: 14px;
   width: 2px;
-  height: 7px;
+  height: 8px;
   background: var(--coral);
   transform: translateX(-50%);
 }
