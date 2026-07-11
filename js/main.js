@@ -24,6 +24,14 @@
         el.setAttribute('href', isBusiness ? businessHref : clientHref);
       }
     });
+
+    const widgetCounter = document.querySelector('.widget .count-up');
+    if (widgetCounter) {
+      const target = isBusiness ? widgetCounter.dataset.targetBusiness : widgetCounter.dataset.targetClient;
+      const prefix = (isBusiness ? widgetCounter.dataset.prefixBusiness : widgetCounter.dataset.prefixClient) || '';
+      widgetCounter.dataset.target = target;
+      widgetCounter.textContent = prefix + Number(target).toLocaleString('es-CL');
+    }
   }
 
   modeToggle.addEventListener('click', () => {
@@ -88,13 +96,17 @@
 
         const counter = widget.querySelector('.count-up');
         if (counter) {
-          const target = parseInt(counter.dataset.target, 10);
           const duration = 1400;
           const start = performance.now();
           function tick(now) {
             const progress = Math.min((now - start) / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
-            counter.textContent = Math.round(eased * target).toLocaleString('es-CL');
+            // Re-read target/prefix every frame so a mode switch mid-animation
+            // (client <-> business) redirects the count instead of being stomped.
+            const target = parseInt(counter.dataset.target, 10);
+            const isBiz = body.classList.contains('mode-business');
+            const prefix = (isBiz ? counter.dataset.prefixBusiness : counter.dataset.prefixClient) || '';
+            counter.textContent = prefix + Math.round(eased * target).toLocaleString('es-CL');
             if (progress < 1) requestAnimationFrame(tick);
           }
           requestAnimationFrame(tick);

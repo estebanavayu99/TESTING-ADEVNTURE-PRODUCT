@@ -874,7 +874,7 @@ body.mode-business .nav__biz-auth { display: flex; }
 .puntos__lead { color: var(--navy-2); font-size: 1.05rem; line-height: 1.6; max-width: 480px; }
 .puntos__list { list-style: none; padding: 0; margin: 24px 0 0; display: flex; flex-direction: column; gap: 14px; }
 .puntos__list li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
-.puntos__list span { font-size: 1.3rem; }
+.puntos__list li > span:first-child { font-size: 1.3rem; }
 .widget {
   background: var(--navy);
   color: var(--white);
