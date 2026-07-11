@@ -96,6 +96,21 @@
   });
   closeBtn.addEventListener('click', closeChat);
 
+  /* ---------- Teaser bubble: greets on every visit, dismissable ---------- */
+  const teaser = document.getElementById('betoChatTeaser');
+  const teaserClose = document.getElementById('betoChatTeaserClose');
+  if (teaser) {
+    function hideTeaser() { teaser.hidden = true; }
+    setTimeout(() => {
+      if (panel.hidden) teaser.hidden = false;
+    }, 1600);
+    teaserClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideTeaser();
+    });
+    fab.addEventListener('click', hideTeaser);
+  }
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = input.value.trim();
