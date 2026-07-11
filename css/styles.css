@@ -994,23 +994,37 @@ body.mode-business .hero__biz-mock { display: flex; }
   background: var(--navy);
   color: var(--white);
   border-radius: var(--radius);
-  padding: 30px;
-  max-width: 380px;
+  padding: 38px 44px;
+  max-width: 440px;
   margin: 0 auto;
   box-shadow: var(--shadow);
 }
-.widget__label { font-size: 0.8rem; opacity: 0.7; margin: 0; }
-.widget__level { font-family: var(--font-display); font-size: 1.3rem; margin: 6px 0 16px; }
-.widget__bar { height: 10px; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden; }
+.widget__label { font-size: 0.85rem; opacity: 0.7; margin: 0; }
+.widget__level { font-family: var(--font-display); font-size: 1.5rem; margin: 8px 0 18px; }
+.widget__bar { position: relative; height: 14px; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden; }
 .widget__bar-fill {
+  position: relative;
   display: block;
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--sun), var(--coral));
   border-radius: 999px;
   transition: width 1.4s cubic-bezier(.2,.8,.2,1);
+  overflow: hidden;
 }
-.widget__count { margin-top: 14px; font-size: 1.6rem; font-family: var(--font-display); }
+.widget__bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  width: 60%;
+  animation: barShine 2.2s ease-in-out infinite;
+}
+@keyframes barShine {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+.widget__count { margin-top: 16px; font-size: 1.85rem; font-family: var(--font-display); }
 .widget__badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .widget__badges span {
   background: rgba(255,255,255,0.1);
