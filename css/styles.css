@@ -307,22 +307,10 @@ a { color: inherit; text-decoration: none; }
 }
 .nav__actions { display: flex; align-items: center; gap: 14px; }
 
-.nav__account { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-
-.nav__account-arrow {
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 10px solid var(--coral);
-  filter: drop-shadow(0 2px 3px rgba(245, 94, 97, 0.35));
-  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
-}
-body.mode-client .nav__account-arrow { transform: translateX(-34px); }
-body.mode-business .nav__account-arrow { transform: translateX(34px); }
+.nav__account { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 
 .nav__client-auth,
-.nav__biz-auth { display: flex; align-items: center; gap: 8px; }
+.nav__biz-auth { display: flex; align-items: flex-start; gap: 8px; }
 body.mode-business .nav__client-auth { display: none; }
 .nav__biz-auth { display: none; }
 body.mode-business .nav__biz-auth { display: flex; }
@@ -331,12 +319,30 @@ body.mode-business .nav__biz-auth { display: flex; }
 .nav__biz-login,
 .nav__signup,
 .nav__biz-signup {
+  position: relative;
+  display: inline-block;
   font-size: 0.8rem;
   font-weight: 700;
   border-radius: 999px;
   padding: 9px 18px;
   white-space: nowrap;
   transition: transform .15s, box-shadow .15s, background .15s, color .15s;
+}
+.nav__login::before,
+.nav__biz-login::before,
+.nav__signup::before,
+.nav__biz-signup::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--coral);
+  filter: drop-shadow(0 2px 2px rgba(245, 94, 97, 0.3));
 }
 .nav__login,
 .nav__biz-login {
@@ -1017,8 +1023,6 @@ body.mode-business .nav__biz-auth { display: flex; }
     box-shadow: var(--shadow);
   }
   .mode-toggle__opt { padding: 8px 10px; font-size: 0.72rem; }
-  body.mode-client .nav__account-arrow { transform: translateX(-22px); }
-  body.mode-business .nav__account-arrow { transform: translateX(22px); }
   .hero__copy { padding: 28px 24px; border-radius: 22px; }
   .nav__actions { gap: 8px; }
   .steps, .cards--4, .cards--3, .cards--5 { grid-template-columns: 1fr; }
@@ -1029,8 +1033,6 @@ body.mode-business .nav__biz-auth { display: flex; }
   .logo { font-size: 1.35rem; gap: 6px; }
   .logo__mark { height: 30px; width: 30px; }
   .mode-toggle__opt { padding: 6px 7px; font-size: 0.62rem; }
-  body.mode-client .nav__account-arrow { transform: translateX(-16px); }
-  body.mode-business .nav__account-arrow { transform: translateX(16px); }
   .nav__actions { gap: 6px; }
 }
 
