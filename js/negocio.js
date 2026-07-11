@@ -254,7 +254,7 @@
       <div class="biz-modal__row"><span>Hora</span><span>${r.hora || '—'}</span></div>
       <div class="biz-modal__row"><span>Fecha de pago</span><span>${paymentDateLabel}</span></div>
       <div class="biz-modal__row"><span>Personas</span><span>${r.personas}</span></div>
-      <div class="biz-modal__row"><span>Estado</span><span>${estadoLabel}</span></div>
+      <div class="biz-modal__row"><span>Estado</span><span class="biz-modal__estado biz-modal__estado--${r.estado}">${estadoLabel}</span></div>
       <div class="biz-modal__row"><span>Monto</span><span>${fmtMoney(r.estado === 'cancelada' ? r.montoOriginal : r.monto)}${r.estado === 'cancelada' ? ' (no cobrado)' : ''}</span></div>
     `;
   }

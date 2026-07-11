@@ -165,6 +165,17 @@
 .biz-modal__row span:first-child { color: var(--slate); font-weight: 600; }
 .biz-modal__row span:last-child { color: var(--navy); font-weight: 800; text-align: right; }
 .biz-modal__group-label { margin: 4px 0 10px; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--coral); }
+.biz-modal__row span:last-child.biz-modal__estado {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.biz-modal__row span:last-child.biz-modal__estado--confirmada { background: rgba(131, 208, 97, 0.22); color: #3f7a2c; }
+.biz-modal__row span:last-child.biz-modal__estado--pendiente { background: rgba(246, 205, 76, 0.3); color: #8a6a10; }
+.biz-modal__row span:last-child.biz-modal__estado--completada { background: rgba(30, 45, 49, 0.08); color: var(--navy-2); }
+.biz-modal__row span:last-child.biz-modal__estado--cancelada { background: rgba(175, 67, 69, 0.14); color: var(--deep-red); }
 .biz-modal__divider { height: 1px; background: rgba(30, 45, 49, 0.1); margin: 20px 0; }
 
 /* Pagos page */
