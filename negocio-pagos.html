@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagos — Panel de aliado Pickmap</title>
+<meta name="description" content="Revisa cuánto has generado, tus liquidaciones pagadas y tu próximo pago como aliado Pickmap.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/negocio.css">
+</head>
+<body class="dash-body">
+
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <div class="cloud cloud--storm cloud--storm-1"></div>
+  <div class="cloud cloud--storm cloud--storm-2"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+  <div class="weather-overlay"></div>
+  <canvas class="rain-canvas" id="rainCanvas"></canvas>
+</div>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.png" alt="" class="logo__mark">
+      Pick<span class="logo__map">Map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="negocio.html">Resumen</a>
+      <a href="negocio-reservas.html">Reservas</a>
+      <a href="negocio-pagos.html" class="is-current">Pagos</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__login" id="bizLogoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="biz">
+  <div class="container">
+    <div class="biz__greeting">
+      <p class="eyebrow">Panel de aliado</p>
+      <h1>Pagos</h1>
+      <p class="biz__sub">Cuánto has generado y cómo te hemos pagado.</p>
+    </div>
+
+    <div class="biz-next-pay">
+      <div class="biz-next-pay__icon">💸</div>
+      <div class="biz-next-pay__body">
+        <p class="biz-next-pay__label">Próximo pago programado</p>
+        <p class="biz-next-pay__amt" id="payNextAmt">—</p>
+        <p class="biz-next-pay__date" id="payNextDate">—</p>
+        <p class="biz-next-pay__method" id="payNextMethod">—</p>
+      </div>
+    </div>
+
+    <section class="dcard">
+      <h2 class="dcard__title">Generado por período</h2>
+      <div class="biz-period-toggle">
+        <button type="button" class="biz-period-btn" data-period="semana">Esta semana</button>
+        <button type="button" class="biz-period-btn is-active" data-period="mes">Este mes</button>
+        <button type="button" class="biz-period-btn" data-period="historico">Histórico</button>
+      </div>
+      <p class="biz-stat__value" id="payPeriodAmt" style="font-size: 2rem;">—</p>
+      <p class="biz-stat__note" id="payPeriodNote">&nbsp;</p>
+    </section>
+
+    <section class="dcard">
+      <h2 class="dcard__title">Historial de liquidaciones</h2>
+      <ul class="biz-liq-list" id="bizLiqList"></ul>
+    </section>
+  </div>
+</main>
+
+<script src="js/skyline.js"></script>
+<script src="js/negocio.js"></script>
+<script src="js/negocio-pagos.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservas — Panel de aliado Pickmap</title>
+<meta name="description" content="Revisa tus reservas activas y tu historial completo como aliado Pickmap.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/negocio.css">
+</head>
+<body class="dash-body">
+
+<div class="skyline" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud cloud--1"></div>
+  <div class="cloud cloud--2"></div>
+  <div class="cloud cloud--3"></div>
+  <div class="cloud cloud--storm cloud--storm-1"></div>
+  <div class="cloud cloud--storm cloud--storm-2"></div>
+  <svg class="bird bird--1" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--2" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <svg class="bird bird--3" viewBox="0 0 40 20"><path d="M0 10 Q10 0 20 10 Q30 0 40 10" /></svg>
+  <div class="mountains mountains--back"></div>
+  <div class="mountains mountains--mid"></div>
+  <div class="mountains mountains--front"></div>
+  <div class="weather-overlay"></div>
+  <canvas class="rain-canvas" id="rainCanvas"></canvas>
+</div>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.png" alt="" class="logo__mark">
+      Pick<span class="logo__map">Map</span>
+    </a>
+    <nav class="nav__links">
+      <a href="negocio.html">Resumen</a>
+      <a href="negocio-reservas.html" class="is-current">Reservas</a>
+      <a href="negocio-pagos.html">Pagos</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__login" id="bizLogoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="biz">
+  <div class="container">
+    <div class="biz__greeting">
+      <p class="eyebrow">Panel de aliado</p>
+      <h1>Reservas</h1>
+      <p class="biz__sub">Tus próximas reservas y el historial completo.</p>
+    </div>
+
+    <section class="dcard">
+      <div class="biz-res-tabs">
+        <button type="button" class="biz-res-tab is-active" id="tabActivas">Activas <span class="biz-res-count" id="countActivas"></span></button>
+        <button type="button" class="biz-res-tab" id="tabHistorial">Historial <span class="biz-res-count" id="countHistorial"></span></button>
+      </div>
+      <ul class="biz-res-list" id="bizResList"></ul>
+    </section>
+  </div>
+</main>
+
+<div class="biz-modal" id="bizModal" hidden>
+  <div class="biz-modal__panel">
+    <div class="biz-modal__head">
+      <h3>Detalle de la reserva</h3>
+      <button type="button" class="biz-modal__close" id="bizModalClose">✕</button>
+    </div>
+    <div class="biz-modal__rows" id="bizModalRows"></div>
+  </div>
+</div>
+
+<script src="js/skyline.js"></script>
+<script src="js/negocio.js"></script>
+<script src="js/negocio-reservas.js"></script>
+</body>
+</html>
