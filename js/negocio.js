@@ -45,6 +45,7 @@
 
   const CLIENTES = ['Javiera Muñoz', 'Tomás Reyes', 'Camila Soto', 'Benjamín Vidal', 'Constanza Pizarro', 'Matías Concha', 'Fernanda Alarcón', 'Ignacio Bravo', 'Antonia Rojas', 'Diego Fuentes', 'Valentina Araya', 'Sebastián Torres'];
   const ACTIVIDADES = ['Cabaña + tinaja caliente (2 noches)', 'Cabaña familiar junto al río', 'Cabaña + desayuno campestre', 'Cabaña romántica + cena', 'Cabaña grupo (6 personas)'];
+  const HORAS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
   const RES_KEY = `pickmap_business_reservations_${bizEmail}`;
 
@@ -71,6 +72,7 @@
           actividad: ACTIVIDADES[Math.floor(rand() * ACTIVIDADES.length)],
           personas: 2 + Math.floor(rand() * 5),
           fecha: date,
+          hora: HORAS[Math.floor(rand() * HORAS.length)],
           monto: estado === 'cancelada' ? 0 : monto,
           montoOriginal: monto,
           estado,
@@ -90,6 +92,7 @@
         actividad: ACTIVIDADES[Math.floor(rand() * ACTIVIDADES.length)],
         personas: 2 + Math.floor(rand() * 5),
         fecha: date,
+        hora: HORAS[Math.floor(rand() * HORAS.length)],
         monto,
         montoOriginal: monto,
         estado: rand() < 0.3 ? 'pendiente' : 'confirmada',
@@ -248,6 +251,7 @@
       <div class="biz-modal__row"><span>Cliente</span><span>${r.cliente}</span></div>
       <div class="biz-modal__row"><span>Actividad</span><span>${r.actividad}</span></div>
       <div class="biz-modal__row"><span>Día de la actividad</span><span>${fmtDate(r.fecha)}</span></div>
+      <div class="biz-modal__row"><span>Hora</span><span>${r.hora || '—'}</span></div>
       <div class="biz-modal__row"><span>Fecha de pago</span><span>${paymentDateLabel}</span></div>
       <div class="biz-modal__row"><span>Personas</span><span>${r.personas}</span></div>
       <div class="biz-modal__row"><span>Estado</span><span>${estadoLabel}</span></div>
@@ -262,8 +266,10 @@
     bizModal.hidden = false;
   }
 
-  function openDayModal(dayReservations) {
-    if (!bizModal || !dayReservations.length) return;
+  function openDayModal(dayReservationsIn) {
+    if (!bizModal || !dayReservationsIn.length) return;
+    // Order by hora so a busy day reads like a clear schedule, not a random list.
+    const dayReservations = [...dayReservationsIn].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
     if (bizModalTitle) {
       bizModalTitle.textContent = dayReservations.length === 1
         ? 'Detalle de la reserva'
@@ -271,7 +277,7 @@
     }
     bizModalRows.innerHTML = dayReservations.map((r, i) => `
       ${i > 0 ? '<div class="biz-modal__divider"></div>' : ''}
-      ${dayReservations.length > 1 ? `<p class="biz-modal__group-label">${r.cliente} · ${r.actividad}</p>` : ''}
+      ${dayReservations.length > 1 ? `<p class="biz-modal__group-label">${r.hora || '—'} · ${r.cliente} · ${r.actividad}</p>` : ''}
       ${reservationRowsHTML(r)}
     `).join('');
     bizModal.hidden = false;
