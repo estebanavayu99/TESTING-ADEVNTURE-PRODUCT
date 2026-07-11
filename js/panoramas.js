@@ -350,12 +350,6 @@
     return true;
   }).map((i) => ({ ...i, reason: null }));
 
-  const sub = document.getElementById('panoramasSub');
-  if (sub && (taste.length || company.length)) {
-    const firstName = user.name ? user.name.trim().split(' ')[0] : 'viajero';
-    sub.textContent = `Beto procesó tu edad, tu compañía y tus gustos en tiempo real junto con el clima y la hora, y su algoritmo decidió que esto es justo lo ideal para ti, ${firstName}.`;
-  }
-
   const kindLabel = { simple: 'Simple', paquete: 'Paquete' };
 
   function cardHTML(item) {
