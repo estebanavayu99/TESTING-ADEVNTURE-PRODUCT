@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iniciar sesión — Pickmap</title>
-<meta name="description" content="Inicia sesión o crea tu cuenta Pickmap para ver tus panoramas y Pick Points.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<title>Acceso empresas — Pickmap</title>
+<meta name="description" content="Inicia sesión o crea tu cuenta de aliado Pickmap para gestionar tus reservas y pagos.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/auth.css">
 </head>
-<body class="mode-client auth-body">
+<body class="auth-body auth-body--empresa">
 
 <div class="skyline" aria-hidden="true">
   <div class="sky"></div>
@@ -40,13 +40,15 @@
       Pick<span class="logo__map">Map</span>
     </a>
     <nav class="nav__links">
-      <a href="index.html">Volver al sitio</a>
+      <a href="index.html#alianzas">Volver al sitio</a>
     </nav>
   </div>
 </header>
 
 <main class="auth-main">
   <div class="auth-card">
+    <p class="auth-kicker" id="authKicker">🏢 Iniciando sesión como empresa</p>
+
     <div class="auth-tabs" role="tablist">
       <button type="button" class="auth-tab is-active" id="tabLogin" role="tab" aria-selected="true">Iniciar sesión</button>
       <button type="button" class="auth-tab" id="tabSignup" role="tab" aria-selected="false">Crear cuenta</button>
@@ -57,34 +59,62 @@
     <form class="auth-form" id="formLogin">
       <label class="auth-field">
         <span>Correo</span>
-        <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
+        <input type="email" name="email" placeholder="tuempresa@correo.com" required autocomplete="email">
       </label>
       <label class="auth-field">
         <span>Contraseña</span>
         <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
       </label>
-      <button type="submit" class="btn btn--primary auth-submit">Entrar</button>
-      <p class="auth-switch">¿Primera vez por acá? <button type="button" class="auth-link" id="goSignup">Crea tu cuenta</button></p>
+      <button type="submit" class="btn btn--primary auth-submit">Entrar al panel</button>
+      <p class="auth-switch">¿Primera vez por acá? <button type="button" class="auth-link" id="goSignup">Crea tu cuenta de empresa</button></p>
     </form>
 
     <form class="auth-form" id="formSignup" hidden>
       <label class="auth-field">
-        <span>Nombre</span>
-        <input type="text" name="name" placeholder="Cami" required autocomplete="name">
+        <span>Nombre completo del representante</span>
+        <input type="text" name="repName" placeholder="Ej: María Jara" required autocomplete="name">
       </label>
       <label class="auth-field">
-        <span>RUT</span>
-        <input type="text" name="rut" id="signupRut" placeholder="12.345.678-9" required autocomplete="off" inputmode="text">
+        <span>RUT del representante</span>
+        <input type="text" name="repRut" id="signupRepRut" placeholder="12.345.678-9" required autocomplete="off" inputmode="text">
+      </label>
+      <label class="auth-field">
+        <span>Nombre de la empresa</span>
+        <input type="text" name="bizName" placeholder="Ej: Cabañas Río Claro" required autocomplete="organization">
+      </label>
+      <label class="auth-field">
+        <span>Nombre legal / Razón social</span>
+        <input type="text" name="legalName" placeholder="Ej: Turismo Río Claro SpA" required autocomplete="off">
+      </label>
+      <label class="auth-field">
+        <span>RUT de la empresa</span>
+        <input type="text" name="bizRut" id="signupBizRut" placeholder="76.123.456-7" required autocomplete="off" inputmode="text">
+      </label>
+      <label class="auth-field">
+        <span>Dirección</span>
+        <input type="text" name="address" placeholder="Calle, número, comuna" required autocomplete="street-address">
+      </label>
+      <label class="auth-field">
+        <span>¿Cómo gestionas hoy tu disponibilidad?</span>
+        <select name="availability" id="signupAvailability" required>
+          <option value="" disabled selected>Selecciona una opción</option>
+          <option value="manual">A mano / agenda de papel</option>
+          <option value="planilla">Planilla (Excel o Google Sheets)</option>
+          <option value="whatsapp">WhatsApp o redes sociales</option>
+          <option value="software">Otro software de reservas</option>
+          <option value="ninguno">Todavía no tengo un sistema</option>
+        </select>
+        <span class="auth-hint">Así sabemos cómo conectar tu disponibilidad real con Beto, nuestra IA.</span>
       </label>
       <label class="auth-field">
         <span>Correo</span>
-        <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
+        <input type="email" name="email" placeholder="tuempresa@correo.com" required autocomplete="email">
       </label>
       <label class="auth-field">
         <span>Contraseña</span>
         <input type="password" name="password" placeholder="Mínimo 4 caracteres" required minlength="4" autocomplete="new-password">
       </label>
-      <button type="submit" class="btn btn--primary auth-submit">Crear cuenta</button>
+      <button type="submit" class="btn btn--primary auth-submit">Crear cuenta de empresa</button>
       <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
     </form>
 
@@ -105,6 +135,6 @@
 </main>
 
 <script src="js/skyline.js"></script>
-<script src="js/auth.js"></script>
+<script src="js/auth-empresa.js"></script>
 </body>
 </html>

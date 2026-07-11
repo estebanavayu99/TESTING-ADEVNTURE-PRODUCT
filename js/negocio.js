@@ -1,6 +1,27 @@
 (() => {
-  const BIZ_KEY = 'pickmap_business';
-  const RES_KEY = 'pickmap_business_reservations';
+  const BIZ_USERS_KEY = 'pickmap_business_users';
+  const BIZ_SESSION_KEY = 'pickmap_business_session';
+
+  function hashStr(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return h;
+  }
+
+  const bizEmail = localStorage.getItem(BIZ_SESSION_KEY);
+  if (!bizEmail) {
+    window.location.href = 'login-empresa.html';
+    return;
+  }
+  const bizUsers = JSON.parse(localStorage.getItem(BIZ_USERS_KEY) || '[]');
+  const bizAccount = bizUsers.find((u) => u.email === bizEmail);
+  if (!bizAccount) {
+    localStorage.removeItem(BIZ_SESSION_KEY);
+    window.location.href = 'login-empresa.html';
+    return;
+  }
 
   function seedRandom(seed) {
     let s = seed % 2147483647;
@@ -12,24 +33,23 @@
   }
 
   function getBusiness() {
-    let biz = JSON.parse(localStorage.getItem(BIZ_KEY) || 'null');
-    if (!biz) {
-      biz = {
-        name: 'Cabañas Río Claro',
-        category: 'Cabañas y termas',
-        since: '2024',
-        paymentMethod: 'Transferencia · Banco Estado •••• 4821',
-      };
-      localStorage.setItem(BIZ_KEY, JSON.stringify(biz));
-    }
-    return biz;
+    return {
+      name: bizAccount.bizName,
+      legalName: bizAccount.legalName,
+      rut: bizAccount.bizRut,
+      address: bizAccount.address,
+      repName: bizAccount.repName,
+      paymentMethod: 'Transferencia · pendiente de configurar',
+    };
   }
 
   const CLIENTES = ['Javiera Muñoz', 'Tomás Reyes', 'Camila Soto', 'Benjamín Vidal', 'Constanza Pizarro', 'Matías Concha', 'Fernanda Alarcón', 'Ignacio Bravo', 'Antonia Rojas', 'Diego Fuentes', 'Valentina Araya', 'Sebastián Torres'];
   const ACTIVIDADES = ['Cabaña + tinaja caliente (2 noches)', 'Cabaña familiar junto al río', 'Cabaña + desayuno campestre', 'Cabaña romántica + cena', 'Cabaña grupo (6 personas)'];
 
+  const RES_KEY = `pickmap_business_reservations_${bizEmail}`;
+
   function generateReservations() {
-    const rand = seedRandom(20240711);
+    const rand = seedRandom(20240711 + hashStr(bizEmail));
     const now = new Date('2026-07-11T12:00:00');
     const list = [];
     let id = 1001;
@@ -135,6 +155,7 @@
   const logoutBtn = document.getElementById('bizLogoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem(BIZ_SESSION_KEY);
       window.location.href = 'index.html#alianzas';
     });
   }

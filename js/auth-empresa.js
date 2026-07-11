@@ -1,6 +1,6 @@
 (() => {
-  const USERS_KEY = 'pickmap_users';
-  const SESSION_KEY = 'pickmap_current_user';
+  const USERS_KEY = 'pickmap_business_users';
+  const SESSION_KEY = 'pickmap_business_session';
 
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
@@ -32,12 +32,15 @@
     const expectedDv = res === 11 ? '0' : res === 10 ? 'K' : String(res);
     return dv === expectedDv;
   }
-  const signupRutInput = document.getElementById('signupRut');
-  if (signupRutInput) {
-    signupRutInput.addEventListener('blur', (e) => {
-      if (e.target.value.trim()) e.target.value = formatRut(e.target.value);
-    });
-  }
+
+  ['signupRepRut', 'signupBizRut'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('blur', (e) => {
+        if (e.target.value.trim()) e.target.value = formatRut(e.target.value);
+      });
+    }
+  });
 
   function getUsers() {
     try {
@@ -55,15 +58,9 @@
     localStorage.setItem(SESSION_KEY, email);
   }
 
-  function getSession() {
-    return localStorage.getItem(SESSION_KEY);
-  }
-
-  // Already logged in: skip straight to onboarding or the dashboard.
-  const activeEmail = getSession();
-  if (activeEmail) {
-    const activeUser = getUsers().find((u) => u.email === activeEmail);
-    window.location.href = activeUser && activeUser.onboarded ? 'dashboard.html' : 'onboarding.html';
+  // Already logged in as business: skip straight to the panel.
+  if (localStorage.getItem(SESSION_KEY)) {
+    window.location.href = 'negocio.html';
     return;
   }
 
@@ -74,6 +71,7 @@
   const formSignup = document.getElementById('formSignup');
   const formVerify = document.getElementById('formVerify');
   const errorBox = document.getElementById('authError');
+  const kicker = document.getElementById('authKicker');
 
   function showForm(which) {
     const isLogin = which === 'login';
@@ -87,6 +85,9 @@
       tabSignup.classList.toggle('is-active', !isLogin);
       tabLogin.setAttribute('aria-selected', String(isLogin));
       tabSignup.setAttribute('aria-selected', String(!isLogin));
+      kicker.textContent = isLogin ? '🏢 Iniciando sesión como empresa' : '🏢 Creando tu cuenta de empresa';
+    } else {
+      kicker.textContent = '🏢 Verifica tu correo de empresa';
     }
     errorBox.hidden = true;
   }
@@ -94,9 +95,8 @@
   function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
 
   let pendingEmail = null;
-  let pendingRedirect = null;
 
-  function startVerification(email, redirectTo) {
+  function startVerification(email) {
     const users = getUsers();
     const idx = users.findIndex((u) => u.email === email);
     if (idx === -1) return;
@@ -104,7 +104,6 @@
     users[idx].verificationCode = code;
     saveUsers(users);
     pendingEmail = email;
-    pendingRedirect = redirectTo;
     document.getElementById('verifyEmailLabel').textContent = email;
     document.getElementById('verifyCodeDisplay').textContent = code;
     document.getElementById('verifyCodeInput').value = '';
@@ -128,11 +127,11 @@
     delete users[idx].verificationCode;
     saveUsers(users);
     setSession(pendingEmail);
-    window.location.href = pendingRedirect;
+    window.location.href = 'negocio.html';
   });
 
   document.getElementById('resendCode').addEventListener('click', () => {
-    if (pendingEmail) startVerification(pendingEmail, pendingRedirect);
+    if (pendingEmail) startVerification(pendingEmail);
   });
   document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
 
@@ -153,29 +152,38 @@
   formSignup.addEventListener('submit', (e) => {
     e.preventDefault();
     const data = new FormData(formSignup);
-    const name = data.get('name').trim();
-    const rut = formatRut(data.get('rut'));
+    const repName = data.get('repName').trim();
+    const repRut = formatRut(data.get('repRut'));
+    const bizName = data.get('bizName').trim();
+    const legalName = data.get('legalName').trim();
+    const bizRut = formatRut(data.get('bizRut'));
+    const address = data.get('address').trim();
+    const availability = data.get('availability');
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    if (!name || !email || password.length < 4) {
-      showError('Revisa los datos: el nombre no puede estar vacío y la contraseña necesita al menos 4 caracteres.');
+    if (!repName || !bizName || !legalName || !address || !availability || !email || password.length < 4) {
+      showError('Revisa que todos los campos estén completos y que la contraseña tenga al menos 4 caracteres.');
       return;
     }
-    if (!isValidRut(rut)) {
-      showError('El RUT ingresado no es válido. Revísalo e intenta de nuevo.');
+    if (!isValidRut(repRut)) {
+      showError('El RUT del representante no es válido. Revísalo e intenta de nuevo.');
+      return;
+    }
+    if (!isValidRut(bizRut)) {
+      showError('El RUT de la empresa no es válido. Revísalo e intenta de nuevo.');
       return;
     }
 
     const users = getUsers();
     if (users.some((u) => u.email === email)) {
-      showError('Ya existe una cuenta con ese correo. Prueba iniciando sesión.');
+      showError('Ya existe una cuenta de empresa con ese correo. Prueba iniciando sesión.');
       return;
     }
 
-    users.push({ name, rut, email, password, onboarded: false, verified: false });
+    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false });
     saveUsers(users);
-    startVerification(email, 'onboarding.html');
+    startVerification(email);
   });
 
   formLogin.addEventListener('submit', (e) => {
@@ -192,11 +200,11 @@
     }
 
     if (!match.verified) {
-      startVerification(email, match.onboarded ? 'dashboard.html' : 'onboarding.html');
+      startVerification(email);
       return;
     }
 
     setSession(email);
-    window.location.href = match.onboarded ? 'dashboard.html' : 'onboarding.html';
+    window.location.href = 'negocio.html';
   });
 })();

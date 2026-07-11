@@ -38,6 +38,20 @@
   transition: color .2s, background .2s;
 }
 .auth-tab.is-active { background: var(--sun); color: var(--navy); }
+.auth-tabs[hidden] { display: none; }
+
+.auth-verify-note { margin: 0 0 4px; font-size: 0.88rem; color: var(--navy-2); line-height: 1.5; }
+.auth-verify-code {
+  margin: 0 0 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.35em;
+  color: var(--coral);
+  background: rgba(245, 94, 97, 0.1);
+  border-radius: 14px;
+  padding: 14px 10px 14px 20px;
+}
 
 .auth-form { display: flex; flex-direction: column; gap: 18px; }
 .auth-form[hidden] { display: none; }
@@ -85,6 +99,44 @@
   font-size: 0.75rem;
   color: var(--slate);
   margin: 22px 0 0;
+}
+
+.auth-field .auth-hint { font-size: 0.78rem; font-weight: 500; color: var(--slate); }
+
+/* ---------- Empresa auth: distinct accent + title ---------- */
+.auth-kicker {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--deep-red);
+  background: rgba(245, 94, 97, 0.1);
+  border: 1px solid rgba(245, 94, 97, 0.25);
+  border-radius: 999px;
+  padding: 8px 16px;
+  margin: 0 0 18px;
+}
+.auth-body--empresa .auth-tab.is-active { background: var(--coral); color: var(--white); }
+.auth-body--empresa .auth-submit {
+  background: linear-gradient(120deg, var(--sun), var(--coral) 55%, var(--deep-red));
+  color: var(--white);
+  border: none;
+  box-shadow: 0 12px 26px rgba(245, 94, 97, 0.45);
+}
+.auth-body--empresa .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(245, 94, 97, 0.55); }
+.auth-body--empresa .auth-link { color: var(--deep-red); }
+.auth-body--empresa .auth-field select {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 45, 49, 0.18);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--navy);
+}
+.auth-body--empresa .auth-field select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(245, 94, 97, 0.18);
 }
 
 /* ========== Onboarding ========== */
