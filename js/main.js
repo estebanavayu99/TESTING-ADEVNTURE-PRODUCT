@@ -106,23 +106,61 @@
     link.addEventListener('click', () => setMode(link.dataset.modeLink));
   });
 
-  /* Point the auth-buttons connector stem at the exact center of each toggle pill */
-  function updateStemOffsets() {
-    const toggleBox = modeToggle.getBoundingClientRect();
-    const toggleCenter = toggleBox.left + toggleBox.width / 2;
-    const clientOpt = modeToggle.querySelector('.mode-toggle__opt[data-mode="client"]');
-    const bizOpt = modeToggle.querySelector('.mode-toggle__opt[data-mode="business"]');
-    if (!clientOpt || !bizOpt) return;
-    const clientBox = clientOpt.getBoundingClientRect();
-    const bizBox = bizOpt.getBoundingClientRect();
-    const clientOffset = (clientBox.left + clientBox.width / 2) - toggleCenter;
-    const bizOffset = (bizBox.left + bizBox.width / 2) - toggleCenter;
-    document.documentElement.style.setProperty('--stem-client-x', `${clientOffset}px`);
-    document.documentElement.style.setProperty('--stem-business-x', `${bizOffset}px`);
+  /* ---------- User menu: account icon -> iniciar sesión / crear cuenta -> viajero / empresa ---------- */
+  const userMenu = document.getElementById('userMenu');
+  if (userMenu) {
+    const trigger = document.getElementById('userMenuTrigger');
+    const panel = document.getElementById('userMenuPanel');
+    const step1 = document.getElementById('userMenuStep1');
+    const step2 = document.getElementById('userMenuStep2');
+    const backBtn = document.getElementById('userMenuBack');
+    let pendingAction = null;
+
+    function closeMenu() {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      step1.hidden = false;
+      step2.hidden = true;
+      pendingAction = null;
+    }
+
+    function openMenu() {
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (panel.hidden) openMenu();
+      else closeMenu();
+    });
+
+    step1.querySelectorAll('[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        pendingAction = btn.dataset.action;
+        step1.hidden = true;
+        step2.hidden = false;
+      });
+    });
+
+    backBtn.addEventListener('click', () => {
+      step1.hidden = false;
+      step2.hidden = true;
+      pendingAction = null;
+    });
+
+    step2.querySelectorAll('[data-type]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const isBusinessType = btn.dataset.type === 'business';
+        const base = isBusinessType ? 'login-empresa.html' : 'login.html';
+        window.location.href = pendingAction === 'signup' ? `${base}?tab=signup` : base;
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!userMenu.contains(e.target)) closeMenu();
+    });
   }
-  updateStemOffsets();
-  window.addEventListener('load', updateStemOffsets);
-  window.addEventListener('resize', updateStemOffsets, { passive: true });
 
   /* ---------- "Quiero ser aliado" CTA: switch to empresa + reveal login/signup ---------- */
   const aliadoCtaBtn = document.getElementById('aliadoCtaBtn');

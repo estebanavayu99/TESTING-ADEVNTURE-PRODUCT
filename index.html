@@ -52,25 +52,22 @@
             <span class="mode-toggle__opt" data-mode="business">Soy empresa</span>
           </span>
         </button>
-        <div class="nav__client-auth" id="navClientAuth">
-          <span class="nav__auth-connector" aria-hidden="true">
-            <span class="nav__auth-connector-stem"></span>
-            <span class="nav__auth-connector-branch"></span>
-            <span class="nav__auth-connector-drop nav__auth-connector-drop--left"></span>
-            <span class="nav__auth-connector-drop nav__auth-connector-drop--right"></span>
-          </span>
-          <a href="login.html" class="nav__login">Iniciar sesión</a>
-          <a href="login.html?tab=signup" class="nav__signup">Crear cuenta</a>
-        </div>
-        <div class="nav__biz-auth" id="navBizAuth">
-          <span class="nav__auth-connector" aria-hidden="true">
-            <span class="nav__auth-connector-stem"></span>
-            <span class="nav__auth-connector-branch"></span>
-            <span class="nav__auth-connector-drop nav__auth-connector-drop--left"></span>
-            <span class="nav__auth-connector-drop nav__auth-connector-drop--right"></span>
-          </span>
-          <a href="login-empresa.html" class="nav__biz-login">Iniciar sesión</a>
-          <a href="login-empresa.html?tab=signup" class="nav__biz-signup">Crear cuenta</a>
+        <div class="user-menu" id="userMenu">
+          <button type="button" class="user-menu__trigger" id="userMenuTrigger" aria-label="Cuenta" aria-expanded="false" aria-haspopup="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+          </button>
+          <div class="user-menu__panel" id="userMenuPanel" hidden>
+            <div class="user-menu__step" id="userMenuStep1">
+              <button type="button" class="user-menu__option" data-action="login">Iniciar sesión</button>
+              <button type="button" class="user-menu__option user-menu__option--primary" data-action="signup">Crear cuenta</button>
+            </div>
+            <div class="user-menu__step" id="userMenuStep2" hidden>
+              <p class="user-menu__question">¿Eres viajero o empresa?</p>
+              <button type="button" class="user-menu__option" data-type="client">🧭 Viajero</button>
+              <button type="button" class="user-menu__option" data-type="business">🏢 Empresa</button>
+              <button type="button" class="user-menu__back" id="userMenuBack">← Volver</button>
+            </div>
+          </div>
         </div>
       </div>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
