@@ -948,6 +948,8 @@ body.mode-business .hero__biz-mock { display: flex; }
 .card__icon { font-size: 2rem; margin-bottom: 14px; }
 .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
 .card p { margin: 0; color: var(--slate); font-size: 0.92rem; line-height: 1.55; }
+.cards--6 .card,
+.card--feature { text-align: center; }
 
 /* Examples */
 .examples { margin-top: 56px; }
