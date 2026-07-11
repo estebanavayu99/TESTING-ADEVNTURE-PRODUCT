@@ -99,6 +99,15 @@
       });
     }
 
+    // Día con varias reservas de personas distintas, para mostrar cómo se ve
+    // el calendario y el detalle cuando un mismo día tiene más de una reserva.
+    const busyDay = new Date(now.getFullYear(), now.getMonth(), 12);
+    list.push(
+      { id: id++, cliente: 'Javiera Muñoz', actividad: 'Cabaña + tinaja caliente (2 noches)', personas: 4, fecha: new Date(busyDay), hora: '10:00', monto: 85000, montoOriginal: 85000, estado: 'confirmada' },
+      { id: id++, cliente: 'Tomás Reyes', actividad: 'Cabaña romántica + cena', personas: 2, fecha: new Date(busyDay), hora: '13:30', monto: 53000, montoOriginal: 53000, estado: 'pendiente' },
+      { id: id++, cliente: 'Fernanda Alarcón', actividad: 'Cabaña grupo (6 personas)', personas: 6, fecha: new Date(busyDay), hora: '18:00', monto: 101000, montoOriginal: 101000, estado: 'confirmada' },
+    );
+
     list.sort((a, b) => a.fecha - b.fecha);
     return list;
   }
