@@ -35,6 +35,17 @@
     link.addEventListener('click', () => setMode(link.dataset.modeLink));
   });
 
+  /* ---------- "Quiero ser aliado" CTA: switch to empresa + reveal login/signup ---------- */
+  const aliadoCtaBtn = document.getElementById('aliadoCtaBtn');
+  if (aliadoCtaBtn) {
+    aliadoCtaBtn.addEventListener('click', () => {
+      setMode('business');
+      aliadoCtaBtn.hidden = true;
+      document.getElementById('alianzasCtaNote').hidden = true;
+      document.getElementById('alianzasAuthOptions').hidden = false;
+    });
+  }
+
   /* ---------- Mobile menu ---------- */
   const hamburger = document.getElementById('hamburger');
   const navLinks = document.getElementById('navLinks');

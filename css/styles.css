@@ -911,6 +911,8 @@ body.mode-business .nav__login { display: none; }
 
 .alianzas__cta { text-align: center; margin-top: 56px; }
 .alianzas__cta p { margin-top: 14px; opacity: 0.7; font-size: 0.85rem; }
+.alianzas__auth-options { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+#aliadoCtaBtn[hidden], #alianzasCtaNote[hidden], #alianzasAuthOptions[hidden] { display: none; }
 
 /* CTA final */
 .cta-final { text-align: center; }
