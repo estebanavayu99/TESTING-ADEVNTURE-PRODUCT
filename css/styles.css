@@ -307,19 +307,67 @@ a { color: inherit; text-decoration: none; }
 }
 .nav__actions { display: flex; align-items: center; gap: 14px; }
 
-.nav__account { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.nav__account { display: flex; flex-direction: column; align-items: center; gap: 26px; }
 
 .nav__client-auth,
-.nav__biz-auth { display: flex; align-items: flex-start; gap: 8px; }
+.nav__biz-auth { position: relative; display: flex; align-items: flex-start; gap: 8px; }
 body.mode-business .nav__client-auth { display: none; }
 .nav__biz-auth { display: none; }
 body.mode-business .nav__biz-auth { display: flex; }
+
+/* Connector diagram: one stem from the toggle, forking into an arrow per button */
+.nav__auth-connector {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+}
+.nav__auth-connector-stem {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  background: var(--coral);
+  transform: translateX(-50%);
+}
+.nav__auth-connector-branch {
+  position: absolute;
+  top: 8px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: var(--coral);
+}
+.nav__auth-connector-drop {
+  position: absolute;
+  top: 8px;
+  width: 2px;
+  height: 7px;
+  background: var(--coral);
+  transform: translateX(-50%);
+}
+.nav__auth-connector-drop::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--coral);
+}
+.nav__auth-connector-drop--left { left: 25%; }
+.nav__auth-connector-drop--right { left: 75%; }
 
 .nav__login,
 .nav__biz-login,
 .nav__signup,
 .nav__biz-signup {
-  position: relative;
   display: inline-block;
   font-size: 0.8rem;
   font-weight: 700;
@@ -327,22 +375,6 @@ body.mode-business .nav__biz-auth { display: flex; }
   padding: 9px 18px;
   white-space: nowrap;
   transition: transform .15s, box-shadow .15s, background .15s, color .15s;
-}
-.nav__login::before,
-.nav__biz-login::before,
-.nav__signup::before,
-.nav__biz-signup::before {
-  content: '';
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 7px solid var(--coral);
-  filter: drop-shadow(0 2px 2px rgba(245, 94, 97, 0.3));
 }
 .nav__login,
 .nav__biz-login {
@@ -406,6 +438,10 @@ body.mode-business .nav__biz-auth { display: flex; }
   gap: 48px;
   align-items: center;
 }
+/* No app for businesses — hide the phone mockup and let the copy take the full width */
+body.mode-business .hero__mock { display: none; }
+body.mode-business .hero__inner { grid-template-columns: 1fr; }
+body.mode-business .hero__copy { max-width: 640px; margin: 0 auto; }
 .hero__copy {
   background: rgba(255, 255, 255, 0.58);
   backdrop-filter: blur(22px) saturate(120%);
