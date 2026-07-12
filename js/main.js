@@ -295,6 +295,99 @@
     requestAnimationFrame(tick);
   }
 
+  /* ---------- Weather cycle tied to scroll, not a time loop ----------
+     Starts sunny at the top of the page and moves through sunset / night /
+     storm the further down the page the user scrolls, so the background
+     doesn't keep shifting on its own while someone is reading (which read
+     as "mareador" on a fixed 15s auto-loop). Mirrors the same phase timing
+     the old CSS keyframes used, just driven by scroll progress (0-100)
+     instead of animation time. */
+  if (!reduceMotion) {
+    const sunEl = document.querySelector('.sun');
+    const nightEl = document.querySelector('.sky-night');
+    const starsEl = document.querySelector('.stars');
+    const weatherEl = document.querySelector('.weather-overlay');
+    const stormClouds = document.querySelectorAll('.cloud--storm');
+
+    const SUN_STOPS = [
+      { p: 0, top: 58, left: 6, opacity: 1, scale: 0.85 },
+      { p: 16, top: 10, left: 30, opacity: 1, scale: 1.08 },
+      { p: 30, top: 8, left: 45, opacity: 1, scale: 1 },
+      { p: 33.33, top: 20, left: 55, opacity: 0.6, scale: 0.95 },
+      { p: 40, top: 60, left: 60, opacity: 0, scale: 0.8 },
+      { p: 60, top: 68, left: 68, opacity: 0, scale: 0.8 },
+      { p: 66.67, top: 32, left: 76, opacity: 0.3, scale: 0.9 },
+      { p: 80, top: 20, left: 84, opacity: 0.35, scale: 0.92 },
+      { p: 93, top: 18, left: 90, opacity: 0.6, scale: 0.95 },
+      { p: 100, top: 58, left: 6, opacity: 1, scale: 0.85 },
+    ];
+    const NIGHT_STOPS = [[0, 0], [33.33, 0], [40, 1], [60, 1], [66.67, 0], [100, 0]];
+    const WEATHER_STOPS = [[0, 0], [66.67, 0], [73, 0.7], [93, 0.7], [100, 0]];
+    const RAIN_STOPS = [[0, 0], [66.67, 0], [73, 0.9], [93, 0.9], [100, 0]];
+    const STORM_STOPS = [[0, 0], [63, 0], [73, 0.85], [93, 0.85], [100, 0]];
+
+    function interpOpacity(stops, pct) {
+      for (let i = 0; i < stops.length - 1; i++) {
+        const [p0, v0] = stops[i];
+        const [p1, v1] = stops[i + 1];
+        if (pct >= p0 && pct <= p1) {
+          const t = p1 === p0 ? 0 : (pct - p0) / (p1 - p0);
+          return v0 + (v1 - v0) * t;
+        }
+      }
+      return stops[stops.length - 1][1];
+    }
+
+    function interpSun(pct) {
+      for (let i = 0; i < SUN_STOPS.length - 1; i++) {
+        const a = SUN_STOPS[i];
+        const b = SUN_STOPS[i + 1];
+        if (pct >= a.p && pct <= b.p) {
+          const t = b.p === a.p ? 0 : (pct - a.p) / (b.p - a.p);
+          return {
+            top: a.top + (b.top - a.top) * t,
+            left: a.left + (b.left - a.left) * t,
+            opacity: a.opacity + (b.opacity - a.opacity) * t,
+            scale: a.scale + (b.scale - a.scale) * t,
+          };
+        }
+      }
+      const last = SUN_STOPS[SUN_STOPS.length - 1];
+      return last;
+    }
+
+    function updateWeatherByScroll() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = scrollable > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollable) * 100)) : 0;
+
+      if (sunEl) {
+        const s = interpSun(pct);
+        sunEl.style.top = s.top + '%';
+        sunEl.style.left = s.left + '%';
+        sunEl.style.opacity = s.opacity;
+        sunEl.style.transform = `scale(${s.scale})`;
+      }
+      const nightOpacity = interpOpacity(NIGHT_STOPS, pct);
+      if (nightEl) nightEl.style.opacity = nightOpacity;
+      if (starsEl) starsEl.style.opacity = nightOpacity;
+      if (weatherEl) weatherEl.style.opacity = interpOpacity(WEATHER_STOPS, pct);
+      if (rainCanvas) rainCanvas.style.opacity = interpOpacity(RAIN_STOPS, pct);
+      const stormOpacity = interpOpacity(STORM_STOPS, pct);
+      stormClouds.forEach((el) => { el.style.opacity = stormOpacity; });
+    }
+
+    let weatherTicking = false;
+    function onScrollWeather() {
+      if (weatherTicking) return;
+      weatherTicking = true;
+      requestAnimationFrame(() => { updateWeatherByScroll(); weatherTicking = false; });
+    }
+
+    updateWeatherByScroll();
+    window.addEventListener('scroll', onScrollWeather, { passive: true });
+    window.addEventListener('resize', onScrollWeather, { passive: true });
+  }
+
   /* ---------- Phone mockup: slow content crossfade ---------- */
   const appContent = document.getElementById('appContent');
   if (appContent && !reduceMotion) {

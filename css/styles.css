@@ -60,30 +60,22 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(180deg, #FDEFD3 0%, #FBD6A8 30%, #F7B98F 55%, #F58F8F 75%, #F55E61 100%);
 }
 
-/* Night overlay: fades in/out over a slow cycle so the sun visibly sets
-   behind the mountains and rises again, without ever animating the sky's
-   gradient stops directly (which browsers can't tween smoothly). */
+/* Night overlay: fades in/out as the user scrolls (js/main.js), so the sun
+   visibly sets behind the mountains the further down the page you go,
+   without ever animating the sky's gradient stops directly (which browsers
+   can't tween smoothly). Scroll-driven instead of a time loop so the scene
+   doesn't keep shifting on its own while someone is reading. */
 .sky-night {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, #0B1220 0%, #16202E 30%, #1E2D31 58%, #2C2130 82%, #3A2233 100%);
   opacity: 0;
-  animation: nightFade 15s ease-in-out infinite;
-}
-@keyframes nightFade {
-  0%     { opacity: 0; }
-  33.33% { opacity: 0; }
-  40%    { opacity: 1; }
-  60%    { opacity: 1; }
-  66.67% { opacity: 0; }
-  100%   { opacity: 0; }
 }
 
 .stars {
   position: absolute;
   inset: 0 0 40% 0;
   opacity: 0;
-  animation: nightFade 15s ease-in-out infinite;
   background-image:
     radial-gradient(1.6px 1.6px at 8% 18%, #fff, transparent),
     radial-gradient(1.4px 1.4px at 18% 32%, #fff, transparent),
@@ -108,21 +100,13 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: linear-gradient(180deg, rgba(94, 104, 112, 0.5), rgba(70, 80, 90, 0.62) 55%, rgba(45, 53, 61, 0.68) 100%);
   opacity: 0;
-  animation: weatherFade 15s ease-in-out infinite;
   pointer-events: none;
-}
-@keyframes weatherFade {
-  0%     { opacity: 0; }
-  66.67% { opacity: 0; }
-  73%    { opacity: 0.7; }
-  93%    { opacity: 0.7; }
-  100%   { opacity: 0; }
 }
 
 /* Rain: real drops drawn on a canvas (js/main.js) rather than a CSS stripe
    pattern, which read as flat diagonal wallpaper instead of falling rain.
-   The canvas draws continuously; only its opacity is tied to the weather
-   cycle below, so it's only visible during the storm phase. */
+   The canvas draws continuously; only its opacity is tied to scroll
+   progress (js/main.js), so it's only visible during the storm phase. */
 .rain-canvas {
   position: absolute;
   inset: 0;
@@ -130,14 +114,6 @@ a { color: inherit; text-decoration: none; }
   height: 100%;
   opacity: 0;
   pointer-events: none;
-  animation: rainCycle 15s ease-in-out infinite;
-}
-@keyframes rainCycle {
-  0%     { opacity: 0; }
-  66.67% { opacity: 0; }
-  73%    { opacity: 0.9; }
-  93%    { opacity: 0.9; }
-  100%   { opacity: 0; }
 }
 
 .cloud--storm {
@@ -146,46 +122,29 @@ a { color: inherit; text-decoration: none; }
   background: rgba(88, 97, 105, 0.8);
   filter: blur(2px);
   opacity: 0;
-  animation: driftRight 65s linear infinite, stormCloudFade 15s ease-in-out infinite;
+  animation: driftRight 65s linear infinite;
 }
 .cloud--storm::before { width: 130px; height: 130px; top: -60px; left: 30px; }
 .cloud--storm::after { width: 100px; height: 100px; top: -40px; left: 155px; }
 .cloud--storm-1 { top: 8%; left: -40%; }
-.cloud--storm-2 { top: 22%; left: -60%; animation-delay: -18s, 0s; opacity: 0; }
-@keyframes stormCloudFade {
-  0%     { opacity: 0; }
-  63%    { opacity: 0; }
-  73%    { opacity: 0.85; }
-  93%    { opacity: 0.85; }
-  100%   { opacity: 0; }
-}
+.cloud--storm-2 { top: 22%; left: -60%; animation-delay: -18s; opacity: 0; }
 
 .sun {
   position: absolute;
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  top: 60%;
-  left: 15%;
+  top: 58%;
+  left: 6%;
+  opacity: 1;
+  transform: scale(0.85);
   background: radial-gradient(circle at 35% 35%, #FFF6D8, var(--sun) 60%, #F6B24C 100%);
   box-shadow: 0 0 60px 20px rgba(246, 205, 76, 0.55), 0 0 140px 60px rgba(245, 94, 97, 0.25);
-  animation: sunCycle 15s ease-in-out infinite;
 }
-/* One full weather cycle gives each state an even 5s in a 15s loop:
-   sunny day (0-33.33%) -> sunset into night (33.33-66.67%) -> pale sun
-   returns behind rain clouds (66.67-100%) -> back to a clear sunrise. */
-@keyframes sunCycle {
-  0%     { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
-  16%    { top: 10%; left: 30%; opacity: 1;    transform: scale(1.08); }
-  30%    { top: 8%;  left: 45%; opacity: 1;    transform: scale(1); }
-  33.33% { top: 20%; left: 55%; opacity: 0.6;  transform: scale(0.95); }
-  40%    { top: 60%; left: 60%; opacity: 0;    transform: scale(0.8); }
-  60%    { top: 68%; left: 68%; opacity: 0;    transform: scale(0.8); }
-  66.67% { top: 32%; left: 76%; opacity: 0.3;  transform: scale(0.9); }
-  80%    { top: 20%; left: 84%; opacity: 0.35; transform: scale(0.92); }
-  93%    { top: 18%; left: 90%; opacity: 0.6;  transform: scale(0.95); }
-  100%   { top: 58%; left: 6%;  opacity: 1;    transform: scale(0.85); }
-}
+/* Sun position/opacity, night overlay, weather overlay and rain are driven
+   by scroll progress in js/main.js (not a time loop) — starts sunny at the
+   top of the page and moves through sunset/night/storm as you scroll down,
+   so the scene doesn't keep shifting on its own while someone is reading. */
 
 .cloud {
   position: absolute;
