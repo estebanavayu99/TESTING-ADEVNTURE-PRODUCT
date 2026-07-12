@@ -79,6 +79,37 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - Repo tiene una sola rama (no hay `main` separado), así que no cabe abrir
   PR salvo que el usuario pida explícitamente crear una rama base nueva.
 
+## Notificaciones (spec para lanzamiento real — aún NO implementado)
+
+El usuario compartió `PickMap_Diagrama_Notificaciones_v2.pdf` con el set de
+notificaciones que espera tener una vez la plataforma esté lanzada con
+clientes reales (hoy no hay backend ni envío de emails real, todo es
+`localStorage`; esto es referencia para cuando exista esa infraestructura).
+
+**Vista Cliente** (todas por email):
+| Etapa | Evento | Contenido |
+|---|---|---|
+| Cuenta | Crear cuenta | Bienvenida |
+| Cuenta | Recuperar contraseña | Enlace seguro |
+| Reserva | Reserva confirmada | Confirmación |
+| Reserva | Reserva cancelada | Confirmación de cancelación |
+| Recordatorio | 24 horas antes | Recordatorio |
+| Post experiencia | Reserva completada | Resumen + puntos + reseña + recomendaciones IA |
+
+**Vista Empresa** (notificación a la empresa):
+| Evento | Notificación |
+|---|---|
+| Nueva reserva | Notificación inmediata con datos del cliente + botón "Ver calendario" (abre el calendario propio de la empresa en Pickmap) |
+| Reserva cancelada | Aviso de cancelación + botón "Ver calendario" |
+| Reserva modificada | Detalle de los cambios + botón "Ver calendario" |
+| 24 horas antes | Recordatorio de las reservas del día siguiente + botón "Ver calendario" |
+| Cliente completó experiencia | Solicitud para validar asistencia (opcional) + acceso al calendario |
+| Cliente dejó reseña | Notificación con puntuación y comentario + acceso al panel |
+| Reseña negativa | Alerta prioritaria + acceso al panel para responder |
+
+No implementar mientras el sitio siga siendo demo estática; es la
+referencia a seguir cuando se construya el backend/envío real de emails.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo
