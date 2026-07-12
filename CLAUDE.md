@@ -30,7 +30,7 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   `.mi-componente[hidden] { display: none; }` en el CSS, porque reglas de
   autor con `display:` pueden ganarle a `[hidden]` en la cascada. Ya pasó
   varias veces en este repo — escribirlo desde el principio en componentes
-  nuevos (chat de Beto, menú de usuario, modales, etc.).
+  nuevos (chat de Darwin, menú de usuario, modales, etc.).
 - **Especificidad CSS con badges de estado**: reglas tipo
   `.biz-modal__row span:last-child { color: ... }` (0,2,1) le ganan a
   overrides ingenuos tipo `.biz-modal__estado--confirmada { color: ... }`
@@ -74,7 +74,7 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   `executablePath: '/opt/pw-browsers/chromium'`, screenshots a la carpeta
   scratchpad.
 - Para producción real, confiar en las capturas que manda el usuario.
-- El FAB de Beto tiene una animación de rebote continua (`betoFabBounce`),
+- El FAB de Darwin tiene una animación de rebote continua (`betoFabBounce`),
   lo que puede hacer fallar el chequeo "wait for stable" de Playwright al
   hacer `.click()`. Usar `force=True`/`force: true` en los tests, no es un
   bug real de producto.

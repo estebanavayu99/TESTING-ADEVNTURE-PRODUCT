@@ -31,7 +31,7 @@
       'Por ahora soy 100% IA 🤖, pero estamos sumando soporte humano pronto. Mientras tanto, ¡pregúntame lo que quieras!',
     ] },
     { test: /hola|buenas|hey|holi/, replies: [
-      '¡Hola! 👋 Soy Beto, la IA de Pickmap. ¿En qué te ayudo?',
+      '¡Hola! 👋 Soy Darwin, la IA de Pickmap. ¿En qué te ayudo?',
     ] },
     { test: /gracias|genial|excelente|perfecto/, replies: [
       '¡De nada! Que tengas un panorama increíble 🎉',
@@ -80,7 +80,7 @@
     badge.hidden = true;
     if (!opened) {
       opened = true;
-      addMessage('¡Hola! Soy Beto 🤖, la IA de Pickmap. Pregúntame lo que quieras sobre panoramas, reservas, Pick Points o cómo sumarte como aliado.', 'bot');
+      addMessage('¡Hola! Soy Darwin 🤖, la IA de Pickmap. Pregúntame lo que quieras sobre panoramas, reservas, Pick Points o cómo sumarte como aliado.', 'bot');
     }
     input.focus();
   }

@@ -167,8 +167,8 @@
 
   function cardHTML(item) {
     const whyBox = item.reason
-      ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
-      : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
+      ? `<p class="pano-card__why">✨ <b>Por qué Darwin lo eligió:</b> nos contaste que ${item.reason}.</p>`
+      : `<p class="pano-card__why pano-card__why--general">🤖 Darwin dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const difficulty = item.difficulty || 'suave';
     return `
       <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
@@ -555,7 +555,7 @@
       <h2 class="reserve-modal__title" id="reserveModalTitle">Resumen de tu reserva</h2>
       <form id="reserveForm" class="reserve-form" novalidate>
         <div class="reserve-step" id="reserveStep1">
-          <p class="reserve-plan-note">🤖 Beto armó este plan según disponibilidad y distancia entre actividades. Toca <span class="reserve-plan-note__chevron">⌄</span> en cada actividad para ajustarla. <button type="button" class="reserve-plan-note__regen" id="reserveAutoPlanBtn">Generar otro plan</button></p>
+          <p class="reserve-plan-note">🤖 Darwin armó este plan según disponibilidad y distancia entre actividades. Toca <span class="reserve-plan-note__chevron">⌄</span> en cada actividad para ajustarla. <button type="button" class="reserve-plan-note__regen" id="reserveAutoPlanBtn">Generar otro plan</button></p>
           <div class="reserve-activities">
             ${allItems.map((it, idx) => activityRowHTML(it, idx, item)).join('')}
           </div>
@@ -636,7 +636,7 @@
           <div class="reserve-success__row"><span>💎 Nuevo saldo Pick Points</span><b>${data.newBalance.toLocaleString('es-CL')}</b></div>` : ''}
           <div class="reserve-success__row"><span>💰 Total pagado</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
         </div>
-        <p class="reserve-success__note">¡Que lo disfrutes muchísimo! Beto ya te está preparando la mejor experiencia 🌟🧳</p>
+        <p class="reserve-success__note">¡Que lo disfrutes muchísimo! Darwin ya te está preparando la mejor experiencia 🌟🧳</p>
         <button type="button" class="btn btn--primary reserve-success__close">Listo</button>
       </div>
     `;

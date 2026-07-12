@@ -816,7 +816,7 @@ body.mode-business .hero__biz-mock { display: flex; }
 .step h3 { margin: 0 0 8px; font-size: 1.1rem; }
 .step p { margin: 0; color: var(--slate); font-size: 0.92rem; line-height: 1.5; }
 
-/* Beto: la IA */
+/* Darwin: la IA */
 .beto__lead {
   max-width: 720px;
   color: var(--navy-2);
@@ -1221,7 +1221,7 @@ body.mode-business .hero__biz-mock { display: flex; }
   .hamburger span { width: 18px; }
 }
 
-/* ========== Beto chat widget ========== */
+/* ========== Darwin chat widget ========== */
 .beto-chat { position: fixed; right: 22px; bottom: 22px; z-index: 60; }
 .beto-chat__fab {
   position: relative;

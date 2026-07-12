@@ -348,7 +348,7 @@
     }
   }
 
-  // Beto also weighs the finer preferences from onboarding (exigencia física,
+  // Darwin also weighs the finer preferences from onboarding (exigencia física,
   // presupuesto, distancia y día) to bubble the closest matches to the top.
   const difficultyPrefs = user.difficulty || [];
   const budgetPrefs = user.budget || [];
@@ -369,7 +369,7 @@
       .map((x) => x.item);
   }
 
-  // General catalog: everything, deduplicated, generic Beto blurb instead of a personal one.
+  // General catalog: everything, deduplicated, generic Darwin blurb instead of a personal one.
   const seenTitles = new Set();
   const general = CATALOG.filter((i) => {
     if (seenTitles.has(i.title)) return false;
@@ -784,7 +784,7 @@
       <h2 class="reserve-modal__title" id="reserveModalTitle">Resumen de tu reserva</h2>
       <form id="reserveForm" class="reserve-form" novalidate>
         <div class="reserve-step" id="reserveStep1">
-          <p class="reserve-plan-note">🤖 Beto armó este plan según disponibilidad y distancia entre actividades. Toca <span class="reserve-plan-note__chevron">⌄</span> en cada actividad para ajustarla. <button type="button" class="reserve-plan-note__regen" id="reserveAutoPlanBtn">Generar otro plan</button></p>
+          <p class="reserve-plan-note">🤖 Darwin armó este plan según disponibilidad y distancia entre actividades. Toca <span class="reserve-plan-note__chevron">⌄</span> en cada actividad para ajustarla. <button type="button" class="reserve-plan-note__regen" id="reserveAutoPlanBtn">Generar otro plan</button></p>
           <div class="reserve-activities">
             ${allItems.map((it, idx) => activityRowHTML(it, idx, item)).join('')}
           </div>
@@ -865,7 +865,7 @@
           <div class="reserve-success__row"><span>💎 Nuevo saldo Pick Points</span><b>${data.newBalance.toLocaleString('es-CL')}</b></div>` : ''}
           <div class="reserve-success__row"><span>💰 Total pagado</span><b>$${data.total.toLocaleString('es-CL')}</b></div>
         </div>
-        <p class="reserve-success__note">¡Que lo disfrutes muchísimo! Beto ya te está preparando la mejor experiencia 🌟🧳</p>
+        <p class="reserve-success__note">¡Que lo disfrutes muchísimo! Darwin ya te está preparando la mejor experiencia 🌟🧳</p>
         <button type="button" class="btn btn--primary reserve-success__close">Listo</button>
       </div>
     `;
@@ -1306,7 +1306,7 @@
     return filtered;
   }
 
-  // "Recomendado para ti" deja el orden de Beto (match score) intacto; las
+  // "Recomendado para ti" deja el orden de Darwin (match score) intacto; las
   // demás opciones son una elección explícita del cliente para verlo a su manera.
   function applySort(list) {
     if (activeSort === 'recomendado') return list;

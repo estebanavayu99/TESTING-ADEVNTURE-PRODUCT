@@ -19,7 +19,7 @@
 
   if (user.onboarded) {
     document.getElementById('onboardingTitle').textContent = `Actualiza tus datos, ${firstName}`;
-    document.querySelector('.onboarding-lead').textContent = 'Ajusta tu edad, con quién sueles viajar y tus gustos cuando quieras — Beto usa esto para seguir afinando tus panoramas.';
+    document.querySelector('.onboarding-lead').textContent = 'Ajusta tu edad, con quién sueles viajar y tus gustos cuando quieras — Darwin usa esto para seguir afinando tus panoramas.';
     document.querySelector('.auth-submit').textContent = 'Guardar cambios';
     document.getElementById('skipOnboarding').hidden = true;
     document.getElementById('age').value = user.age || '';
@@ -83,7 +83,7 @@
     const city = document.getElementById('city').value.trim();
 
     if (!age || company.length === 0 || difficulty.length === 0 || budget.length === 0 || travelDistance.length === 0 || preferredDay.length === 0 || !city) {
-      errorBox.textContent = 'Todos los campos son obligatorios — así Beto arma algo realmente a tu pinta.';
+      errorBox.textContent = 'Todos los campos son obligatorios — así Darwin arma algo realmente a tu pinta.';
       errorBox.hidden = false;
       return;
     }
