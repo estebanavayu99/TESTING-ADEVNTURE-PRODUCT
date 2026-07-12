@@ -338,7 +338,7 @@
     }
     recommended = recommended
       .map((item, idx) => ({ item, idx, score: matchScore(item) }))
-      .sort((a, b) => b.score - a.score || a.idx - b.idx)
+      .sort((a, b) => b.score - a.score || parseFloat(b.item.rating) - parseFloat(a.item.rating) || a.idx - b.idx)
       .map((x) => x.item);
   }
 
