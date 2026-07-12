@@ -102,8 +102,24 @@
 
   // Deterministic "real-looking" rating/reviews/price/km/day + a photo-card gradient per item.
   const GRADIENTS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
-  // Fake stock photos (Lorem Picsum) tinted with the card's gradient, just to preview
-  // how colors read with real photography instead of flat emoji-on-gradient cards.
+  // Fake stock photos (Unsplash CDN, picked deterministically per item) tinted with the
+  // card's gradient, just to preview how colors read with real photography instead of
+  // flat emoji-on-gradient cards. Using images.unsplash.com directly (not picsum.photos)
+  // since picsum is blocked on some networks; Unsplash's own CDN almost never is.
+  const PHOTO_POOL = [
+    'photo-1506905925346-21bda4d32df4',
+    'photo-1469474968028-56623f02e42e',
+    'photo-1441974231531-c6227db76b6e',
+    'photo-1507525428034-b723cf961d3e',
+    'photo-1500530855697-b586d89ba3ee',
+    'photo-1476514525535-07fb3b4ae5f1',
+    'photo-1483729558449-99ef09a8c325',
+    'photo-1493246507139-91e8fad9978e',
+    'photo-1519046904884-53103b34b206',
+    'photo-1470770841072-f978cf4d019e',
+    'photo-1454391304352-2bf4678b1a53',
+    'photo-1544735716-392fe2489ffa',
+  ];
   const GRADIENT_TINTS = {
     g1: ['246,205,76', '245,94,97'],
     g2: ['131,208,97', '63,122,44'],
@@ -274,7 +290,7 @@
       gear: getGear(item.title, category),
       category,
       grad: GRADIENTS[i % GRADIENTS.length],
-      photo: `https://picsum.photos/seed/${h}/400/300`,
+      photo: `https://images.unsplash.com/${PHOTO_POOL[h % PHOTO_POOL.length]}?w=400&h=300&fit=crop&q=60&auto=format`,
     };
   }
   function distanceBucket(km) {
