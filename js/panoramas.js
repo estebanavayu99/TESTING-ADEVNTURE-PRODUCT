@@ -1258,6 +1258,7 @@
   let activeDistance = 'todas';
   let activePrice = 'todos';
   let activeDay = 'todos';
+  let activeSort = 'recomendado';
 
   const categorySelect = document.getElementById('filterCategory');
   if (categorySelect) {
@@ -1281,8 +1282,19 @@
     return filtered;
   }
 
+  // "Recomendado para ti" deja el orden de Beto (match score) intacto; las
+  // demás opciones son una elección explícita del cliente para verlo a su manera.
+  function applySort(list) {
+    if (activeSort === 'recomendado') return list;
+    const sorted = [...list];
+    if (activeSort === 'rating') sorted.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+    else if (activeSort === 'price_asc') sorted.sort((a, b) => a.priceNum - b.priceNum);
+    else if (activeSort === 'price_desc') sorted.sort((a, b) => b.priceNum - a.priceNum);
+    return sorted;
+  }
+
   function renderRows() {
-    const filteredRecommended = applyAdvFilters(recommended);
+    const filteredRecommended = applySort(applyAdvFilters(recommended));
     renderRow('rowSimple', filteredRecommended.filter((i) => i.kind === 'simple').slice(0, 8));
     renderRow('rowPaquete', filteredRecommended.filter((i) => i.kind === 'paquete').slice(0, 8));
     renderRow('rowTodos', filteredRecommended.slice(0, 8));
@@ -1291,7 +1303,7 @@
   function renderExplore() {
     const source = activeTab === 'recomendado' ? recommended : general;
     const kindFiltered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
-    const filtered = applyAdvFilters(kindFiltered);
+    const filtered = applySort(applyAdvFilters(kindFiltered));
     if (filtered.length === 0) {
       grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
       return;
@@ -1332,12 +1344,14 @@
       activeDistance = 'todas';
       activePrice = 'todos';
       activeDay = 'todos';
+      activeSort = 'recomendado';
       document.querySelectorAll('.pano-filter').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === filter));
       document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === 'recomendado'));
       if (categorySelect) categorySelect.value = 'todas';
       document.getElementById('filterDistance').value = 'todas';
       document.getElementById('filterPrice').value = 'todos';
       document.getElementById('filterDay').value = 'todos';
+      document.getElementById('filterSort').value = 'recomendado';
       renderAll();
       document.getElementById('explorar').scrollIntoView({ behavior: 'smooth' });
     });
@@ -1347,15 +1361,18 @@
   document.getElementById('filterDistance').addEventListener('change', (e) => { activeDistance = e.target.value; renderAll(); });
   document.getElementById('filterPrice').addEventListener('change', (e) => { activePrice = e.target.value; renderAll(); });
   document.getElementById('filterDay').addEventListener('change', (e) => { activeDay = e.target.value; renderAll(); });
+  document.getElementById('filterSort').addEventListener('change', (e) => { activeSort = e.target.value; renderAll(); });
   document.getElementById('resetFilters').addEventListener('click', () => {
     activeCategory = 'todas';
     activeDistance = 'todas';
     activePrice = 'todos';
     activeDay = 'todos';
+    activeSort = 'recomendado';
     if (categorySelect) categorySelect.value = 'todas';
     document.getElementById('filterDistance').value = 'todas';
     document.getElementById('filterPrice').value = 'todos';
     document.getElementById('filterDay').value = 'todos';
+    document.getElementById('filterSort').value = 'recomendado';
     renderAll();
   });
 
