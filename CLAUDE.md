@@ -42,6 +42,18 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   rompe silenciosamente cualquier cadena `&&` posterior (por ejemplo, un
   commit que nunca se ejecuta). Ejecutar `pkill` y los comandos git
   siguientes como llamadas de Bash **separadas**, nunca encadenadas.
+- **`.nav` no puede tener fondo transparente**: es `position: sticky`. Si
+  el fondo es `transparent`, cuando el usuario hace scroll el contenido
+  que pasa por debajo se ve "a través" del nav y se superpone visualmente
+  con el logo/pills (bug real, confirmado con screenshot de producción).
+  Debe llevar siempre un fondo sólido o esmerilado (mismo patrón
+  `rgba(255,255,255,.55) + backdrop-filter: blur()` que `.hero__copy` /
+  `.puntos__copy` / `.cta-final__copy`), nunca `transparent`.
+- **CDN de fotos placeholder: usar Unsplash, no Picsum**: `picsum.photos`
+  se bloquea en algunas redes/equipos (confirmado por el usuario — hard
+  refresh no lo arregló). `images.unsplash.com` es el estándar de la
+  industria y casi nunca se bloquea; preferirlo para cualquier imagen de
+  stock/fake en el sitio.
 
 ## Verificación visual
 
