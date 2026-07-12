@@ -1131,7 +1131,18 @@ body.mode-business .hero__biz-mock { display: flex; }
 .footer__title { font-weight: 800; color: var(--white); margin: 0 0 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .footer__cols a { display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.75; }
 .footer__cols a:hover { opacity: 1; }
-.footer__bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; font-size: 0.8rem; opacity: 0.6; }
+.footer__bottom {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 20px;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.footer__legal { color: inherit; text-decoration: none; }
+.footer__legal:hover { text-decoration: underline; }
 
 /* ========== Reveal on scroll ========== */
 [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }

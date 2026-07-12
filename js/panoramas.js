@@ -380,16 +380,12 @@
   const kindLabel = { simple: 'Simple', paquete: 'Paquete' };
 
   function cardHTML(item) {
-    const whyBox = item.reason
-      ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
-      : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const liked = isFavorited(item.title);
     const [tintA, tintB] = GRADIENT_TINTS[item.grad];
     const photoStyle = `background-image: linear-gradient(135deg, rgba(${tintA},.5), rgba(${tintB},.5)), url('${item.photo}'); background-color: rgb(${tintB}); background-size: cover; background-position: center;`;
     return `
       <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
         <div class="pano-card__photo pano-card__photo--${item.grad}" style="${photoStyle}">
-          <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
           <span class="pano-card__heart${liked ? ' is-liked' : ''}" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
           <span class="pano-card__badges">
@@ -401,7 +397,6 @@
           <p class="pano-card__title">${item.title}</p>
           <p class="pano-card__rating">⭐ ${item.rating} <span>(${item.reviews})</span></p>
           <p class="pano-card__price">Desde <b>$${item.price}</b> por persona</p>
-          ${whyBox}
         </div>
       </article>
     `;
