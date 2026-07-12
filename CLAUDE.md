@@ -110,6 +110,18 @@ clientes reales (hoy no hay backend ni envío de emails real, todo es
 No implementar mientras el sitio siga siendo demo estática; es la
 referencia a seguir cuando se construya el backend/envío real de emails.
 
+- **Preview de diseño guardado**: `notificaciones-preview.html` (raíz del
+  repo) tiene las 13 plantillas de email ya maquetadas con la marca de
+  Pickmap (inbox simulado: lista a la izquierda + preview del correo a la
+  derecha, con toggle de tema). Es solo una página de referencia para
+  iterar el diseño — no está enlazada desde el nav ni desde ninguna otra
+  página del sitio (lleva `<meta name="robots" content="noindex, nofollow">`),
+  y no envía correos reales. Las 4 notificaciones "buenas" para el cliente
+  (Bienvenida, Reserva confirmada, Recordatorio 24h, Post experiencia)
+  usan una barra superior a rayas (coral/amarillo/verde) + un recuadro de
+  "dato random" con humor; las demás (cancelaciones, seguridad, reseña
+  negativa) se mantienen serias a propósito.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo

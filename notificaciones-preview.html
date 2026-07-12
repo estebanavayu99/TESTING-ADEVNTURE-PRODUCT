@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Pickmap — Preview de notificaciones</title>
+<style>
+  :root {
+    --ink: #1E2D31;
+    --ink-2: #273C42;
+    --ink-soft: #5E696C;
+    --paper: #FAF7F1;
+    --paper-raised: #FFFFFF;
+    --line: rgba(30,45,49,0.11);
+    --line-soft: rgba(30,45,49,0.06);
+    --coral: #F55E61;
+    --coral-ink: #B23E40;
+    --sun: #F6CD4C;
+    --sun-ink: #8A6A16;
+    --green: #4E9A3A;
+    --green-bg: #83D061;
+    --red: #AF4345;
+    --shadow: 0 1px 2px rgba(30,45,49,0.06), 0 12px 32px rgba(30,45,49,0.08);
+  }
+  :root[data-theme="dark"] {
+    --ink: #F1F3F0;
+    --ink-2: #D7DEDA;
+    --ink-soft: #A9B4B2;
+    --paper: #161E20;
+    --paper-raised: #1D2729;
+    --line: rgba(255,255,255,0.09);
+    --line-soft: rgba(255,255,255,0.05);
+    --coral: #FF7B7D;
+    --coral-ink: #FFB2B3;
+    --sun: #F6CD4C;
+    --sun-ink: #F6CD4C;
+    --green: #8FD979;
+    --green-bg: #4E9A3A;
+    --red: #FF8385;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #F1F3F0;
+      --ink-2: #D7DEDA;
+      --ink-soft: #A9B4B2;
+      --paper: #161E20;
+      --paper-raised: #1D2729;
+      --line: rgba(255,255,255,0.09);
+      --line-soft: rgba(255,255,255,0.05);
+      --coral: #FF7B7D;
+      --coral-ink: #FFB2B3;
+      --sun: #F6CD4C;
+      --sun-ink: #F6CD4C;
+      --green: #8FD979;
+      --green-bg: #4E9A3A;
+      --red: #FF8385;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  .display {
+    font-family: ui-rounded, "SF Pro Rounded", "Century Gothic", Futura, system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .rail {
+    border-right: 1px solid var(--line);
+    background: var(--paper-raised);
+    padding: 22px 16px 32px;
+    overflow-y: auto;
+  }
+  .rail__brand {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 8px 6px;
+    font-size: 1.15rem;
+  }
+  .rail__brand b { color: var(--ink); }
+  .rail__brand span { color: var(--green-bg); }
+  .rail__sub {
+    margin: 2px 8px 22px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .rail__group-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-soft);
+    margin: 20px 10px 8px;
+  }
+  .rail__group-title:first-of-type { margin-top: 4px; }
+  .rail__item {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+  }
+  .rail__item:hover { background: var(--line-soft); }
+  .rail__item.is-active {
+    background: var(--line-soft);
+    border-color: var(--line);
+  }
+  .rail__dot {
+    flex-shrink: 0;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+  }
+  .rail__item-text { min-width: 0; }
+  .rail__item-title {
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rail__item-desc {
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------- Stage ---------- */
+  .stage {
+    padding: 28px 40px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+  .stage__meta {
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 16px;
+  }
+  .stage__kicker {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+  .stage__title {
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .stage__desc {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .mailhead {
+    width: 100%;
+    max-width: 640px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    border-bottom: none;
+    padding: 14px 20px;
+    box-shadow: var(--shadow);
+  }
+  .mailhead__row {
+    display: flex;
+    gap: 8px;
+    font-size: 0.82rem;
+    padding: 3px 0;
+  }
+  .mailhead__label { color: var(--ink-soft); width: 46px; flex-shrink: 0; }
+  .mailhead__value { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+  .mailhead__subject {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  .frame-wrap {
+    width: 100%;
+    max-width: 640px;
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    background: #fff;
+  }
+  iframe#mailFrame {
+    display: block;
+    width: 100%;
+    height: 720px;
+    border: 0;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 18px; right: 18px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .rail { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; }
+    .stage { padding: 22px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" type="button">🌗 Tema</button>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rail__brand display"><b>Pick</b><span>Map</span></div>
+    <p class="rail__sub">Preview de las 13 notificaciones del diagrama operacional. Elige una a la izquierda para verla como llegaría — luego vamos afinando el diseño de cada una.</p>
+
+    <p class="rail__group-title">Vista cliente</p>
+    <div id="railClient"></div>
+
+    <p class="rail__group-title">Vista empresa</p>
+    <div id="railBusiness"></div>
+  </aside>
+
+  <main class="stage">
+    <div class="stage__meta">
+      <p class="stage__kicker" id="metaKicker">Vista cliente</p>
+      <h1 class="stage__title display" id="metaTitle">—</h1>
+      <p class="stage__desc" id="metaDesc">—</p>
+    </div>
+
+    <div class="mailhead">
+      <div class="mailhead__row"><span class="mailhead__label">De</span><span class="mailhead__value">Pickmap &lt;hola@pickmap.cl&gt;</span></div>
+      <div class="mailhead__row"><span class="mailhead__label">Para</span><span class="mailhead__value" id="mailTo">contacto@pickmap.cl</span></div>
+      <div class="mailhead__subject" id="mailSubject">—</div>
+    </div>
+    <div class="frame-wrap">
+      <iframe id="mailFrame" title="Preview del email"></iframe>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- Brand tokens reused inside each rendered email ---------- */
+const BRAND = {
+  navy: '#1E2D31',
+  navy2: '#273C42',
+  slate: '#5E696C',
+  coral: '#F55E61',
+  sun: '#F6CD4C',
+  green: '#83D061',
+  greenInk: '#3f7a2c',
+  red: '#AF4345',
+  cream: '#FAF7F1',
+};
+
+function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts) {
+  opts = opts || {};
+  const barStyle = opts.festive
+    ? `background: linear-gradient(90deg, ${BRAND.coral} 0%, ${BRAND.coral} 33%, ${BRAND.sun} 33%, ${BRAND.sun} 66%, ${BRAND.green} 66%, ${BRAND.green} 100%);`
+    : `background:${accent};`;
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+  <style>
+    body { margin:0; padding:0; background:${BRAND.cream}; font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; color:${BRAND.navy}; }
+    .wrap { max-width:600px; margin:0 auto; padding:0 0 40px; }
+    .accent-bar { height:${opts.festive ? 8 : 6}px; ${barStyle} }
+    .header { padding:26px 32px 18px; }
+    .logo { font-family: ui-rounded, 'SF Pro Rounded', 'Century Gothic', Futura, system-ui, sans-serif; font-weight:700; font-size:1.3rem; }
+    .logo b { color:${BRAND.navy}; } .logo span { color:${BRAND.greenInk}; }
+    .badge { display:inline-block; margin-top:14px; padding:5px 12px; border-radius:999px; font-size:0.72rem; font-weight:800; letter-spacing:.02em; background:${accent}22; color:${accent}; }
+    .card { background:#fff; margin:0 24px; border-radius:16px; padding:28px 28px 8px; box-shadow:0 10px 30px rgba(30,45,49,0.07); }
+    .card h1 { font-size:1.28rem; margin:0 0 14px; line-height:1.3; }
+    .card p { font-size:0.95rem; line-height:1.6; color:${BRAND.navy2}; margin:0 0 14px; }
+    .preheader { display:none; max-height:0; overflow:hidden; }
+    .cta { display:inline-block; margin:6px 0 22px; padding:13px 26px; border-radius:999px; background:${BRAND.coral}; color:#fff !important; font-weight:800; font-size:0.92rem; text-decoration:none; }
+    .divider { border:none; border-top:1px solid rgba(30,45,49,0.1); margin:22px 0 18px; }
+    .tip { margin:0 0 20px; padding:13px 16px; border-radius:12px; background:${accent}14; border:1px dashed ${accent}66; font-size:0.86rem; line-height:1.55; color:${BRAND.navy2}; }
+    .footer { padding:26px 32px 0; font-size:0.76rem; color:${BRAND.slate}; line-height:1.6; }
+    .footer a { color:${BRAND.slate}; }
+    table.kv td { padding:6px 0; font-size:0.9rem; }
+    table.kv td:first-child { color:${BRAND.slate}; width:42%; }
+    table.kv td:last-child { font-weight:700; color:${BRAND.navy}; text-align:right; }
+  </style></head>
+  <body>
+    <span class="preheader">${preheader}</span>
+    <div class="wrap">
+      <div class="accent-bar"></div>
+      <div class="header">
+        <div class="logo">Pick<b>Map</b><span></span></div>
+        ${badgeLabel ? `<div class="badge">${badgeLabel}</div>` : ''}
+      </div>
+      <div class="card">
+        ${bodyHtml}
+        ${opts.tip ? `<div class="tip">${opts.tip}</div>` : ''}
+        ${ctaLabel ? `<a class="cta" href="${ctaHref || '#'}">${ctaLabel}</a>` : ''}
+      </div>
+      <div class="footer">
+        Pickmap SpA · Santiago, Chile<br>
+        Recibiste este correo porque tienes una cuenta activa en Pickmap.
+        <a href="#">Gestionar notificaciones</a> · <a href="terminos.html">Términos y Condiciones</a>
+      </div>
+    </div>
+  </body></html>`;
+}
+
+/* ---------- The 13 notifications ---------- */
+const NOTIFS = [
+  {
+    id: 'bienvenida', group: 'cliente', dot: BRAND.greenInk,
+    title: 'Bienvenida', desc: 'Al crear la cuenta',
+    subject: '¡Bienvenido a Pickmap, Camila! 🎉🧭',
+    body: shell(BRAND.greenInk, 'CUENTA NUEVA',
+      'Cuéntanos qué te gusta y Beto arma tu primer panorama.',
+      `<h1>¡Hola, Camila! 👋🎉</h1>
+       <p>Tu cuenta ya está lista. Ahora falta lo más importante: contarle a <b>Beto</b>, nuestra IA, quién eres — tu edad, con quién sales y qué te gusta hacer. Es solo una vez.</p>
+       <p>Con eso, Beto cruza tus gustos con el clima y la hora para armarte panoramas que de verdad tienen sentido, sin que tengas que buscar nada.</p>`,
+      'Completar mi perfil', '#',
+      { festive: true, tip: '🌱 Dato random: mientras más viajes haces, más feliz eres. Y de pasada, vas acumulando Pick Points para tu próxima experiencia.' }),
+  },
+  {
+    id: 'recuperar', group: 'cliente', dot: BRAND.navy2,
+    title: 'Recuperar contraseña', desc: 'Enlace seguro',
+    subject: 'Restablece tu contraseña de Pickmap',
+    body: shell(BRAND.navy2, 'SEGURIDAD',
+      'Recibimos una solicitud para restablecer tu contraseña.',
+      `<h1>Restablece tu contraseña</h1>
+       <p>Recibimos una solicitud para cambiar la contraseña de tu cuenta <b>c****@gmail.com</b>. Si fuiste tú, crea una nueva contraseña con el botón de abajo.</p>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Este enlace expira en 30 minutos. Si no solicitaste esto, puedes ignorar este correo — tu contraseña actual sigue funcionando.</p>`,
+      'Crear nueva contraseña', '#'),
+  },
+  {
+    id: 'reserva-confirmada', group: 'cliente', dot: BRAND.green,
+    title: 'Reserva confirmada', desc: 'Confirmación',
+    subject: 'Tu reserva está confirmada ✅🎉',
+    body: shell(BRAND.greenInk, 'RESERVA CONFIRMADA',
+      'Canopy + termas — sábado 18 de julio, 10:00.',
+      `<h1>¡Listo, tu panorama está confirmado! 🎉🏕️</h1>
+       <p>Aquí el detalle de tu reserva:</p>
+       <table class="kv" width="100%">
+         <tr><td>Actividad</td><td>Canopy + termas</td></tr>
+         <tr><td>Lugar</td><td>Cajón del Maipo</td></tr>
+         <tr><td>Fecha</td><td>Sáb 18 jul, 10:00</td></tr>
+         <tr><td>Personas</td><td>2</td></tr>
+         <tr><td>Total pagado</td><td>$58.000</td></tr>
+       </table>
+       <hr class="divider">
+       <p>Te escribiremos un recordatorio un día antes con el clima y lo que debes llevar.</p>`,
+      'Ver mi reserva', '#',
+      { festive: true, tip: '🙌 Desde ahora la cuenta regresiva corre por tu cuenta. De organizar todo lo demás, nos encargamos nosotros.' }),
+  },
+  {
+    id: 'reserva-cancelada-cliente', group: 'cliente', dot: BRAND.red,
+    title: 'Reserva cancelada', desc: 'Confirmación de cancelación',
+    subject: 'Tu reserva fue cancelada',
+    body: shell(BRAND.red, 'CANCELACIÓN',
+      'Cancelaste tu reserva de Cena romántica con vista.',
+      `<h1>Tu reserva fue cancelada</h1>
+       <p>Confirmamos la cancelación de tu reserva de <b>Cena romántica con vista</b>, agendada para el sáb 25 de julio.</p>
+       <table class="kv" width="100%">
+         <tr><td>Monto pagado</td><td>$24.000</td></tr>
+         <tr><td>Política aplicada</td><td>72h+ anticipación</td></tr>
+         <tr><td>Reembolso</td><td>100% · $24.000</td></tr>
+       </table>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">El reembolso se procesa por el mismo medio de pago dentro de los próximos 10 días hábiles.</p>`,
+      'Ver mis reservas', '#'),
+  },
+  {
+    id: 'recordatorio-cliente', group: 'cliente', dot: BRAND.sun,
+    title: 'Recordatorio 24h', desc: 'Un día antes',
+    subject: '¡Mañana es el día! ⏰🌤️',
+    body: shell(BRAND.sun, 'RECORDATORIO',
+      'Mañana, 10:00 — Canopy + termas en Cajón del Maipo.',
+      `<h1>¡Mañana vives tu panorama! ⏰🌤️</h1>
+       <p><b>Canopy + termas</b> · Cajón del Maipo · 10:00 hrs</p>
+       <p>Beto revisó el clima para ti: <b>22°, despejado</b>. Ideal para el circuito de canopy antes de las termas.</p>
+       <p><b>Qué llevar:</b> ropa cómoda, zapatillas cerradas y traje de baño para las tinajas.</p>`,
+      'Ver detalles de la reserva', '#',
+      { festive: true, tip: '🎒 Beto ya revisó el clima, la ruta y hasta la temperatura de las termas. Tú solo preocúpate de traer la mejor actitud.' }),
+  },
+  {
+    id: 'post-experiencia', group: 'cliente', dot: BRAND.coral,
+    title: 'Post experiencia', desc: 'Reserva completada',
+    subject: '¡Lo lograste! 🎊 ¿Cómo estuvo tu panorama?',
+    body: shell(BRAND.coral, 'RESUMEN + RESEÑA',
+      'Ganaste 120 Pick Points. Cuéntanos cómo te fue.',
+      `<h1>¡Lo lograste! 🎊⭐</h1>
+       <p>Esperamos que lo hayas pasado increíble. Por vivir este panorama, sumaste:</p>
+       <table class="kv" width="100%">
+         <tr><td>Pick Points ganados</td><td>+120</td></tr>
+         <tr><td>Total acumulado</td><td>1.360</td></tr>
+       </table>
+       <hr class="divider">
+       <p>Cuéntanos cómo te fue — ayuda a otros viajeros y a Beto a recomendarte mejor la próxima vez.</p>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Beto ya cruzó tu historial y tiene 3 panoramas nuevos que te podrían gustar.</p>`,
+      'Dejar mi reseña', '#',
+      { festive: true, tip: '🏆 Sigue así y pronto vas a tener más Pick Points que excusas para no salir el finde.' }),
+  },
+  {
+    id: 'nueva-reserva-empresa', group: 'empresa', dot: BRAND.green,
+    title: 'Nueva reserva', desc: 'Notificación inmediata',
+    subject: '🔔 Nueva reserva confirmada',
+    body: shell(BRAND.greenInk, 'NUEVA RESERVA',
+      'Javiera Muñoz reservó Cabaña + tinaja caliente.',
+      `<h1>Tienes una reserva nueva 🎉</h1>
+       <table class="kv" width="100%">
+         <tr><td>Cliente</td><td>Javiera Muñoz</td></tr>
+         <tr><td>Actividad</td><td>Cabaña + tinaja (2 noches)</td></tr>
+         <tr><td>Fecha</td><td>Sáb 12 jul, 10:00</td></tr>
+         <tr><td>Personas</td><td>4</td></tr>
+         <tr><td>Monto</td><td>$85.000</td></tr>
+       </table>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Revisa el detalle completo y el resto de tu día en tu calendario.</p>`,
+      'Ver calendario', '#'),
+  },
+  {
+    id: 'reserva-cancelada-empresa', group: 'empresa', dot: BRAND.red,
+    title: 'Reserva cancelada', desc: 'Aviso de cancelación',
+    subject: 'Reserva cancelada',
+    body: shell(BRAND.red, 'CANCELACIÓN',
+      'Tomás Reyes canceló su reserva del sáb 12 jul.',
+      `<h1>Una reserva fue cancelada</h1>
+       <table class="kv" width="100%">
+         <tr><td>Cliente</td><td>Tomás Reyes</td></tr>
+         <tr><td>Actividad</td><td>Cabaña romántica + cena</td></tr>
+         <tr><td>Fecha</td><td>Sáb 12 jul, 13:30</td></tr>
+       </table>
+       <p>Tu disponibilidad para ese horario ya fue actualizada automáticamente.</p>`,
+      'Ver calendario', '#'),
+  },
+  {
+    id: 'reserva-modificada', group: 'empresa', dot: BRAND.sun,
+    title: 'Reserva modificada', desc: 'Detalle de los cambios',
+    subject: 'Cambios en una reserva',
+    body: shell(BRAND.sun, 'MODIFICACIÓN',
+      'Fernanda Alarcón cambió su reserva de horario.',
+      `<h1>Una reserva fue modificada</h1>
+       <p>Fernanda Alarcón · Cabaña grupo (6 personas)</p>
+       <table class="kv" width="100%">
+         <tr><td>Antes</td><td>Sáb 12 jul, 15:00</td></tr>
+         <tr><td>Ahora</td><td>Sáb 12 jul, 18:00</td></tr>
+         <tr><td>Personas</td><td>6 (sin cambios)</td></tr>
+       </table>`,
+      'Ver calendario', '#'),
+  },
+  {
+    id: 'recordatorio-empresa', group: 'empresa', dot: BRAND.sun,
+    title: 'Recordatorio 24h', desc: 'Reservas de mañana',
+    subject: 'Mañana tienes 3 reservas',
+    body: shell(BRAND.sun, 'RECORDATORIO',
+      'Tienes 3 reservas agendadas para mañana.',
+      `<h1>Mañana tienes 3 reservas 📅</h1>
+       <table class="kv" width="100%">
+         <tr><td>10:00</td><td>Javiera Muñoz · Cabaña + tinaja</td></tr>
+         <tr><td>13:30</td><td>Tomás Reyes · Cena romántica</td></tr>
+         <tr><td>18:00</td><td>Fernanda Alarcón · Grupo (6)</td></tr>
+       </table>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Revisa el detalle completo de cada una en tu calendario.</p>`,
+      'Ver calendario', '#'),
+  },
+  {
+    id: 'cliente-completo-experiencia', group: 'empresa', dot: BRAND.coral,
+    title: 'Experiencia completada', desc: 'Validar asistencia',
+    subject: '¿Se realizó la actividad?',
+    body: shell(BRAND.coral, 'VALIDACIÓN OPCIONAL',
+      'Confirma si Javiera Muñoz asistió a su reserva.',
+      `<h1>¿Se realizó esta actividad?</h1>
+       <p>Javiera Muñoz tenía agendado <b>Cabaña + tinaja caliente</b> hoy a las 10:00.</p>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Confirmar la asistencia es opcional, pero nos ayuda a mantener tu calendario al día.</p>`,
+      'Confirmar en el panel', '#'),
+  },
+  {
+    id: 'cliente-dejo-resena', group: 'empresa', dot: BRAND.green,
+    title: 'Nueva reseña', desc: 'Puntuación y comentario',
+    subject: 'Nueva reseña ⭐⭐⭐⭐⭐',
+    body: shell(BRAND.greenInk, 'RESEÑA · 5/5',
+      'Javiera Muñoz dejó una reseña de 5 estrellas.',
+      `<h1>Recibiste una reseña nueva ⭐⭐⭐⭐⭐</h1>
+       <p style="font-style:italic;">"La tinaja caliente con vista al río fue lo mejor del viaje. Todo impecable, volveríamos sin dudar."</p>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">— Javiera Muñoz</p>`,
+      'Ver en el panel', '#'),
+  },
+  {
+    id: 'resena-negativa', group: 'empresa', dot: BRAND.red,
+    title: 'Reseña negativa', desc: 'Alerta prioritaria',
+    subject: '⚠️ Reseña negativa recibida',
+    body: shell(BRAND.red, 'ALERTA PRIORITARIA · 2/5',
+      'Recibiste una reseña de 2 estrellas — te recomendamos responder.',
+      `<h1>Recibiste una reseña de 2/5 ⭐⭐</h1>
+       <p style="font-style:italic;">"La cabaña estaba bien, pero la tinaja nunca llegó a temperatura y nadie nos avisó."</p>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">— Cliente reciente</p>
+       <p><b>Te recomendamos responder dentro de las próximas 24 horas.</b> Una respuesta a tiempo puede cambiar cómo la ven otros viajeros.</p>`,
+      'Responder ahora', '#'),
+  },
+];
+
+/* ---------- Render sidebar + wire up switching ---------- */
+const GROUP_LABEL = { cliente: 'Vista cliente', empresa: 'Vista empresa' };
+const railClient = document.getElementById('railClient');
+const railBusiness = document.getElementById('railBusiness');
+
+NOTIFS.forEach((n) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'rail__item';
+  btn.dataset.id = n.id;
+  btn.innerHTML = `<span class="rail__dot" style="background:${n.dot}"></span>
+    <span class="rail__item-text">
+      <span class="rail__item-title">${n.title}</span>
+      <span class="rail__item-desc">${n.desc}</span>
+    </span>`;
+  btn.addEventListener('click', () => selectNotif(n.id));
+  (n.group === 'cliente' ? railClient : railBusiness).appendChild(btn);
+});
+
+function selectNotif(id) {
+  const n = NOTIFS.find((x) => x.id === id);
+  if (!n) return;
+  document.querySelectorAll('.rail__item').forEach((b) => b.classList.toggle('is-active', b.dataset.id === id));
+  document.getElementById('metaKicker').textContent = GROUP_LABEL[n.group];
+  document.getElementById('metaTitle').textContent = n.title;
+  document.getElementById('metaDesc').textContent = n.desc;
+  document.getElementById('mailSubject').textContent = n.subject;
+  document.getElementById('mailTo').textContent = n.group === 'cliente' ? 'contacto@pickmap.cl' : 'contacto@pickmap.cl (panel de empresa)';
+  document.getElementById('mailFrame').srcdoc = n.body;
+}
+
+selectNotif(NOTIFS[0].id);
+
+/* ---------- Theme toggle ---------- */
+const root = document.documentElement;
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const current = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>
