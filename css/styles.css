@@ -489,7 +489,7 @@ body.mode-business .hero__biz-mock { display: flex; }
 .btn--ghost:hover { background: var(--navy); color: var(--white); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
 
-.hero__stats { display: flex; gap: 14px; }
+.hero__stats { display: flex; flex-wrap: wrap; gap: 14px; }
 .hero__stat {
   display: flex;
   flex-direction: column;
@@ -557,8 +557,8 @@ body.mode-business .hero__biz-mock { display: flex; }
 .biz-chart-card {
   position: relative;
   z-index: 1;
-  width: 320px;
-  max-width: 80vw;
+  width: 288px;
+  max-width: 76vw;
   background: rgba(255, 255, 255, 0.92);
   border: 3px solid rgba(255, 255, 255, 0.6);
   border-radius: 32px;
@@ -623,8 +623,8 @@ body.mode-business .hero__biz-mock { display: flex; }
 .phone {
   position: relative;
   z-index: 1;
-  width: 250px;
-  max-width: 76vw;
+  width: 224px;
+  max-width: 72vw;
   background: var(--navy);
   border: 3px solid rgba(255, 255, 255, 0.5);
   border-radius: 40px;
@@ -1179,16 +1179,37 @@ body.mode-business .hero__biz-mock { display: flex; }
   }
   .mode-toggle__opt { padding: 8px 10px; font-size: 0.72rem; }
   .hero__copy { padding: 28px 24px; border-radius: 22px; }
-  .nav__actions { gap: 8px; }
+  .nav__actions { gap: 6px; }
+  .nav__account { gap: 8px; }
+  .hero__stat { padding: 12px 14px; }
   .steps, .cards--4, .cards--3, .cards--5, .cards--6 { grid-template-columns: 1fr; }
   .footer__inner { flex-direction: column; }
 }
 
 @media (max-width: 400px) {
-  .logo { font-size: 1.35rem; gap: 6px; }
-  .logo__mark { height: 30px; width: 30px; }
-  .mode-toggle__opt { padding: 6px 7px; font-size: 0.62rem; }
-  .nav__actions { gap: 6px; }
+  .container { padding: 0 16px; }
+  .logo { font-size: 1.2rem; gap: 5px; }
+  .logo__mark { height: 26px; width: 26px; }
+  .mode-toggle__opt { padding: 5px 6px; font-size: 0.58rem; }
+  .nav__actions { gap: 4px; }
+  .nav__account { gap: 5px; }
+  .user-menu__trigger { width: 30px; height: 30px; }
+  .hamburger { padding: 6px; }
+  .hero__stat { padding: 10px 12px; }
+  .hero__stats strong { font-size: 1.2rem; }
+  .hero__stats span { font-size: 0.72rem; }
+}
+
+@media (max-width: 340px) {
+  .container { padding: 0 12px; }
+  .logo { font-size: 1.05rem; gap: 4px; }
+  .logo__mark { height: 22px; width: 22px; }
+  .mode-toggle__opt { padding: 4px 5px; font-size: 0.52rem; }
+  .nav__actions { gap: 2px; }
+  .nav__account { gap: 3px; }
+  .user-menu__trigger { width: 26px; height: 26px; }
+  .hamburger { padding: 4px; }
+  .hamburger span { width: 18px; }
 }
 
 /* ========== Beto chat widget ========== */
