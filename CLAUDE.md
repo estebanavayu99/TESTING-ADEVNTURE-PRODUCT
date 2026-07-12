@@ -22,6 +22,13 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - `js/negocio.js` es el módulo compartido de las 6 páginas `negocio-*.html`
   (Resumen, Reservas, Pagos, Reseñas, Referidos, Calendario) y expone
   `window.PickmapNegocio` con getters + helpers de modal.
+- **La IA se llama "Darwin"** en todo el texto visible del sitio (antes
+  "Beto"). Los identificadores internos de código quedaron sin tocar a
+  propósito — clases (`.beto-chat`, `.beto__profile`), IDs
+  (`betoChatFab`, `betoChatPanel`) y el archivo `js/beto-chat.js` siguen
+  usando "beto" en minúscula. Si agregas texto visible nuevo sobre la IA,
+  usa "Darwin"; si tocas el widget de chat en código, sigue usando el
+  prefijo `beto` en selectores/IDs para no romper referencias existentes.
 
 ## Gotchas conocidos
 
