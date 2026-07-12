@@ -647,7 +647,8 @@ body.mode-business .hero__biz-mock { display: flex; }
   border-radius: 28px;
   margin-top: -18px;
   padding: 16px 13px 14px;
-  min-height: 390px;
+  height: 430px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
