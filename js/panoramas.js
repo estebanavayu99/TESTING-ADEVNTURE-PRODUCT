@@ -102,6 +102,16 @@
 
   // Deterministic "real-looking" rating/reviews/price/km/day + a photo-card gradient per item.
   const GRADIENTS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
+  // Fake stock photos (Lorem Picsum) tinted with the card's gradient, just to preview
+  // how colors read with real photography instead of flat emoji-on-gradient cards.
+  const GRADIENT_TINTS = {
+    g1: ['246,205,76', '245,94,97'],
+    g2: ['131,208,97', '63,122,44'],
+    g3: ['127,200,232', '58,110,165'],
+    g4: ['245,143,143', '175,67,69'],
+    g5: ['199,166,245', '108,74,166'],
+    g6: ['251,214,168', '201,117,122'],
+  };
   function hashStr(str) {
     let h = 0;
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
@@ -264,6 +274,7 @@
       gear: getGear(item.title, category),
       category,
       grad: GRADIENTS[i % GRADIENTS.length],
+      photo: `https://picsum.photos/seed/${h}/400/300`,
     };
   }
   function distanceBucket(km) {
@@ -357,9 +368,11 @@
       ? `<p class="pano-card__why">✨ <b>Por qué Beto lo eligió:</b> nos contaste que ${item.reason}.</p>`
       : `<p class="pano-card__why pano-card__why--general">🤖 Beto dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const liked = isFavorited(item.title);
+    const [tintA, tintB] = GRADIENT_TINTS[item.grad];
+    const photoStyle = `background-image: linear-gradient(135deg, rgba(${tintA},.5), rgba(${tintB},.5)), url('${item.photo}'); background-color: rgb(${tintB}); background-size: cover; background-position: center;`;
     return `
       <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
-        <div class="pano-card__photo pano-card__photo--${item.grad}">
+        <div class="pano-card__photo pano-card__photo--${item.grad}" style="${photoStyle}">
           <span class="pano-card__emoji">${item.icon}</span>
           <span class="pano-card__tag">${item.meta}</span>
           <span class="pano-card__heart${liked ? ' is-liked' : ''}" data-title="${item.title}">${liked ? '♥' : '♡'}</span>
