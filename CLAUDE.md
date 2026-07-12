@@ -54,6 +54,17 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   refresh no lo arregló). `images.unsplash.com` es el estándar de la
   industria y casi nunca se bloquea; preferirlo para cualquier imagen de
   stock/fake en el sitio.
+- **Overflow horizontal en mobile por filas flex sin `flex-wrap`**: una
+  fila flex sin `flex-wrap` (ej. `.hero__stats`) no se achica por debajo
+  del ancho mínimo de su contenido (`min-width:auto` por defecto en
+  flex/grid), así que en viewports angostos revienta el ancho de todo el
+  contenedor padre (grid de una sola columna incluido) y termina en
+  scroll horizontal de toda la página. Se detecta con
+  `document.body.scrollWidth` > `window.innerWidth` en Playwright. Fix:
+  `flex-wrap: wrap` en la fila, y si sigue sin alcanzar, reforzar los
+  breakpoints angostos del nav (`.nav__actions`, `.mode-toggle__opt`,
+  `.logo`) — probar explícitamente a 390px, 375px y 320px, no solo un
+  breakpoint "mobile" genérico.
 
 ## Verificación visual
 
