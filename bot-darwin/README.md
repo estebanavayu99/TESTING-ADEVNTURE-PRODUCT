@@ -72,9 +72,54 @@ enchufado, nada más en el motor cambia.
 - [~] Fase 3 — afluencia + eventos locales (heurística/placeholder) + rankear_combos (completo)
 - [ ] Fase 4 — memoria entre sesiones real + bucle de aprendizaje de pesos w1..w8 (sección 3 de la spec de algoritmos; no implementado, queda para cuando haya datos reales de conversión)
 
+## Disponibilidad multi-negocio: decisión tomada (aún sin implementar)
+
+Cómo `verificar_disponibilidad` va a manejar la disponibilidad real de
+"muchos negocios de distintos rubros y ubicaciones" (A1 del system
+prompt), inspirado en cómo lo resuelve Booking.com (verificado, no de
+memoria — ver fuentes abajo):
+
+- **Pickmap es la única fuente de verdad** de disponibilidad (no cada
+  negocio sincronizado desde su propio sistema externo, salvo que a
+  futuro se justifique un "channel manager" para negocios grandes que ya
+  tengan uno — eso queda como v2 opcional, no bloquea el lanzamiento).
+- **El negocio configura una plantilla, no un calendario diario**: cupos
+  por día de semana + horario, una sola vez. Solo vuelve a entrar para
+  marcar **excepciones** (bloquear un día, subir/bajar cupos puntuales) —
+  equivalente al Extranet de Booking, donde la carga es baja y los
+  cambios quedan reflejados en el momento.
+- **Cada reserva que hace el propio bot descuenta cupo automático** — el
+  negocio no tiene que avisar nada por lo que se vende a través de
+  Pickmap (igual que el "pool allotment" de Booking: el inventario se
+  descuenta solo desde el canal de venta).
+- **Puntaje de confiabilidad por negocio** alimentando `rankear_combos`
+  como una dimensión más: si un negocio cancela reservas ya confirmadas
+  por su lado (no si el cliente cancela bajo una política válida — ese
+  matiz importa y así lo hace Booking), el bot le baja prioridad de forma
+  automática. Es el mecanismo real de "hacer que lo cumplan": conviene
+  económicamente mantenerlo al día, no depende de fiscalizar a nadie.
+- **Confirmación instantánea por defecto.** Un modo "solicitud de
+  reserva" (el negocio confirma en una ventana corta antes de cobrar) se
+  deja como fallback solo para negocios nuevos sin historial — este
+  último punto es una propuesta razonable por analogía con Airbnb
+  Experiences, no algo verificado específicamente para Booking.
+
+Falta: definir el modelo de datos exacto (`negocio_id` en cada slot de
+cupos), la UI de la plantilla+excepciones en `negocio-calendario.html`
+(hoy esa página solo *muestra* reservas, no deja definir cupos), y cómo
+se calcula/expone el puntaje de confiabilidad. No implementar hasta
+tener la BD real conectada.
+
+Fuentes consultadas: [Booking.com Extranet Guide](https://phptravels.com/booking-com-extranet),
+[Updating rates and availability — Booking.com for Partners](https://partner.booking.com/en-us/help/rates-availability/extranet-calendar/updating-your-rates-and-availability),
+[Extranet in Travel Booking Systems — AltexSoft](https://www.altexsoft.com/blog/extranet-in-travel-booking-systems/),
+[Booking.com Ranking Algorithm Explained](https://www.smartorder.ai/resources/blog/booking-com-ranking-algorithm/),
+[Understanding Cancellation Policies — Booking.com developers](https://developers.booking.com/connectivity/docs/policies-api/understanding-cancellation-policy).
+
 ## Pendiente antes de "inyectar" en el sitio real
 
 - [ ] Reemplazar `data/catalogo.mock.js` por la BD real del usuario.
+- [ ] Implementar disponibilidad multi-negocio según la sección de arriba (plantilla+excepciones, descuento automático, puntaje de confiabilidad).
 - [ ] Reemplazar `js/afluencia.js` por datos reales de reservas/feriados.
 - [ ] Definir flujo de reserva/pago real (E5 del system prompt, sigue `[COMPLETAR]`).
 - [ ] Definir canal de derivación a humano (E5, sigue `[COMPLETAR]`).
