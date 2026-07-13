@@ -14,19 +14,18 @@
     return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
-  const CATEGORIA_KEYWORDS = {
-    enologia: ['vino', 'viña', 'vina', 'enolog', 'cata'],
-    aventura: ['aventura', 'trekking', 'kayak', 'adrenalina', 'extremo', 'montaña', 'montana'],
-    relax: ['relax', 'spa', 'descansar', 'tranquilo', 'masaje', 'relajad'],
-    cultural: ['cultura', 'historia', 'museo', 'arquitectura', 'patrimonio', 'histor'],
-    foodie: ['comida', 'gastronom', 'comer', 'mercado', 'sabores', 'foodie'],
-    romantico: ['romantic', 'pareja', 'aniversario', 'luna de miel', 'atardecer', 'novia', 'novio'],
-    familiar: ['familia', 'niños', 'ninos', 'niñas', 'hijos', 'familiar'],
-  };
-  const CATEGORIA_A_ARQUETIPO = {
-    enologia: 'foodie', foodie: 'foodie', aventura: 'aventurero', relax: 'relajado',
-    cultural: 'cultural', romantico: 'romantico', familiar: 'familiar',
-  };
+  // Taxonomia real (178 categorias del listado de negocios del usuario,
+  // agrupadas en 9 buckets) — ver data/taxonomia-categorias.js. Antes esto
+  // era una lista de 7 categorias inventadas de juguete; ahora la deteccion
+  // de intencion reconoce el vocabulario real de categorias de experiencias
+  // en Chile, no solo un puñado de sinonimos genericos.
+  const TAXONOMIA = window.PickmapDarwinData.TAXONOMIA_CATEGORIAS;
+  const CATEGORIA_KEYWORDS = {};
+  const CATEGORIA_A_ARQUETIPO = {};
+  for (const [bucket, data] of Object.entries(TAXONOMIA)) {
+    CATEGORIA_KEYWORDS[bucket] = data.keywords;
+    CATEGORIA_A_ARQUETIPO[bucket] = data.arquetipo;
+  }
 
   const PATRONES_EMOCION = {
     frustrado: /no funciona|p[ée]simo|malo|molesto|frustrad|enojad|esto no sirve|fatal/,
@@ -135,6 +134,7 @@
     aventura: 'un traslado ida y vuelta', foodie: 'una copa de vino para acompañar',
     enologia: 'transporte directo desde tu hotel', romantico: 'un set de fotos profesionales',
     familiar: 'transporte con silla infantil', relax: 'un upgrade a suite privada', cultural: 'un audioguía en tu idioma',
+    fiesta: 'una segunda ronda de tragos', explorador: 'un almuerzo típico del lugar',
   };
 
   function proponerCombos(D, perfil) {
@@ -145,7 +145,11 @@
       .map((i) => i.categoria);
 
     let candidatos = D.tools.buscarActividades({ categorias: categoriasObjetivo.length ? categoriasObjetivo : undefined, excluir_ids: perfil.descartados });
-    if (candidatos.length < 2) candidatos = D.tools.buscarActividades({ excluir_ids: perfil.descartados });
+    // Solo se abre a todo el catálogo si NO hay ningún candidato de la
+    // categoría de interés — con 1 solo candidato real igual se prioriza
+    // por sobre "traer todo" (antes esto ahogaba categorías nuevas que
+    // todavía tienen pocas actividades de prueba, como fiesta/explorador).
+    if (!candidatos.length) candidatos = D.tools.buscarActividades({ excluir_ids: perfil.descartados });
     if (!candidatos.length) return null;
     // buscarActividades devuelve en orden de catálogo, no de preferencia:
     // reordenamos para que la categoría con mayor afinidad quede primero.

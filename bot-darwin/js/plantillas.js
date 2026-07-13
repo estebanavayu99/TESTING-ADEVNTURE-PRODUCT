@@ -25,6 +25,7 @@
     const mapa = {
       enologia: '🍷', aventura: '🏔️', relax: '🧖', cultural: '🏛️',
       foodie: '🍲', romantico: '🌅', familiar: '👨‍👩‍👧',
+      fiesta: '🍹', explorador: '🧭',
     };
     return mapa[categoria] || '📍';
   }

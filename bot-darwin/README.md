@@ -39,6 +39,44 @@ separados del resto justo para eso.
 | `js/contexto.js` — hora_local | Real, cálculo local con `Intl`, sin red |
 | `js/afluencia.js` — afluencia, eventos_locales | **Heurística/placeholder** — reemplazar por datos reales de reservas y calendario de feriados/festivales cuando existan |
 | `js/motor.js`, `js/plantillas.js` | Reglas del system prompt v4 implementadas como código determinístico (sin LLM) |
+| `data/taxonomia-categorias.js` | **Real** (taxonomía, no datos de negocios): 178 categorías reales agrupadas en 9 buckets |
+
+## Taxonomía de categorías (ampliada con datos reales)
+
+El usuario pasó `chile_experiences_FINAL.csv` — un listado de ~29 mil
+negocios turísticos de todo Chile (aún sin confirmar como aliados, por
+eso **ese archivo no vive en este repo**, solo se analizó localmente).
+De ahí se sacó algo que sí es reutilizable y no es sensible: la
+**taxonomía real de categorías de experiencias** (178 valores, ej.
+"Trekking", "Masajes", "Tour de vinos", "Bar temático", "Turismo rural").
+
+`data/taxonomia-categorias.js` agrupa esas 178 categorías en 9 buckets
+(`enologia, aventura, relax, cultural, foodie, romantico, familiar,
+fiesta, explorador`), cada uno con su arquetipo (ahora los 8 de A3 del
+system prompt están cubiertos — antes `fiesta`→`social_fiestero` y
+`explorador`→`explorador_local` no eran alcanzables) y una lista de
+keywords para detectar la intención en el texto libre. `js/motor.js` ya
+no usa una lista de 7 categorías inventadas — usa esta taxonomía.
+
+Antes de llegar a este archivo, el CSV real necesitó dos pasadas de
+limpieza (documentadas para la próxima vez que llegue un lote similar):
+1. **~770 filas con columnas corridas**: el nombre del negocio en Google
+   Maps traía comas internas (ej. "Taller Agustín Desabolladura,
+   Pintura, Mecánica..."), lo que desalineaba todo lo de ahí en
+   adelante. Se arregla buscando en qué columna aparece una región real
+   de Chile y realineando desde ahí.
+2. **~932 negocios con categoría mal asignada** (probablemente
+   auto-asignada en el scraping, no revisada a mano) — ej. una empresa
+   de grúas industriales etiquetada "Masajes", una ferretería etiquetada
+   "Masajes", una veterinaria etiquetada "Zoológico". Se detectan por
+   palabras clave de rubros no-turísticos (mecánica, ferretería, salud
+   clínica, legal, etc.) en el nombre del negocio, sin importar la
+   categoría asignada. Quedaron descartados de la base de trabajo.
+
+Catálogo mock (`data/catalogo.mock.js`) ahora tiene 2 actividades de
+ejemplo más (`a9` fiesta, `a10` explorador) para que esos dos arquetipos
+nuevos sean alcanzables de punta a punta en el preview, no solo en la
+detección de texto.
 
 ## Cómo probarlo localmente
 

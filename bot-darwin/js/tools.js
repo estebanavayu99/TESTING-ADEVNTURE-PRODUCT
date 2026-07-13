@@ -106,7 +106,12 @@
   }
 
   function armarCombo(actividadIds, opciones = {}) {
-    const { fecha, personas = 1, horaCierreMin = 20 * 60 } = opciones;
+    // 23:59 por defecto: el catálogo placeholder no trae un "hora_cierre"
+    // real por actividad todavía, así que no hay base honesta para rechazar
+    // una actividad nocturna (ej. un bar a las 21:00) contra un horario de
+    // cierre inventado. Cuando la BD real traiga horario de cierre por
+    // negocio, pasarlo explícito acá vía opciones.horaCierreMin.
+    const { fecha, personas = 1, horaCierreMin = 23 * 60 + 59 } = opciones;
     const actividades = actividadIds.map((id) => catalogo().find((a) => a.id === id)).filter(Boolean);
     if (!actividades.length) return null;
 
