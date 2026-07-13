@@ -1,0 +1,17 @@
+{
+  "name": "Pickmap — Panoramas personalizados",
+  "short_name": "Pickmap",
+  "description": "Pickmap arma panoramas personalizados según tu clima, tus gustos y tu grupo.",
+  "start_url": "/index.html",
+  "id": "/index.html",
+  "display": "standalone",
+  "background_color": "#FBF8F3",
+  "theme_color": "#F6CD4C",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
