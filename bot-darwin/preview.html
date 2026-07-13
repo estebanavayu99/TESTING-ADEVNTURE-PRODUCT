@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Darwin — consola de pruebas (no publico)</title>
+<link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <div class="darwin-banner">
+    🧪 <strong>Consola interna de pruebas</strong> — bot-darwin no está conectado al sitio ni a producción. Cat&aacute;logo con datos de prueba (placeholder) hasta recibir la BD real.
+  </div>
+
+  <div class="darwin-layout">
+    <section class="darwin-panel">
+      <div class="darwin-panel__header">
+        <h2>Chat con Darwin (motor de reglas)</h2>
+        <button id="darwinReset" type="button">Reiniciar sesión</button>
+      </div>
+      <div class="darwin-quick" id="darwinQuick"></div>
+      <div id="darwinMensajes"></div>
+      <form id="darwinForm">
+        <input id="darwinInput" type="text" autocomplete="off" placeholder="Escribe como si fueras un viajero…">
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <section class="darwin-panel">
+      <div class="darwin-panel__header">
+        <h2>Debug: perfil interno / intent_score / combos</h2>
+        <button id="darwinClima" type="button">Actualizar clima real (necesita internet)</button>
+      </div>
+      <div class="darwin-debug" id="darwinDebug">Envía un mensaje para ver el estado interno acá.</div>
+    </section>
+  </div>
+
+  <script src="data/catalogo.mock.js"></script>
+  <script src="js/algoritmos.js"></script>
+  <script src="js/tools.js"></script>
+  <script src="js/contexto.js"></script>
+  <script src="js/afluencia.js"></script>
+  <script src="js/plantillas.js"></script>
+  <script src="js/motor.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>
