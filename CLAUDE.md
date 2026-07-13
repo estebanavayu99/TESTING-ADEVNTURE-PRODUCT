@@ -29,6 +29,18 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   usando "beto" en minúscula. Si agregas texto visible nuevo sobre la IA,
   usa "Darwin"; si tocas el widget de chat en código, sigue usando el
   prefijo `beto` en selectores/IDs para no romper referencias existentes.
+- **PWA instalable para testing en el celular**: `manifest.json` + `sw.js`
+  (service worker network-first, minimalista) + íconos en `assets/`
+  (`icon-192.png`, `icon-512.png`, `icon-maskable-*.png`, generados desde
+  `assets/logo.png` sobre fondo `--sun`; `apple-touch-icon.png` para iOS).
+  Están enlazados en todas las páginas de la app (no en
+  `notificaciones-preview.html` ni `terminos.html`, que son solo
+  referencia). Con esto, "Agregar a pantalla de inicio" desde el celular
+  instala Pickmap con ícono propio y ventana standalone, sin publicar en
+  ninguna store — sirve para testear como app mientras se itera. Si se
+  agrega una página nueva de la app, replicar el mismo bloque de tags
+  (manifest, meta de iOS, registro del service worker) que ya está en las
+  demás páginas.
 
 ## Gotchas conocidos
 
