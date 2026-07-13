@@ -288,6 +288,14 @@
     return idx === actividades.length - 1 ? 1 : 0.7;
   }
 
+  /*
+   * Devuelve las razones como datos ESTRUCTURADOS (tipo + valores crudos),
+   * no como frases ya armadas — asi el numero de afinidad (0.76, etc.)
+   * queda disponible para el panel de debug pero plantillas.js decide como
+   * convertirlo en una frase humana (nunca mostrarle un decimal de afinidad
+   * a un cliente real). Separa el "que" (esta funcion) del "como lo dice"
+   * (la capa de NLG), tal como pide el resumen de integracion de la spec.
+   */
   function razonesPara(combo, dims, afinidades, contexto) {
     const razones = [];
     if (combo.actividades && combo.actividades.length) {
@@ -295,7 +303,7 @@
         const v = afinidades ? (afinidades[a.categoria] ?? 0) : 0;
         return v > best.v ? { a, v } : best;
       }, { a: null, v: -Infinity });
-      if (top.a && top.v > 0) razones.push(`calza con ${top.a.categoria} (${top.v.toFixed(2)})`);
+      if (top.a && top.v > 0) razones.push({ tipo: 'afinidad', categoria: top.a.categoria, valor: Math.round(top.v * 100) / 100 });
     }
     // Solo se menciona el clima si hay un dato real de la tool `clima` en
     // contexto — nunca inventar "buen clima" cuando en realidad no se
@@ -303,14 +311,14 @@
     // no confirmen).
     const hayClimaReal = !!(contexto && contexto.clima);
     if (hayClimaReal) {
-      if (dims.clima >= 0.9) razones.push('buen clima para el plan');
-      else if (dims.clima <= 0.3) razones.push('clima adverso, con plan B listo');
+      if (dims.clima >= 0.9) razones.push({ tipo: 'clima_bueno' });
+      else if (dims.clima <= 0.3) razones.push({ tipo: 'clima_adverso' });
     }
     if (combo.actividades && combo.actividades.length > 1 && combo.tiempo_traslado_total_min !== undefined) {
-      razones.push(`traslados ${combo.tiempo_traslado_total_min} min`);
+      razones.push({ tipo: 'traslados', minutos: combo.tiempo_traslado_total_min });
     }
     const ultima = (combo.actividades || [])[((combo.actividades || []).length || 1) - 1];
-    if (ultima && ultima.hero_moment) razones.push(`cierra con ${ultima.nombre}`);
+    if (ultima && ultima.hero_moment) razones.push({ tipo: 'cierre_hero', nombre: ultima.nombre });
     return razones;
   }
 

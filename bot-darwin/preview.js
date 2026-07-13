@@ -79,9 +79,9 @@
       const perfil = D.motor.cargarPerfil(SID);
       perfil.contexto.clima = clima;
       D.motor.guardarPerfil(SID, perfil);
-      agregarMensaje(`(clima real actualizado: ${JSON.stringify(clima)})`, 'bot');
+      agregarMensaje(`🌤️ Clima real actualizado para Santiago Centro: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round(clima.lluvia_prob * 100)}% de probabilidad de lluvia. Darwin ya lo va a tener en cuenta al armar el próximo combo.`, 'bot');
     } catch (err) {
-      agregarMensaje(`(no se pudo obtener clima real: ${err.message} — esperado si no hay salida a internet)`, 'bot');
+      agregarMensaje('🌧️ No pude conectarme a internet para revisar el clima real desde acá — es normal en este preview (corre en un ambiente sin salida a internet o con restricciones de seguridad). El resto del bot funciona igual; esta función en particular hay que probarla corriendo el archivo local en tu computador.', 'bot');
     }
   });
 

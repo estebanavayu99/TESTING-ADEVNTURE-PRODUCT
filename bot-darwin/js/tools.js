@@ -124,8 +124,10 @@
     }
 
     let tiempoTrasladoTotal = 0;
+    let distanciaTrasladoTotalKm = 0;
     for (let i = 0; i < actividades.length - 1; i++) {
       tiempoTrasladoTotal += estimarTrasladoMin(actividades[i], actividades[i + 1]);
+      distanciaTrasladoTotalKm += haversineKm(actividades[i].ubicacion, actividades[i + 1].ubicacion);
     }
 
     let llegaDespuesCierre = false;
@@ -150,6 +152,7 @@
       actividades,
       precio_total: actividades.reduce((s, a) => s + a.precio, 0) * personas,
       tiempo_traslado_total_min: tiempoTrasladoTotal,
+      distancia_traslado_total_km: Math.round(distanciaTrasladoTotalKm * 10) / 10,
       tiene_cupo: tieneCupo,
       llega_despues_cierre: llegaDespuesCierre,
       horarios_elegidos: horariosElegidos,

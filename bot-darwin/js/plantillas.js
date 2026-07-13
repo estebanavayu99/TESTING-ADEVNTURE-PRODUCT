@@ -34,6 +34,49 @@
     return `$${n.toLocaleString('es-CL')}`;
   }
 
+  function formatoDuracion(min) {
+    if (min < 60) return `${min} min`;
+    const horas = Math.floor(min / 60);
+    const resto = min % 60;
+    return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`;
+  }
+
+  const ENERGIA_HUMANA = { baja: 'tranquilo', media: 'moderado', alta: 'exigente' };
+
+  // Nunca mostrarle al cliente el numero crudo de afinidad (0.76, etc): eso
+  // es dato de debug interno. Acá se traduce cada bucket de la taxonomía a
+  // una frase humana, sin jerga ni decimales.
+  const FRASE_AFINIDAD = {
+    enologia: 'te gusta el vino y la buena mesa',
+    aventura: 'te gusta la aventura',
+    relax: 'quieres desconectar y relajarte',
+    cultural: 'te gusta la cultura y la historia',
+    foodie: 'te gusta la buena comida',
+    romantico: 'quieres algo especial en pareja',
+    familiar: 'buscas algo para disfrutar en familia',
+    fiesta: 'quieres buena onda y ambiente',
+    explorador: 'quieres algo auténtico, poco turístico',
+  };
+  function fraseAfinidad(categoria) {
+    return FRASE_AFINIDAD[categoria] || 'calza con lo que me has contado';
+  }
+
+  // Compone UNA frase humana a partir de las razones estructuradas de
+  // rankearCombos (algoritmos.js) — separa el dato (que) de la voz (como se
+  // dice), y evita que se filtren fragmentos tecnicos (afinidad en decimal,
+  // minutos de traslado) a la respuesta que lee el cliente.
+  function frasePorQue(razones) {
+    const lista = razones || [];
+    const afin = lista.find((r) => r.tipo === 'afinidad');
+    const cierre = lista.find((r) => r.tipo === 'cierre_hero');
+    const climaAdverso = lista.find((r) => r.tipo === 'clima_adverso');
+    let frase = `Porque ${fraseAfinidad(afin && afin.categoria)}`;
+    if (cierre) frase += `, y cierra con ${cierre.nombre} — tu momento cumbre`;
+    frase += '.';
+    if (climaAdverso) frase += ' Ojo que el pronóstico está incierto, por eso ya tiene plan B.';
+    return frase;
+  }
+
   // Mismo patrón que ya usa panoramas.js en el sitio real: un "simple" se
   // nombra por su propio título, un "paquete" (2+ panoramas) se nombra
   // encadenando los títulos con " + " (ej. "Trekking + cabaña con tinaja"),
@@ -43,32 +86,70 @@
     return acts.map((a) => a.nombre).join(' + ');
   }
 
-  function formatearCombo(comboRankeado, comboCompleto, arquetipos) {
+  // Bajo esta distancia el traslado se ofrece caminando en vez de en auto
+  // (~15 min a paso normal). Es una estimacion en linea recta (haversine),
+  // no una ruta real caminable — cuando calcularRuta/optimizarItinerarioReal
+  // esten disponibles con internet real, esto se puede afinar con la
+  // distancia real de caminata en vez de esta aproximacion.
+  const KM_CAMINABLE = 1.2;
+
+  function fraseTraslado(minutos, km) {
+    if (km !== undefined && km <= KM_CAMINABLE) {
+      return `🚶 Entre panoramas se puede ir caminando: ~${minutos} min (~${km} km).`;
+    }
+    return `🚗 Traslado entre panoramas: ~${minutos} min en auto (~${km ?? '?'} km).`;
+  }
+
+  // Solo se muestra si hay un dato REAL de la tool `clima` (regla E5: no
+  // prometer lo que las tools no confirman) — sin esto, no se inventa nada.
+  function fraseClima(clima) {
+    if (!clima) return null;
+    const emoji = (clima.lluvia_prob || 0) >= 0.4 ? '🌧️' : '☀️';
+    return `${emoji} Para esa fecha: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round((clima.lluvia_prob || 0) * 100)}% de probabilidad de lluvia.`;
+  }
+
+  function formatearCombo(comboRankeado, comboCompleto, arquetipos, clima) {
     const tono = tonoPara(arquetipos);
     const acts = comboCompleto.actividades || [];
     const emoji = emojiCategoria(acts[0] && acts[0].categoria);
-    const lineas = acts.map((a, i) => {
+
+    const bloques = acts.map((a, i) => {
       const hora = (comboCompleto.horarios_elegidos || [])[i] || a.horarios[0];
-      const cumbre = a.hero_moment ? ' — el momento cumbre ☀️' : '';
-      return `• ${hora} — ${a.nombre} (${a.duracion_min} min, energía ${a.energia})${cumbre}`;
+      const cumbre = a.hero_moment ? ' ☀️ tu momento cumbre' : '';
+      return [
+        `🕐 ${hora} · ${a.nombre} (${formatoDuracion(a.duracion_min)}, ritmo ${ENERGIA_HUMANA[a.energia] || a.energia})${cumbre}`,
+        `📍 ${a.punto_encuentro}`,
+      ].join('\n');
     });
-    const razones = comboRankeado.razones && comboRankeado.razones.length
-      ? comboRankeado.razones.join(', ')
-      : 'calza con lo que me has contado';
+
+    const lineaTraslado = acts.length > 1 && comboCompleto.tiempo_traslado_total_min !== undefined
+      ? fraseTraslado(comboCompleto.tiempo_traslado_total_min, comboCompleto.distancia_traslado_total_km)
+      : null;
+
+    const lineaOrigen = comboCompleto.distancia_desde_origen_km !== undefined
+      ? `📌 Desde ${comboCompleto.origen_nombre || 'tu ubicación'}: ~${comboCompleto.tiempo_desde_origen_min} min (~${comboCompleto.distancia_desde_origen_km} km).`
+      : null;
+
+    const lineaClima = fraseClima(clima);
+
     const planB = comboCompleto.plan_b
-      ? `Si ${comboCompleto.plan_b.gatillo === 'lluvia' ? 'llueve' : comboCompleto.plan_b.gatillo}, lo cambiamos por ${comboCompleto.plan_b.reemplazo}.`
-      : 'Traslados calzan sin apuro.';
+      ? `Si ${comboCompleto.plan_b.gatillo === 'lluvia' ? 'llueve' : comboCompleto.plan_b.gatillo}, lo cambiamos por ${comboCompleto.plan_b.reemplazo} — ya tienes plan B.`
+      : null;
 
     return [
-      `${tono.intro}`,
+      tono.intro,
       ``,
-      `${emoji} ${tituloCombo(acts)} — ${formatoPrecio(comboCompleto.precio_total)} p/p`,
-      ...lineas,
+      `${emoji} ${tituloCombo(acts)}`,
+      `${formatoPrecio(comboCompleto.precio_total)} por persona`,
       ``,
-      planB,
-      `Te lo armé así porque ${razones}.`,
+      ...(lineaOrigen ? [lineaOrigen, ``] : []),
+      ...bloques.flatMap((b) => [b, ``]),
+      ...(lineaTraslado ? [lineaTraslado, ``] : []),
+      ...(lineaClima ? [lineaClima, ``] : []),
+      ...(planB ? [planB, ``] : []),
+      frasePorQue(comboRankeado.razones),
       tono.cierre,
-    ].join('\n');
+    ].join('\n').replace(/\n{3,}/g, '\n\n');
   }
 
   function preguntaClarificadora(perfil) {
@@ -94,7 +175,7 @@
     if (!top || (top.afinidad || 0) <= 0) {
       return 'Entiendo la duda — es una decisión más, no te compliques: los viajeros que reservan con poca info igual terminan felices, la mayoría repite.';
     }
-    return `Entiendo la duda. Por lo que me has contado, ${top.categoria} es justo lo tuyo (${(top.afinidad).toFixed(2)} de afinidad) — los viajeros con ese mismo perfil que reservan esto, vuelven encantados.`;
+    return `Entiendo la duda. Por lo que me has contado, ${fraseAfinidad(top.categoria)} — los viajeros con ese mismo perfil que reservan esto, vuelven encantados.`;
   }
 
   function objecion(tipo) {

@@ -90,6 +90,7 @@
   function perfilPorDefecto() {
     return {
       arquetipos: [], estado_emocional: null, destino: null, fechas: null,
+      origen: null, // { lat, lng, nombre } — de donde parte el cliente, para distancia real
       grupo: { adultos: null, ninos: null, tipo: null, gustos_divergentes: [] },
       presupuesto: { banda: null, sensibilidad: null, gastado_en_combo: 0 },
       intereses: [], intensidad_preferida: null, energia_acumulada_dia: 0,
@@ -183,7 +184,17 @@
     const mejor = rankeados[0];
     const comboCompleto = mapaCompletos.get(mejor.combo_id);
 
-    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos);
+    // Distancia real (haversine) desde donde parte el cliente hasta el
+    // primer panorama — antes solo se calculaba el traslado ENTRE
+    // panoramas de un mismo combo, nunca desde el origen del cliente.
+    if (perfil.origen && comboCompleto.actividades.length) {
+      const primera = comboCompleto.actividades[0];
+      comboCompleto.distancia_desde_origen_km = Math.round(D.tools._internas.haversineKm(perfil.origen, primera.ubicacion) * 10) / 10;
+      comboCompleto.tiempo_desde_origen_min = D.tools._internas.estimarTrasladoMin({ ubicacion: perfil.origen }, primera);
+      comboCompleto.origen_nombre = perfil.origen.nombre || null;
+    }
+
+    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, perfil.contexto.clima);
     if (perfil.ocasion_especial) texto = `Para tu ${perfil.ocasion_especial}, esto lo hace inolvidable. ${texto}`;
     const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
     if (addon && perfil.intent_score.confianza >= 0.7) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;

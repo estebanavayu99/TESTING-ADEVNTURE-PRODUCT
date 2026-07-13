@@ -12,6 +12,17 @@ Basado en los 3 documentos que armó el usuario:
 - `pickmap_algoritmos_spec.pdf` — matemática de `calcular_confianza` y `rankear_combos`.
 - `pickmap_system_prompt_v4.pdf` — reglas de negocio/venta consultiva del agente.
 
+## Importante: el producto final NO es un chat
+
+El usuario aclaró esto explícitamente: la entrega final de Darwin va a
+ser **una guía que ofrece la recomendación directo** (el panorama o
+combinación de panoramas ya armado, con el porqué), no una interfaz de
+chat de ida y vuelta. `preview.html` sigue siendo una consola de chat
+porque es la forma más rápida de probar el motor turno a turno — pero
+no hay que asumir que esa UI es el diseño final. Cuando se defina cómo
+se ve la "guía" de verdad, `js/motor.js`/`js/plantillas.js` deberían
+poder alimentarla igual (ya devuelven texto armado, no HTML de chat).
+
 ## Decisión de esta etapa: sin LLM real
 
 El usuario eligió, para esta etapa, un motor **100% reglas/heurísticas**
