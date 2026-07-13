@@ -244,7 +244,10 @@
       texto = D.plantillas.respuestaEmocional('frustrado');
     } else if (objecionDetectada) {
       texto = D.plantillas.objecion(objecionDetectada);
-    } else if (intent.confianza < 0.4 && !señales.length) {
+    } else if (intent.confianza < 0.4 && !señales.length && estadoEmocional !== 'entusiasmado') {
+      // "Entusiasmado" es la excepcion: A4 pide avanzar rapido al cierre,
+      // no frenarlo con una pregunta aunque la confianza numerica sea baja
+      // (la propia emocion ya es una senal fuerte de que hay que actuar).
       const base = D.plantillas.preguntaClarificadora(perfil);
       texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
     } else {
@@ -254,10 +257,14 @@
       } else if (resultado.sinResultados) {
         texto = 'Encontré actividades pero ninguna con cupo/condiciones para armar un combo ahora — probemos con otra fecha u otra categoría.';
       } else {
-        // Abrumado con confianza media/alta: igual se simplifica a 1 sola
-        // opción (ya lo hace proponerCombos), pero se reconoce el estado
-        // antes de proponer en vez de ignorarlo (regla A4 del prompt).
-        texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')}\n\n${resultado.texto}` : resultado.texto;
+        // Abrumado/dudando con confianza suficiente para proponer: igual se
+        // reconoce el estado antes del combo en vez de ignorarlo (regla A4
+        // del prompt) — abrumado se simplifica, dudando se refuerza con el
+        // dato mas relevante + prueba social (C5).
+        let prefijo = '';
+        if (estadoEmocional === 'abrumado') prefijo = `${D.plantillas.respuestaEmocional('abrumado')}\n\n`;
+        else if (estadoEmocional === 'dudando') prefijo = `${D.plantillas.reforzarDuda(perfil)}\n\n`;
+        texto = prefijo + resultado.texto;
         debug.combos = resultado.combosRankeados;
         perfil.carrito = [{ combo_id: resultado.comboElegido.combo_id, precio: resultado.comboElegido.precio_total }];
       }

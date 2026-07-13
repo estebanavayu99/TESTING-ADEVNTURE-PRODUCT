@@ -77,6 +77,17 @@
     }
   }
 
+  // C5 del prompt: prueba social contextual (no generica) + el dato de
+  // afinidad mas fuerte del propio cliente, para el estado "dudando" de A4.
+  function reforzarDuda(perfil) {
+    const intereses = (perfil.intereses || []).slice().sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
+    const top = intereses[0];
+    if (!top || (top.afinidad || 0) <= 0) {
+      return 'Entiendo la duda — es una decisión más, no te compliques: los viajeros que reservan con poca info igual terminan felices, la mayoría repite.';
+    }
+    return `Entiendo la duda. Por lo que me has contado, ${top.categoria} es justo lo tuyo (${(top.afinidad).toFixed(2)} de afinidad) — los viajeros con ese mismo perfil que reservan esto, vuelven encantados.`;
+  }
+
   function objecion(tipo) {
     if (tipo === 'precio') return 'Entiendo, el precio importa. Este vale lo que cuesta por lo que incluye — pero si prefieres, tengo una versión más económica con la misma esencia.';
     if (tipo === 'lo_pienso') return 'Sin apuro, te lo dejo guardado. Ojo que el cupo de ese horario es limitado, así que si te convence, mejor confirmar pronto.';
@@ -89,6 +100,6 @@
 
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.plantillas = {
-    formatearCombo, preguntaClarificadora, respuestaEmocional, objecion, reenganche, tonoPara,
+    formatearCombo, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
   };
 })();
