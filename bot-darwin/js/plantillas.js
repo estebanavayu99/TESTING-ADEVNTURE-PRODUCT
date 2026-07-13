@@ -34,6 +34,15 @@
     return `$${n.toLocaleString('es-CL')}`;
   }
 
+  // Mismo patrón que ya usa panoramas.js en el sitio real: un "simple" se
+  // nombra por su propio título, un "paquete" (2+ panoramas) se nombra
+  // encadenando los títulos con " + " (ej. "Trekking + cabaña con tinaja"),
+  // para que Darwin entregue el panorama ya armado con nombre propio, no un
+  // combo genérico sin identidad.
+  function tituloCombo(acts) {
+    return acts.map((a) => a.nombre).join(' + ');
+  }
+
   function formatearCombo(comboRankeado, comboCompleto, arquetipos) {
     const tono = tonoPara(arquetipos);
     const acts = comboCompleto.actividades || [];
@@ -53,7 +62,7 @@
     return [
       `${tono.intro}`,
       ``,
-      `${emoji} Combo — ${formatoPrecio(comboCompleto.precio_total)} p/p`,
+      `${emoji} ${tituloCombo(acts)} — ${formatoPrecio(comboCompleto.precio_total)} p/p`,
       ...lineas,
       ``,
       planB,
