@@ -1193,6 +1193,27 @@ body.mode-business .hero__biz-mock { display: flex; }
   .hero__stats { grid-template-columns: 1fr; }
   .steps, .cards--4, .cards--3, .cards--5, .cards--6 { grid-template-columns: 1fr; }
   .footer__inner { flex-direction: column; }
+
+  /* Denser rhythm on mobile so the site reads more like an app and less
+     like a shrunk-down desktop page — mostly less whitespace between
+     sections, plus a modest (not drastic) reduction in type sizes. */
+  .hero { padding: 32px 0 20px; min-height: auto; }
+  .hero h1 { font-size: 1.9rem; line-height: 1.15; margin-bottom: 12px; }
+  .hero__sub { font-size: 0.98rem; margin-bottom: 20px; }
+  .btn { padding: 12px 22px; font-size: 0.88rem; }
+  .btn--lg { padding: 13px 26px; font-size: 0.92rem; }
+  .section { padding: 52px 0; }
+  .section h2 { font-size: 1.5rem; margin-bottom: 26px; }
+  .step { padding: 22px 18px 20px; }
+  .step h3 { font-size: 1rem; }
+  .step p { font-size: 0.86rem; }
+  .card { padding: 20px 16px; }
+  .card__icon { font-size: 1.7rem; margin-bottom: 10px; }
+  .card h3 { font-size: 1rem; }
+  .card p { font-size: 0.88rem; }
+  .faq__item { padding: 2px 16px; }
+  .faq__question { padding: 13px 26px 13px 0; font-size: 0.92rem; }
+  .faq__answer { font-size: 0.85rem; margin-bottom: 14px; }
 }
 
 @media (max-width: 400px) {
