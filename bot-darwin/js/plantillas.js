@@ -242,19 +242,26 @@
       ? `Si ${comboCompleto.plan_b.gatillo === 'lluvia' ? 'llueve' : comboCompleto.plan_b.gatillo}, lo cambiamos por ${comboCompleto.plan_b.reemplazo} — ya tienes plan B.`
       : null;
 
+    // Orden pedido por el usuario (calcado de cómo su sitio real muestra el
+    // "Resumen de tu reserva"): primero que quede claro CUÁLES y CUÁNTOS
+    // panoramas se ofrecen, cuánto dura cada uno y cuán lejos están entre
+    // ellos — el precio es lo último, no lo primero.
+    const conteo = acts.length > 1 ? `${acts.length} panoramas: ` : '';
+
     return [
       tono.intro,
       ``,
-      `${emoji} ${tituloCombo(acts)}`,
-      fraseTotal(comboCompleto.precio_total, comboCompleto.precio_por_persona, comboCompleto.personas),
+      `${emoji} ${conteo}${tituloCombo(acts)}`,
       ``,
       ...(lineaDivergencia ? [lineaDivergencia, ``] : []),
-      ...(lineaOrigen ? [lineaOrigen, ``] : []),
       ...bloques.flatMap((b) => [b, ``]),
       ...(lineaTraslado ? [lineaTraslado, ``] : []),
+      ...(lineaOrigen ? [lineaOrigen, ``] : []),
       ...(lineaAyudaTraslado ? [lineaAyudaTraslado, ``] : []),
       ...(lineaClima ? [lineaClima, ``] : []),
       ...(planB ? [planB, ``] : []),
+      fraseTotal(comboCompleto.precio_total, comboCompleto.precio_por_persona, comboCompleto.personas),
+      ``,
       frasePorQue(comboRankeado.razones),
       tono.cierre,
     ].join('\n').replace(/\n{3,}/g, '\n\n');
@@ -294,15 +301,19 @@
     const kmMaxTramo = Math.max(0, ...plan.dias.map((d) => d.distancia_desde_anterior_km || 0));
     const lineaAyudaTraslado = fraseAyudaTraslado(undefined, kmMaxTramo);
 
+    // Mismo orden que formatearCombo: primero cuáles/cuántos panoramas,
+    // cuánto dura cada uno y cuán lejos están entre ellos; el precio va al
+    // final, justo antes de cerrar.
     return [
       tono.intro,
       ``,
       `🗺️ Plan de ${plan.dias.length} días: ${titulo}`,
-      fraseTotal(plan.precio_total, plan.precio_por_persona, plan.personas),
       ``,
       ...bloquesDias.flatMap((b) => [b, ``]),
       ...(lineaAyudaTraslado ? [lineaAyudaTraslado, ``] : []),
       ...(lineaClima ? [lineaClima, ``] : []),
+      fraseTotal(plan.precio_total, plan.precio_por_persona, plan.personas),
+      ``,
       `¿Te lo dejo apartado completo, con alojamiento y las ${plan.dias.length - 1} actividades incluidas?`,
     ].join('\n').replace(/\n{3,}/g, '\n\n');
   }

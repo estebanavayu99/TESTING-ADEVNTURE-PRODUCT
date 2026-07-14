@@ -283,6 +283,39 @@ ahora recomienda 1 sola actividad primero, según expertise, y ofrece
 combinar en vez de imponer un combo de entrada). Regresión completa sin
 cambios tras los 5 fixes: 11/11 algoritmos + todos los escenarios previos.
 
+## Orden de la información: precio al final, no al principio
+
+El usuario mandó 2 screenshots más comparando la respuesta de Darwin con
+el "Resumen de tu reserva" real de su sitio, y fue explícito: *"el precio
+va de último. Primero que entiendas cuáles y cuántos panoramas te estoy
+ofreciendo, cuánto dura cada uno y cuán lejos están entre ellos. No mucho
+texto ni cosas que molesten visualmente."* Aclaró que esto es sobre el
+**orden de las ideas**, no un pedido de rediseñar la UI de chat (el
+producto final no es un chat, ver sección de arriba) — el texto de
+`plantillas.js` es donde se piensa esa jerarquía antes de que exista la
+UI visual real.
+
+Se reordenó `formatearCombo` y `formatearPlanMultiDia` en
+`js/plantillas.js`:
+1. Intro breve + título (con conteo explícito si son 2+ panoramas, ej.
+   "🏔️ 2 panoramas: Trekking cascada escondida + Cata guiada en viña
+   boutique" — antes no se decía cuántos, solo se encadenaban los
+   nombres).
+2. Bloque de cada actividad (hora, duración, punto de encuentro, cómo
+   llegar, dato de local si aplica).
+3. Distancia/tiempo **entre** los panoramas del combo — el dato que pidió
+   explícitamente ver temprano, porque "es parte de lo que hace el bot,
+   combinaciones posibles".
+4. Distancia desde el origen del cliente, ayuda de traslado, clima, plan B
+   (secundarios, después de entender el plan en sí).
+5. **Precio al final**, justo antes del "porque..." y la pregunta de
+   cierre — antes aparecía inmediatamente después del título, muy arriba.
+
+Verificado con Playwright en los 5 escenarios existentes (aniversario,
+paquete de 2 actividades, plan multi-día, divergencia, grupo de 2
+personas, clima dual) — mismo contenido, nuevo orden, sin regresiones
+(11/11 algoritmos + todos los escenarios previos).
+
 ## Cómo probarlo localmente
 
 ```bash
