@@ -51,6 +51,10 @@ separados del resto justo para eso.
 | `js/afluencia.js` — afluencia, eventos_locales | **Heurística/placeholder** — reemplazar por datos reales de reservas y calendario de feriados/festivales cuando existan |
 | `js/motor.js`, `js/plantillas.js` | Reglas del system prompt v4 implementadas como código determinístico (sin LLM) |
 | `data/taxonomia-categorias.js` | **Real** (taxonomía, no datos de negocios): 178 categorías reales agrupadas en 9 buckets |
+| Ubicación real (`navigator.geolocation`) | **Real**, nativa del navegador, gratis, sin key. Requiere permiso del usuario y una página con internet real (no funciona en el sandbox ni en el preview alojado con CSP) |
+| Distancia/tiempo real (origen→panorama, entre panoramas, plan multi-día) | **Real**, matemática haversine + velocidad por tramo (30 km/h ciudad, 80 km/h interurbano >50km) |
+| Plan de varios días (`armarPlanMultiDia`) | **Real** para la secuencia demo cabaña+termas+trekking (sur de Chile); generalizar a cualquier combinación/región es trabajo pendiente (ver Pendiente) |
+| "Panoramas cerca de ahí" (`sugerirRelacionados`) | **Real**, rankeo multifactorial + filtro de radio real (80 km) — no solo categoría+proximidad como el nearbyItems() actual del sitio |
 
 ## Taxonomía de categorías (ampliada con datos reales)
 
@@ -173,4 +177,6 @@ Fuentes consultadas: [Booking.com Extranet Guide](https://phptravels.com/booking
 - [ ] Definir flujo de reserva/pago real (E5 del system prompt, sigue `[COMPLETAR]`).
 - [ ] Definir canal de derivación a humano (E5, sigue `[COMPLETAR]`).
 - [ ] Decidir si en algún momento se conecta un LLM real (Claude) para reemplazar la detección por palabras clave — el punto de enganche son `algoritmos.js`/`tools.js` como tools.
-- [ ] Probar `js/contexto.js` (Open-Meteo/OSRM) con salida a internet real — no se pudo verificar en este sandbox.
+- [ ] Probar `js/contexto.js` y `navigator.geolocation` (Open-Meteo/OSRM/ubicación real) con salida a internet real — no se pudo verificar en este sandbox ni en el preview alojado (CSP bloquea red externa); sí se puede probar abriendo el archivo local en un navegador normal.
+- [ ] Generalizar `armarPlanMultiDia`: hoy es una secuencia fija de demo (cabaña+termas+trekking, sur de Chile) para probar el concepto de punta a punta — falta que arme planes de N días para cualquier combinación de categorías/regiones una vez haya más catálogo real.
+- [ ] Agregar estacionamiento/cómo-llegar real por negocio al contrato de datos — hoy `fraseLlegada()` es una guía genérica por categoría (mismo criterio que ya usa el sitio real en `ARRIVAL_BY_CATEGORY`), no un dato preciso por local.

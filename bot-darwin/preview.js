@@ -68,21 +68,38 @@
     location.reload();
   });
 
-  // Demuestra las tools de Prioridad 2 con red real (clima real vía
-  // Open-Meteo). En este sandbox de desarrollo no hay salida a internet,
-  // asi que se espera que falle acá — el catch deja el bot funcionando
-  // igual, solo sin ese dato de contexto.
-  document.getElementById('darwinClima').addEventListener('click', async () => {
-    const coords = { lat: -33.4372, lng: -70.6506 }; // Santiago Centro, referencia demo
-    try {
-      const clima = await D.contexto.clima(coords);
+  // Ubicación real (navigator.geolocation: nativa del navegador, gratis, sin
+  // API key) + clima real para esas coordenadas exactas (Open-Meteo, gratis,
+  // sin key). Todo esto SI requiere salida a internet real y permiso del
+  // navegador — no se puede probar en un ambiente sandbox sin red, pero
+  // corre de verdad apenas se abra este archivo en un navegador normal.
+  function actualizarClimaPara(coords, nombre) {
+    return D.contexto.clima(coords).then((clima) => {
       const perfil = D.motor.cargarPerfil(SID);
+      perfil.origen = { ...coords, nombre };
       perfil.contexto.clima = clima;
       D.motor.guardarPerfil(SID, perfil);
-      agregarMensaje(`🌤️ Clima real actualizado para Santiago Centro: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round(clima.lluvia_prob * 100)}% de probabilidad de lluvia. Darwin ya lo va a tener en cuenta al armar el próximo combo.`, 'bot');
-    } catch (err) {
-      agregarMensaje('🌧️ No pude conectarme a internet para revisar el clima real desde acá — es normal en este preview (corre en un ambiente sin salida a internet o con restricciones de seguridad). El resto del bot funciona igual; esta función en particular hay que probarla corriendo el archivo local en tu computador.', 'bot');
+      agregarMensaje(`📍 Ubicación real detectada (${nombre}). 🌤️ Clima real: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round(clima.lluvia_prob * 100)}% de probabilidad de lluvia. Darwin ya va a usar esto para calcular distancias reales y el próximo combo.`, 'bot');
+    }).catch((err) => {
+      agregarMensaje(`📍 Ubicación real detectada (${nombre}), pero no pude conectarme a internet para revisar el clima real desde acá (${err.message}) — es normal en un ambiente sin salida a internet. La distancia real desde tu ubicación sí va a funcionar igual.`, 'bot');
+    });
+  }
+
+  document.getElementById('darwinClima').addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      agregarMensaje('Tu navegador no soporta geolocalización — usando Santiago Centro como referencia.', 'bot');
+      actualizarClimaPara({ lat: -33.4372, lng: -70.6506 }, 'Santiago Centro (referencia)');
+      return;
     }
+    agregarMensaje('📍 Pidiendo permiso para usar tu ubicación real…', 'bot');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => actualizarClimaPara({ lat: pos.coords.latitude, lng: pos.coords.longitude }, 'tu ubicación'),
+      (err) => {
+        agregarMensaje(`No se pudo obtener tu ubicación real (${err.message}) — revisa el permiso de ubicación del navegador. Mientras tanto uso Santiago Centro como referencia.`, 'bot');
+        actualizarClimaPara({ lat: -33.4372, lng: -70.6506 }, 'Santiago Centro (referencia)');
+      },
+      { timeout: 8000 },
+    );
   });
 
   agregarMensaje('¡Hola! Soy Darwin (versión de prueba, motor de reglas). Cuéntame qué panorama buscas.', 'bot');

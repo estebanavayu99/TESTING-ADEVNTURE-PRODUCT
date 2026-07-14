@@ -47,6 +47,15 @@
   const PATRON_OCASION = /aniversario|cumplea[ñn]os|luna de miel|pedida de mano|propuesta de matrimonio/;
   const PATRON_OBJECION_PRECIO = /caro|muy caro|precio alto|se me pasa (del|de mi) presupuesto/;
   const PATRON_OBJECION_PIENSO = /lo pienso|despu[ée]s veo|no s[ée] a[uú]n|lo consulto/;
+  // Deteccion explicita del caso "plan de varios dias" (cabaña + termas +
+  // trekking en el sur) — hoy es una demo puntual de esta secuencia
+  // exacta, no un planificador general de N dias/categorias (eso necesita
+  // más catálogo real para generalizar; ver README).
+  const PATRON_PLAN_MULTIDIA = /caban|fin de semana.*sur|sur.*fin de semana|plan de.*dias|termas.*trekking|trekking.*termas/;
+  // "Panoramas cerca de ahi": mismo patron que ya usa panoramas.js en el
+  // sitio real (nearbyItems + boton "+" para agregar), pero rankeado con
+  // el motor multifactorial real en vez de solo proximidad+categoria.
+  const PATRON_VER_RELACIONADOS = /que mas hay cerca|algo mas cerca|otras opciones cerca|agregar algo mas|panoramas cerca|ideas relacionadas/;
 
   function detectarCategorias(texto) {
     const t = sinAcentos(texto);
@@ -72,6 +81,8 @@
   }
   function esConfirmacion(texto) { return PATRON_CONFIRMACION.test(sinAcentos(texto)); }
   function esDescarte(texto) { return PATRON_DESCARTE.test(sinAcentos(texto)); }
+  function esPlanMultiDia(texto) { return PATRON_PLAN_MULTIDIA.test(sinAcentos(texto)); }
+  function pideRelacionados(texto) { return PATRON_VER_RELACIONADOS.test(sinAcentos(texto)); }
 
   function extraerPresupuesto(texto) {
     const m = /(\d{4,7})/.exec(texto.replace(/\./g, ''));
@@ -202,6 +213,75 @@
     return { texto, combosRankeados: rankeados, comboElegido: comboCompleto };
   }
 
+  // Secuencia fija cabaña + termas + trekking (sur de Chile) — demuestra el
+  // plan de varios días de punta a punta con datos reales del catálogo
+  // (a11/a12/a13). Generalizar esto a cualquier combinación de categorías
+  // y regiones es trabajo aparte para cuando exista más catálogo real.
+  const IDS_PLAN_SUR = ['a11', 'a12', 'a13'];
+
+  function proponerPlanMultiDia(D, perfil) {
+    const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
+    const plan = D.tools.armarPlanMultiDia(IDS_PLAN_SUR, {
+      fechaInicio: perfil.fechas,
+      personas,
+      origen: perfil.origen,
+    });
+    if (!plan) return null;
+    if (!plan.tiene_cupo) return { sinResultados: true };
+
+    const texto = D.plantillas.formatearPlanMultiDia(plan, perfil.arquetipos, perfil.contexto.clima);
+    return { texto, plan };
+  }
+
+  // "Cerca de ahi" es una promesa de distancia, no solo de tema: 80km es
+  // un radio razonable para un mismo dia de panoramas (mas que eso ya es
+  // otra salida). Sin este filtro, rankearCombos podia elegir algo con
+  // buena afinidad pero a cientos de km — bien puntuado, pero no "cerca".
+  const RADIO_CERCA_KM = 80;
+
+  // "Panoramas cerca de ahí": arma candidatos de 1 actividad cada uno
+  // (fuera del combo ya elegido, y dentro de RADIO_CERCA_KM) y los pasa
+  // por rankearCombos real — a diferencia del nearbyItems() del sitio
+  // (solo proximidad+categoría complementaria), acá además pesan perfil,
+  // presupuesto, energía y clima.
+  function sugerirRelacionados(D, perfil) {
+    const ultimoCarrito = perfil.carrito[perfil.carrito.length - 1];
+    if (!ultimoCarrito) return null;
+    const idsCombo = ultimoCarrito.combo_id.split('-');
+    const base = D.tools.detalleActividad(idsCombo[0]);
+    if (!base) return null;
+
+    const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
+    const candidatos = D.tools.buscarActividades({ excluir_ids: [...idsCombo, ...perfil.descartados] })
+      .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
+    const combosCandidatos = candidatos
+      .map((c) => D.tools.armarCombo([c.id], { fecha: perfil.fechas, personas }))
+      .filter(Boolean);
+    if (!combosCandidatos.length) return { sinResultados: true };
+
+    const afinidadesMap = {};
+    for (const i of perfil.intereses) afinidadesMap[i.categoria] = i.afinidad || 0;
+    const perfilRanking = {
+      arquetipos: perfil.arquetipos, afinidades: afinidadesMap, presupuesto: perfil.presupuesto,
+      grupo: perfil.grupo, restricciones: perfil.restricciones, historial_ids: perfil.historial_ids,
+    };
+    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima };
+    const rankeados = D.algoritmos.rankearCombos(combosCandidatos, perfilRanking, contexto);
+    if (!rankeados.length) return { sinResultados: true };
+
+    const mapaCompletos = new Map(combosCandidatos.map((c) => [c.combo_id, c]));
+    const top3 = rankeados.slice(0, 3).map((r) => {
+      const completo = mapaCompletos.get(r.combo_id);
+      const act = completo.actividades[0];
+      return {
+        actividad: act,
+        distancia_km: Math.round(D.tools._internas.haversineKm(base.ubicacion, act.ubicacion) * 10) / 10,
+        razones: r.razones,
+      };
+    });
+    return { texto: D.plantillas.formatearRelacionados(top3, base), relacionados: top3 };
+  }
+
   function procesarMensaje(sessionId, textoUsuario) {
     const D = window.PickmapDarwin;
     const perfil = cargarPerfil(sessionId);
@@ -251,6 +331,24 @@
       texto = '¡Que lo disfrutes muchísimo! Cuando vuelvas, cuéntame cómo te fue y te tengo el próximo panorama listo 🎉';
     } else if (perfil.etapa_embudo === 'decision') {
       texto = 'Perfecto, te lo dejo apartado. En breve te llega la confirmación con el punto de encuentro y todo el detalle.';
+    } else if (pideRelacionados(textoUsuario)) {
+      const resultado = sugerirRelacionados(D, perfil);
+      if (!resultado || resultado.sinResultados) {
+        texto = 'No encontré más panoramas relacionados cerca de ese por ahora — cuéntame si quieres otra categoría.';
+      } else {
+        texto = resultado.texto;
+        debug.relacionados = resultado.relacionados;
+      }
+    } else if (esPlanMultiDia(textoUsuario)) {
+      const resultado = proponerPlanMultiDia(D, perfil);
+      if (!resultado) {
+        texto = 'No pude armar el plan de varios días ahora mismo — cuéntame más y lo ajusto.';
+      } else if (resultado.sinResultados) {
+        texto = 'Encontré el plan pero no hay cupo para alguna fecha — probemos otra semana.';
+      } else {
+        texto = resultado.texto;
+        debug.plan = resultado.plan;
+      }
     } else if (estadoEmocional === 'frustrado') {
       texto = D.plantillas.respuestaEmocional('frustrado');
     } else if (objecionDetectada) {

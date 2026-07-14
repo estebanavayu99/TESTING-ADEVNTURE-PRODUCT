@@ -91,7 +91,11 @@
 
   function estimarTrasladoMin(a, b) {
     const km = haversineKm(a.ubicacion, b.ubicacion);
-    const VELOCIDAD_KMH = 30;
+    // 30 km/h sirve para trasladarse ENTRE panoramas de la misma ciudad
+    // (tráfico, semáforos), pero da tiempos absurdos en un viaje
+    // interurbano largo (ej. Santiago-Pucón calculaba 22 h en vez de ~9 h
+    // reales) — sobre 50 km se asume velocidad de carretera.
+    const VELOCIDAD_KMH = km > 50 ? 80 : 30;
     return Math.round((km / VELOCIDAD_KMH) * 60) + 5; // +5 min de buffer de bajada/espera
   }
 
@@ -160,6 +164,65 @@
     };
   }
 
+  function sumarDiasISO(fechaISO, dias) {
+    const d = new Date(`${fechaISO}T00:00:00`);
+    d.setDate(d.getDate() + dias);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /* ---------- armarPlanMultiDia ----------
+   * Plan de varios dias (ej. cabaña + termas + trekking): cada id en
+   * `idsPorDia` es UN dia del plan, en orden. A diferencia de armarCombo
+   * (que arma paradas del MISMO dia), acá cada actividad ancla su propio
+   * dia, con traslado calculado desde el punto anterior — el origen del
+   * cliente para el dia 1 (si se conoce), y la actividad del dia anterior
+   * para los dias siguientes.
+   */
+  function armarPlanMultiDia(idsPorDia, opciones = {}) {
+    const { fechaInicio, personas = 1, origen } = opciones;
+    const actividades = idsPorDia.map((id) => catalogo().find((a) => a.id === id)).filter(Boolean);
+    if (!actividades.length) return null;
+
+    let tieneCupo = true;
+    const dias = [];
+    // OJO: puntoAnterior nunca debe ser el objeto de actividad del catalogo
+    // mutado con datos extra — son objetos compartidos (misma referencia
+    // que CATALOGO_MOCK), así que el nombre "anterior" se rastrea aparte
+    // en vez de tacharlo encima del objeto real.
+    let puntoAnterior = origen ? { ubicacion: origen } : null;
+    let nombreAnterior = origen ? (origen.nombre || 'tu ubicación') : null;
+
+    actividades.forEach((act, i) => {
+      const fecha = fechaInicio ? sumarDiasISO(fechaInicio, i) : null;
+      const disp = fecha ? verificarDisponibilidad(act.id, fecha, personas) : { disponible: true, horarios_disponibles: (act.horarios || []).map((h) => ({ hora: h, cupos: 99 })) };
+      if (!disp.disponible) tieneCupo = false;
+
+      const dia = {
+        numero: i + 1,
+        fecha,
+        actividad: act,
+        hora: disp.horarios_disponibles[0] ? disp.horarios_disponibles[0].hora : act.horarios[0],
+        distancia_desde_anterior_km: null,
+        tiempo_desde_anterior_min: null,
+        desde_nombre: nombreAnterior,
+      };
+      if (puntoAnterior) {
+        dia.distancia_desde_anterior_km = Math.round(haversineKm(puntoAnterior.ubicacion, act.ubicacion) * 10) / 10;
+        dia.tiempo_desde_anterior_min = estimarTrasladoMin(puntoAnterior, act);
+      }
+      dias.push(dia);
+      puntoAnterior = act;
+      nombreAnterior = act.nombre;
+    });
+
+    return {
+      plan_id: actividades.map((a) => a.id).join('-'),
+      dias,
+      precio_total: actividades.reduce((s, a) => s + a.precio, 0) * personas,
+      tiene_cupo: tieneCupo,
+    };
+  }
+
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.tools = {
     configurarFuenteCatalogo,
@@ -167,6 +230,7 @@
     detalleActividad,
     verificarDisponibilidad,
     registrarInteraccion,
+    armarPlanMultiDia,
     obtenerEventos,
     armarCombo,
     _internas: { haversineKm, estimarTrasladoMin },

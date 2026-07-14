@@ -30,6 +30,26 @@
     return mapa[categoria] || '📍';
   }
 
+  // Mismo patrón que ya usa panoramas.js en el sitio real (ARRIVAL_BY_CATEGORY):
+  // una guía de cómo llegar/estacionamiento por categoría, no un dato preciso
+  // por negocio (eso no existe todavía en el catálogo placeholder). Cuando la
+  // BD real traiga estacionamiento por local, esto se reemplaza por el dato
+  // real; mientras tanto da la misma utilidad honesta que ya tiene el sitio.
+  const LLEGADA_POR_CATEGORIA = {
+    aventura: 'En auto por camino hasta el sector; conviene ir con auto propio o coordinar transporte compartido.',
+    relax: 'En auto propio; el recinto suele tener estacionamiento gratuito para huéspedes.',
+    cultural: 'A pie desde el punto más cercano o en auto; zona con buena conectividad.',
+    foodie: 'A pie o en auto dentro del barrio; hay estacionamientos públicos cercanos.',
+    enologia: 'En auto propio (zona rural/viñas); el lugar cuenta con estacionamiento para visitantes.',
+    romantico: 'En auto o Uber/taxi; conviene reservar con anticipación.',
+    familiar: 'En auto propio; el lugar cuenta con estacionamiento y acceso apto para niños.',
+    fiesta: 'Conviene llegar en Uber/taxi; el sector tiene alta demanda de estacionamiento los fines de semana.',
+    explorador: 'En auto o transporte público hasta el punto de inicio; es zona rural, revisa el estado del camino.',
+  };
+  function fraseLlegada(categoria) {
+    return LLEGADA_POR_CATEGORIA[categoria] || 'Te confirmamos la dirección exacta y accesos al reservar.';
+  }
+
   function formatoPrecio(n) {
     return `$${n.toLocaleString('es-CL')}`;
   }
@@ -93,11 +113,22 @@
   // distancia real de caminata en vez de esta aproximacion.
   const KM_CAMINABLE = 1.2;
 
+  function modoTraslado(km) {
+    return (km !== undefined && km <= KM_CAMINABLE)
+      ? { emoji: '🚶', modo: 'caminando' }
+      : { emoji: '🚗', modo: 'en auto' };
+  }
+
   function fraseTraslado(minutos, km) {
-    if (km !== undefined && km <= KM_CAMINABLE) {
-      return `🚶 Entre panoramas se puede ir caminando: ~${minutos} min (~${km} km).`;
-    }
-    return `🚗 Traslado entre panoramas: ~${minutos} min en auto (~${km ?? '?'} km).`;
+    const { emoji, modo } = modoTraslado(km);
+    return modo === 'caminando'
+      ? `${emoji} Entre panoramas se puede ir caminando: ~${minutos} min (~${km} km).`
+      : `${emoji} Traslado entre panoramas: ~${minutos} min ${modo} (~${km ?? '?'} km).`;
+  }
+
+  function fraseTrasladoDesde(nombre, minutos, km) {
+    const { emoji, modo } = modoTraslado(km);
+    return `${emoji} Desde ${nombre}: ~${minutos} min ${modo} (~${km ?? '?'} km).`;
   }
 
   // Solo se muestra si hay un dato REAL de la tool `clima` (regla E5: no
@@ -119,6 +150,7 @@
       return [
         `🕐 ${hora} · ${a.nombre} (${formatoDuracion(a.duracion_min)}, ritmo ${ENERGIA_HUMANA[a.energia] || a.energia})${cumbre}`,
         `📍 ${a.punto_encuentro}`,
+        `🅿️ ${fraseLlegada(a.categoria)}`,
       ].join('\n');
     });
 
@@ -150,6 +182,68 @@
       frasePorQue(comboRankeado.razones),
       tono.cierre,
     ].join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
+  // Plan de varios días (ej. cabaña + termas + trekking): cada día es una
+  // actividad ancla (una de ellas puede ser `tipo: 'hospedaje'`), con
+  // traslado real desde el día anterior (o desde el origen del cliente
+  // para el día 1).
+  function formatearPlanMultiDia(plan, arquetipos, clima) {
+    const tono = tonoPara(arquetipos);
+    const titulo = plan.dias.map((d) => d.actividad.nombre).join(' + ');
+
+    const bloquesDias = plan.dias.map((dia) => {
+      const act = dia.actividad;
+      const encabezado = act.tipo === 'hospedaje'
+        ? `🛏️ Día ${dia.numero}${dia.fecha ? ` (${dia.fecha})` : ''}: ${act.nombre}`
+        : `${emojiCategoria(act.categoria)} Día ${dia.numero}${dia.fecha ? ` (${dia.fecha})` : ''}: ${act.nombre}`;
+      const traslado = dia.distancia_desde_anterior_km !== null && dia.distancia_desde_anterior_km !== undefined
+        ? fraseTrasladoDesde(dia.desde_nombre || 'el día anterior', dia.tiempo_desde_anterior_min, dia.distancia_desde_anterior_km)
+        : null;
+      const cumbre = act.hero_moment ? ' ☀️ el momento cumbre del plan' : '';
+      const lineaHorario = act.tipo === 'hospedaje'
+        ? `🕐 Check-in ${dia.hora}`
+        : `🕐 ${dia.hora} · ${formatoDuracion(act.duracion_min)}, ritmo ${ENERGIA_HUMANA[act.energia] || act.energia}${cumbre}`;
+      return [
+        encabezado,
+        traslado,
+        lineaHorario,
+        `📍 ${act.punto_encuentro}`,
+        `🅿️ ${fraseLlegada(act.categoria)}`,
+      ].filter(Boolean).join('\n');
+    });
+
+    const lineaClima = fraseClima(clima);
+
+    return [
+      tono.intro,
+      ``,
+      `🗺️ Plan de ${plan.dias.length} días: ${titulo}`,
+      `${formatoPrecio(plan.precio_total)} total por persona`,
+      ``,
+      ...bloquesDias.flatMap((b) => [b, ``]),
+      ...(lineaClima ? [lineaClima, ``] : []),
+      `¿Te lo dejo apartado completo, con alojamiento y las ${plan.dias.length - 1} actividades incluidas?`,
+    ].join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
+  // "Panoramas cerca de ahí" — mismo nombre y espíritu que la sección del
+  // sitio real, pero las razones vienen del ranking multifactorial, no de
+  // solo categoría+cercanía.
+  function formatearRelacionados(relacionados, base) {
+    const filas = relacionados.map(({ actividad, distancia_km, razones }) => {
+      const razon = (razones && razones.find((r) => r.tipo === 'afinidad'))
+        ? fraseAfinidad(razones.find((r) => r.tipo === 'afinidad').categoria)
+        : 'complementa bien tu plan';
+      return `• ${actividad.nombre} — a ${distancia_km} km de ahí, ${formatoPrecio(actividad.precio)} p/p (${razon})`;
+    });
+    return [
+      `📎 Panoramas cerca de ${base.nombre}:`,
+      ``,
+      ...filas,
+      ``,
+      '¿Agrego alguno a tu plan?',
+    ].join('\n');
   }
 
   function preguntaClarificadora(perfil) {
@@ -190,6 +284,6 @@
 
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.plantillas = {
-    formatearCombo, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
+    formatearCombo, formatearPlanMultiDia, formatearRelacionados, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
   };
 })();

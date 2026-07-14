@@ -12,7 +12,11 @@
  *   energia: 'baja'|'media'|'alta', exterior, indoor_alt, accesible,
  *   experiencia_estimada (1-5), hero_moment,
  *   horarios[], punto_encuentro, incluye[], no_incluye[], restricciones[],
- *   cupos: { 'YYYY-MM-DD': { 'HH:MM': numeroDeCupos } }
+ *   cupos: { 'YYYY-MM-DD': { 'HH:MM': numeroDeCupos } },
+ *   tipo?: 'hospedaje' — opcional; ausente = actividad de día normal.
+ *     Se usa para armar planes de varios días (ver armarPlanMultiDia en
+ *     tools.js): una actividad `hospedaje` ancla las noches del plan,
+ *     el resto son actividades de día alrededor de esa base.
  * }
  */
 (() => {
@@ -238,6 +242,73 @@
       no_incluye: ['transporte'],
       restricciones: [],
       cupos: cuposParaProximosDias({ '09:30': 10 }),
+    },
+    // --- Cluster sur de Chile (Pucón), para el caso de uso de plan de
+    // varios días (cabaña + termas + trekking). `tipo: 'hospedaje'` es
+    // nuevo: distingue una noche de alojamiento de una actividad de día.
+    {
+      id: 'a11',
+      nombre: 'Cabaña con tinaja caliente (2 noches)',
+      categoria: 'relax',
+      tags: ['relax', 'hospedaje', 'sur'],
+      tipo: 'hospedaje',
+      precio: 90000,
+      duracion_min: 24 * 60,
+      ubicacion: { lat: -39.2724, lng: -71.9760, comuna: 'Pucón' },
+      energia: 'baja',
+      exterior: false,
+      indoor_alt: true,
+      accesible: true,
+      experiencia_estimada: 5,
+      hero_moment: false,
+      horarios: ['15:00'],
+      punto_encuentro: 'Recepción cabañas, camino a Caburgua',
+      incluye: ['2 noches', 'tinaja caliente privada', 'desayuno'],
+      no_incluye: ['transporte'],
+      restricciones: [],
+      cupos: cuposParaProximosDias({ '15:00': 4 }),
+    },
+    {
+      id: 'a12',
+      nombre: 'Termas naturales al aire libre',
+      categoria: 'relax',
+      tags: ['relax', 'termas', 'sur'],
+      precio: 20000,
+      duracion_min: 150,
+      ubicacion: { lat: -39.42, lng: -71.68, comuna: 'Curarrehue' },
+      energia: 'baja',
+      exterior: true,
+      indoor_alt: false,
+      accesible: true,
+      experiencia_estimada: 4,
+      hero_moment: false,
+      horarios: ['10:00', '14:00'],
+      punto_encuentro: 'Acceso termas, portón de entrada',
+      incluye: ['entrada a pozones naturales'],
+      no_incluye: ['transporte', 'toallas'],
+      restricciones: [],
+      cupos: cuposParaProximosDias({ '10:00': 15, '14:00': 15 }),
+    },
+    {
+      id: 'a13',
+      nombre: 'Trekking sendero volcán Villarrica',
+      categoria: 'aventura',
+      tags: ['aventura', 'trekking', 'sur'],
+      precio: 25000,
+      duracion_min: 240,
+      ubicacion: { lat: -39.42, lng: -71.93, comuna: 'Pucón' },
+      energia: 'alta',
+      exterior: true,
+      indoor_alt: false,
+      accesible: false,
+      experiencia_estimada: 5,
+      hero_moment: true,
+      horarios: ['08:00'],
+      punto_encuentro: 'Portón CONAF, sector Rucapillán',
+      incluye: ['guía de montaña', 'seguro de actividad'],
+      no_incluye: ['equipo personal', 'transporte'],
+      restricciones: ['condición física media-alta'],
+      cupos: cuposParaProximosDias({ '08:00': 8 }),
     },
   ];
 
