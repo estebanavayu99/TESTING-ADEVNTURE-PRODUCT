@@ -190,6 +190,51 @@ Playwright que la estructura (labels, distancias/tiempos, URLs de los
 `iframe` con las coordenadas correctas) es correcta — apenas se abra en
 un navegador con red, el mapa se ve real.
 
+## Flujo real confirmado: recomendación única → oferta opcional → combo con mapas
+
+El usuario mandó 2 screenshots más de su web real (modal de detalle de un
+panorama solo, con "Panoramas cerca de ahí" abajo; y "Resumen de tu
+reserva" con el plan completo + "Tu Ruta") y lo resumió así: *"en primer
+lugar muestra recomendaciones según tu expertis, para luego incluso
+ofrecer combos a elección (solo si el cliente quiere). En caso de
+escogerlo, salen todos los mapas."* Esto reveló que el motor por defecto
+estaba armando un combo de 2 actividades de entrada (`top3[0]+top3[1]`),
+sin dar el paso intermedio de "ofrecer, no imponer". Se restructuró
+`proponerCombos` en `js/motor.js`:
+
+1. **Default (sin señal de paquete/explorar/divergencia)**: se arman
+   combos de **1 sola actividad** para el top 3 de candidatos y se
+   rankean entre sí — la "recomendación según expertise" es elegir la
+   MEJOR opción individual (multi-factor: afinidad, presupuesto, clima,
+   energía, arquetipo), no forzar ya una combinación.
+2. Tras esa recomendación, si hay una actividad complementaria real cerca
+   (mismo radio que "panoramas cerca de ahí", `RADIO_CERCA_KM = 80`), se
+   agrega una frase de oferta (`plantillas.ofertaComplemento`) y se guarda
+   `perfil.oferta_combo = { base_id, complemento_id }` — sin armar el
+   combo todavía.
+3. El combo de 2 actividades (y el panel "Tu Ruta" con mapas) **solo se
+   arma si el cliente**: (a) pide explícitamente un paquete (detección ya
+   existente de la Fase 26), o (b) **acepta la oferta** con una
+   afirmación simple ("sí", "dale", "agrégalo"...) — `PATRON_ACEPTA_OFERTA`
+   + `aceptaOfertaCombo()`. La aceptación solo cuenta si hay una
+   `perfil.oferta_combo` pendiente Y el mensaje no trae una categoría
+   nueva (para no confundir un "sí" que en realidad es el inicio de otro
+   tema). Al aceptar, se arma EXACTAMENTE el combo ofrecido (mismo
+   base+complemento), no uno recalculado, para que la respuesta sea
+   consistente con lo que ya vio.
+4. `preview.js` (`mostrarRuta`) ahora exige `debug.plan` o
+   `debug.comboCompleto.actividades.length >= 2` antes de poblar el panel
+   de mapas — una recomendación única solo muestra el dato de distancia
+   como texto (`📌 Desde tu ubicación: ...`), igual que el modal de
+   detalle de un panorama solo en el sitio real (sin mapa embebido); el
+   mapa aparece recién en el "Resumen de tu reserva" equivalente.
+
+Verificado con Playwright: turno 1 (recomendación + oferta, 0 mapas) →
+turno 2 ("sí, dale" → combo completo + 2 mapas + `oferta_combo` vuelve a
+`null`). Regresión completa sin cambios: 11/11 algoritmos + todos los
+escenarios (aniversario, relacionados, plan multi-día, divergencia,
+reenganche, explorar, clima dual, paquete explícito) siguen correctos.
+
 ## Cómo probarlo localmente
 
 ```bash

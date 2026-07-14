@@ -142,6 +142,15 @@
     return `${emoji} Desde ${nombre}: ~${minutos} min ${modo} (~${km ?? '?'} km).`;
   }
 
+  // Flujo real del sitio (screenshots de panoramas.js): tras la
+  // recomendación única, se ofrece combinarla con algo cercano — "solo si
+  // el cliente quiere". Esta frase es la oferta; el combo de verdad y los
+  // mapas de "Tu Ruta" solo aparecen si acepta en un turno futuro.
+  function ofertaComplemento(complemento, distanciaKm) {
+    if (!complemento) return null;
+    return `¿Quieres que te arme el plan completo agregando ${emojiCategoria(complemento.categoria)} ${complemento.nombre} (a ${distanciaKm} km de ahí)? Solo dímelo y te muestro la ruta completa con mapas.`;
+  }
+
   // Bug real reportado: se informaba la distancia/tiempo pero se asumía en
   // silencio que el cliente maneja su propio auto, sin ofrecerle ayuda real
   // con el traslado (bus, transfer, auto compartido) — "ni me ofrece la
@@ -361,6 +370,6 @@
 
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.plantillas = {
-    formatearCombo, formatearPlanMultiDia, formatearRelacionados, formatearOpcionesComparadas, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
+    formatearCombo, formatearPlanMultiDia, formatearRelacionados, formatearOpcionesComparadas, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara, ofertaComplemento,
   };
 })();

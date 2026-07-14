@@ -68,8 +68,14 @@
   }
 
   function mostrarRuta(perfil, debug) {
+    // El panel de mapas solo aparece para un plan real de 2+ paradas (combo
+    // aceptado o plan multi-día) — igual que en panoramas.js, la
+    // recomendación única (1 sola actividad) muestra el dato de distancia
+    // como texto, pero no arma el panel de "Tu Ruta" con mapas todavía.
+    const esPlanMultiStop = debug.plan || (debug.comboCompleto && debug.comboCompleto.actividades.length >= 2);
+    if (!esPlanMultiStop) return;
     const paradas = construirParadas(perfil, debug.comboCompleto, debug.plan);
-    if (paradas.length < 2) return; // sin origen real o solo 1 actividad: se deja el panel como estaba
+    if (paradas.length < 2) return; // sin origen real: no hay desde donde trazar el primer tramo
     const legs = paradas.slice(1).map((p, i) => legEmbedHTML(paradas[i], p)).join('');
     rutaEl.innerHTML = `${legs}<p class="darwin-ruta__caption">📍 Vista referencial en Google Maps entre las zonas de tu plan</p>`;
   }

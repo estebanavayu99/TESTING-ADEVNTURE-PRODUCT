@@ -62,6 +62,15 @@
   // pese a haber pedido un paquete (bug real reportado: "quierp paquete"
   // devolvia la misma opcion unica de siempre).
   const PATRON_QUIERE_PAQUETE = /\bpaquete\b|\bcombo\b|combinad[oa]|\bpack\b|dos actividades|m[aá]s de una actividad|junto con algo m[aá]s/;
+  // Flujo real del sitio (confirmado por el usuario con capturas de
+  // panoramas.js): PRIMERO una recomendación única "según tu expertise",
+  // DESPUÉS se ofrece combinarla con algo cercano — pero solo se arma el
+  // combo (y aparecen los mapas de "Tu Ruta") si el cliente ACEPTA esa
+  // oferta. Afirmaciones simples ("sí", "dale", "agrégalo"...) cuentan como
+  // aceptación SOLO cuando hay una oferta pendiente (perfil.oferta_combo) y
+  // el mensaje no trae una categoría nueva — si no, un "sí" suelto en medio
+  // de otra conversación se malinterpretaría como aceptar una oferta vieja.
+  const PATRON_ACEPTA_OFERTA = /^\s*(s[ií]|dale|bueno|ok(?:ay)?|de acuerdo|me parece|perfecto|listo|agr[ée]galo|s[uú]malo|hazlo|el plan completo)\b/;
   // Deteccion explicita del caso "plan de varios dias" (cabaña + termas +
   // trekking en el sur) — hoy es una demo puntual de esta secuencia
   // exacta, no un planificador general de N dias/categorias (eso necesita
@@ -141,6 +150,7 @@
   function esSaludoVacio(texto) { return PATRON_SALUDO.test(sinAcentos(texto)); }
   function quiereExplorar(texto) { return PATRON_QUIERE_EXPLORAR.test(sinAcentos(texto)); }
   function quierePaquete(texto) { return PATRON_QUIERE_PAQUETE.test(sinAcentos(texto)); }
+  function aceptaOfertaCombo(texto) { return PATRON_ACEPTA_OFERTA.test(sinAcentos(texto)); }
   function esPlanMultiDia(texto) { return PATRON_PLAN_MULTIDIA.test(sinAcentos(texto)); }
   function pideRelacionados(texto) { return PATRON_VER_RELACIONADOS.test(sinAcentos(texto)); }
 
@@ -174,6 +184,11 @@
       // propuesta porque cada combo puede estar en un lugar distinto.
       contexto: { clima_usuario: null, luz: null, eventos: null, afluencia: null },
       favoritos: [], descartados: [], historial_ids: [], carrito: [],
+      // oferta_combo: { base_id, complemento_id } — el complemento cercano
+      // que se le ofreció al cliente junto con la última recomendación
+      // única. Se consume (vuelve a null) apenas se acepta o se pide un
+      // paquete explícito; una recomendación nueva la reemplaza o la borra.
+      oferta_combo: null,
     };
   }
 
@@ -227,7 +242,7 @@
     }
   }
 
-  async function proponerCombos(D, perfil, explorar = false, forzarPaquete = false) {
+  async function proponerCombos(D, perfil, explorar = false, forzarPaquete = false, aceptaOferta = false) {
     // D3: si el grupo tiene gustos en conflicto detectados esta sesión, la
     // secuencia la define QUIEN SE MENCIONÓ PRIMERO (no el score de
     // afinidad) — el objetivo es que cada persona vea que se consideró lo
@@ -282,25 +297,39 @@
       const ancla = candidatos[0];
       const candidatosZona = candidatos.filter((c) => D.tools._internas.haversineKm(ancla.ubicacion, c.ubicacion) <= RADIO_MISMA_ZONA_KM);
       combosCompletos.push(...candidatosZona.slice(0, 3).map((c) => D.tools.armarCombo([c.id], opciones)));
-    } else {
+    } else if (aceptaOferta && perfil.oferta_combo) {
+      // El cliente aceptó la oferta de combinar que se le hizo en el turno
+      // anterior ("¿quieres que te arme el plan completo agregando X?") —
+      // se arma EXACTAMENTE ese combo (mismo base + complemento que ya vio),
+      // no uno recalculado de cero, para que la respuesta sea consistente.
+      const combo = D.tools.armarCombo([perfil.oferta_combo.base_id, perfil.oferta_combo.complemento_id], opciones);
+      if (combo) combosCompletos.push(combo);
+    } else if (forzarPaquete) {
+      // Pedido explícito de paquete: se ignora cualquier oferta pendiente
+      // vieja (podría ser de otro tema) y se arma fresco desde los
+      // candidatos actuales — el cliente ya dijo que quiere 2+, no una sola.
       if (top3.length >= 2) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[1].id], opciones));
-      // Si pidió explícitamente un paquete/combo, no se ofrece la opción de
-      // 1 sola actividad como alternativa — el cliente ya dijo que quiere
-      // 2+, dejarla competir en el ranking es como no haberlo escuchado.
-      if (!forzarPaquete && top3.length >= 1) combosCompletos.push(D.tools.armarCombo([top3[0].id], opciones));
       if (top3.length >= 3) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[2].id], opciones));
       // Caso real del bug: la categoría de interés solo tiene 1 actividad
       // en el catálogo (top3.length === 1), así que no hay con qué armar un
       // 2do combo por categoría. Si igual pidió paquete, se complementa esa
       // única actividad con algo cercano (cualquier categoría, mismo radio
       // que "panoramas cerca de ahí") en vez de devolverle 1 sola opción.
-      if (forzarPaquete && top3.length === 1 && !combosCompletos.length) {
+      if (top3.length === 1 && !combosCompletos.length) {
         const base = top3[0];
         const complemento = candidatos.find((c) => c.id !== base.id && D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
           || D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id] })
             .find((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
         if (complemento) combosCompletos.push(D.tools.armarCombo([base.id, complemento.id], opciones));
       }
+    } else {
+      // DEFAULT — regla real del sitio (confirmada con capturas de
+      // panoramas.js): primero UNA recomendación según expertise, rankeada
+      // entre varios candidatos individuales (no forzando ya un combo de
+      // 2). Más abajo se ofrece combinarla con algo cercano — el combo de
+      // verdad (y el panel de mapas "Tu Ruta") solo aparecen si el cliente
+      // acepta esa oferta o pide un paquete explícito.
+      for (const c of top3) combosCompletos.push(D.tools.armarCombo([c.id], opciones));
     }
     const combosValidos = combosCompletos.filter(Boolean);
     if (!combosValidos.length) return null;
@@ -352,10 +381,29 @@
 
     let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, climaPanorama, perfil.grupo.gustos_divergentes, perfil.contexto.clima_usuario);
     if (perfil.ocasion_especial) texto = `Para tu ${perfil.ocasion_especial}, esto lo hace inolvidable. ${texto}`;
-    const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
-    if (addon && perfil.intent_score.confianza >= 0.7) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;
 
-    return { texto, combosRankeados: rankeados, comboElegido: comboCompleto };
+    // Oferta de combinar (solo tras la recomendación única default, y solo
+    // si hay un complemento real cerca) — "solo si el cliente quiere": el
+    // combo de 2 actividades y el panel de mapas no se arman hasta que
+    // acepte esto o pida un paquete explícito en un turno futuro.
+    let ofertaComplemento = null;
+    const esRecomendacionUnica = !hayDivergencia && !explorar && !forzarPaquete && !aceptaOferta && comboCompleto.actividades.length === 1;
+    if (esRecomendacionUnica) {
+      const base = comboCompleto.actividades[0];
+      const cercano = D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id] })
+        .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
+        .sort((a, b) => D.tools._internas.haversineKm(base.ubicacion, a.ubicacion) - D.tools._internas.haversineKm(base.ubicacion, b.ubicacion))[0];
+      if (cercano) {
+        const distanciaKm = Math.round(D.tools._internas.haversineKm(base.ubicacion, cercano.ubicacion) * 10) / 10;
+        ofertaComplemento = { base_id: base.id, complemento_id: cercano.id, complemento: cercano, distanciaKm };
+        texto += `\n\n${D.plantillas.ofertaComplemento(cercano, distanciaKm)}`;
+      }
+    }
+
+    const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
+    if (addon && perfil.intent_score.confianza >= 0.7 && !ofertaComplemento) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;
+
+    return { texto, combosRankeados: rankeados, comboElegido: comboCompleto, ofertaComplemento };
   }
 
   // Secuencia fija cabaña + termas + trekking (sur de Chile) — demuestra el
@@ -518,7 +566,14 @@
       const base = D.plantillas.preguntaClarificadora(perfil);
       texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
     } else {
-      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario), quierePaquete(textoUsuario));
+      const quierePaqueteExplicito = quierePaquete(textoUsuario);
+      // Aceptar una oferta pendiente solo cuenta si hay una oferta real
+      // guardada Y el mensaje no trae categoría nueva (si no, un "sí" que en
+      // realidad es el inicio de otro tema se confundiría con aceptar la
+      // oferta vieja) Y no es ya un pedido explícito de paquete (ese toma
+      // prioridad y arma uno fresco, ignorando la oferta anterior).
+      const aceptaOferta = !!(perfil.oferta_combo && !quierePaqueteExplicito && !categorias.length && aceptaOfertaCombo(textoUsuario));
+      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario), quierePaqueteExplicito, aceptaOferta);
       if (!resultado) {
         texto = 'No tengo panoramas que calcen 100% con eso ahora mismo, pero cuéntame más (categoría, fecha o presupuesto) y busco la opción más cercana.';
       } else if (resultado.sinResultados) {
@@ -535,6 +590,9 @@
         debug.combos = resultado.combosRankeados;
         debug.comboCompleto = resultado.comboElegido;
         perfil.carrito = [{ combo_id: resultado.comboElegido.combo_id, precio: resultado.comboElegido.precio_total }];
+        perfil.oferta_combo = resultado.ofertaComplemento
+          ? { base_id: resultado.ofertaComplemento.base_id, complemento_id: resultado.ofertaComplemento.complemento_id }
+          : null;
       }
     }
 
