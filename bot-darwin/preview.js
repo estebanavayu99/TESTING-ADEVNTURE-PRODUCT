@@ -28,10 +28,13 @@
     debugEl.textContent = JSON.stringify({ perfil, debug }, null, 2);
   }
 
-  function enviar(texto) {
+  async function enviar(texto) {
     if (!texto.trim()) return;
     agregarMensaje(texto, 'user');
-    const { texto: respuesta, perfil, debug } = D.motor.procesarMensaje(SID, texto);
+    // procesarMensaje es async: el clima del panorama se busca fresco
+    // (red real) en cada propuesta, no solo el del cliente al apretar el
+    // botón de ubicación.
+    const { texto: respuesta, perfil, debug } = await D.motor.procesarMensaje(SID, texto);
     agregarMensaje(respuesta, 'bot');
     mostrarDebug(perfil, debug);
   }
@@ -74,13 +77,20 @@
   // navegador — no se puede probar en un ambiente sandbox sin red, pero
   // corre de verdad apenas se abra este archivo en un navegador normal.
   function actualizarClimaPara(coords, nombre) {
+    // Esto guarda el clima DE DONDE ESTÁS (secundario) + tu ubicación para
+    // distancias reales. El clima del PANORAMA (el que importa para saber
+    // qué ropa llevar) se busca aparte, fresco, cuando Darwin arma cada
+    // propuesta — por eso acá no se mezcla con lo que se muestra en el combo.
     return D.contexto.clima(coords).then((clima) => {
       const perfil = D.motor.cargarPerfil(SID);
       perfil.origen = { ...coords, nombre };
-      perfil.contexto.clima = clima;
+      perfil.contexto.clima_usuario = clima;
       D.motor.guardarPerfil(SID, perfil);
-      agregarMensaje(`📍 Ubicación real detectada (${nombre}). 🌤️ Clima real: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round(clima.lluvia_prob * 100)}% de probabilidad de lluvia. Darwin ya va a usar esto para calcular distancias reales y el próximo combo.`, 'bot');
+      agregarMensaje(`📍 Ubicación real detectada (${nombre}). 🌤️ Clima donde estás: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round(clima.lluvia_prob * 100)}% de probabilidad de lluvia. El clima de cada panorama que te proponga lo busco aparte, fresco, para ese lugar específico.`, 'bot');
     }).catch((err) => {
+      const perfil = D.motor.cargarPerfil(SID);
+      perfil.origen = { ...coords, nombre };
+      D.motor.guardarPerfil(SID, perfil);
       agregarMensaje(`📍 Ubicación real detectada (${nombre}), pero no pude conectarme a internet para revisar el clima real desde acá (${err.message}) — es normal en un ambiente sin salida a internet. La distancia real desde tu ubicación sí va a funcionar igual.`, 'bot');
     });
   }

@@ -144,10 +144,17 @@
 
   // Solo se muestra si hay un dato REAL de la tool `clima` (regla E5: no
   // prometer lo que las tools no confirman) — sin esto, no se inventa nada.
-  function fraseClima(clima) {
-    if (!clima) return null;
-    const emoji = (clima.lluvia_prob || 0) >= 0.4 ? '🌧️' : '☀️';
-    return `${emoji} Para esa fecha: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round((clima.lluvia_prob || 0) * 100)}% de probabilidad de lluvia.`;
+  // "panorama" (que ropa llevar allá) es el dato principal; "usuario"
+  // (donde está el cliente ahora) es secundario — se pidió explícitamente
+  // considerarlo igual, aunque sea menos relevante que el del destino.
+  function fraseClima(climaPanorama, climaUsuario) {
+    if (!climaPanorama) return null;
+    const emoji = (climaPanorama.lluvia_prob || 0) >= 0.4 ? '🌧️' : '☀️';
+    let frase = `${emoji} En el panorama: ${climaPanorama.temp_min}°–${climaPanorama.temp_max}°C, ${Math.round((climaPanorama.lluvia_prob || 0) * 100)}% de probabilidad de lluvia — así sabes qué ropa llevar.`;
+    if (climaUsuario) {
+      frase += `\n🌡️ Donde estás tú ahora: ${climaUsuario.temp_min}°–${climaUsuario.temp_max}°C (dato secundario, para referencia).`;
+    }
+    return frase;
   }
 
   // D3 del system prompt: "si el grupo tiene intereses en conflicto,
@@ -167,7 +174,7 @@
     return `🤝 Sé que a uno le tinca ${et1} y al otro ${et2} — por eso parte con lo primero y cierra con lo segundo, así ninguno se queda sin lo suyo.`;
   }
 
-  function formatearCombo(comboRankeado, comboCompleto, arquetipos, clima, gustosDivergentes) {
+  function formatearCombo(comboRankeado, comboCompleto, arquetipos, climaPanorama, gustosDivergentes, climaUsuario) {
     const tono = tonoPara(arquetipos);
     const acts = comboCompleto.actividades || [];
     const emoji = emojiCategoria(acts[0] && acts[0].categoria);
@@ -191,7 +198,7 @@
       ? `📌 Desde ${comboCompleto.origen_nombre || 'tu ubicación'}: ~${comboCompleto.tiempo_desde_origen_min} min (~${comboCompleto.distancia_desde_origen_km} km).`
       : null;
 
-    const lineaClima = fraseClima(clima);
+    const lineaClima = fraseClima(climaPanorama, climaUsuario);
     const lineaDivergencia = fraseDivergencia(gustosDivergentes, acts.map((a) => a.categoria));
 
     const planB = comboCompleto.plan_b

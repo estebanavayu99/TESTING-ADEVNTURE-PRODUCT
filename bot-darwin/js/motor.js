@@ -160,7 +160,12 @@
       intereses: [], intensidad_preferida: null, energia_acumulada_dia: 0,
       restricciones: [], motivo_viaje: null, ocasion_especial: null,
       intent_score: { que_quiere: null, confianza: 0 }, etapa_embudo: null,
-      contexto: { clima: null, luz: null, eventos: null, afluencia: null },
+      // clima_usuario: donde esta el cliente AHORA (secundario, poco
+      // relevante para que se ponga, pero se considera igual — cacheado
+      // una vez via el boton de ubicacion real). clima_panorama: el clima
+      // del PANORAMA propuesto (que ropa llevar), se busca fresco en cada
+      // propuesta porque cada combo puede estar en un lugar distinto.
+      contexto: { clima_usuario: null, luz: null, eventos: null, afluencia: null },
       favoritos: [], descartados: [], historial_ids: [], carrito: [],
     };
   }
@@ -202,7 +207,20 @@
     fiesta: 'una segunda ronda de tragos', explorador: 'un almuerzo típico del lugar',
   };
 
-  function proponerCombos(D, perfil, explorar = false) {
+  // Clima REAL del panorama propuesto (no el del cliente): se busca fresco
+  // en cada propuesta porque cada combo puede quedar en un lugar distinto
+  // — es el dato que importa para "qué ropa llevar". Requiere red real; si
+  // falla (sin internet, como este sandbox) se degrada con honestidad: no
+  // se inventa nada, simplemente no se menciona el clima del panorama.
+  async function obtenerClimaPanorama(D, ubicacion, fecha) {
+    try {
+      return await D.contexto.clima({ lat: ubicacion.lat, lng: ubicacion.lng, fecha });
+    } catch {
+      return null;
+    }
+  }
+
+  async function proponerCombos(D, perfil, explorar = false) {
     // D3: si el grupo tiene gustos en conflicto detectados esta sesión, la
     // secuencia la define QUIEN SE MENCIONÓ PRIMERO (no el score de
     // afinidad) — el objetivo es que cada persona vea que se consideró lo
@@ -272,7 +290,13 @@
       arquetipos: perfil.arquetipos, afinidades: afinidadesMap, presupuesto: perfil.presupuesto,
       grupo: perfil.grupo, restricciones: perfil.restricciones, historial_ids: perfil.historial_ids,
     };
-    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima };
+    // Nota: el clima usado para RANKEAR (filtro duro de actividades
+    // exteriores + f_clima) es el del cliente como aproximacion de "la
+    // zona" — funciona bien para combos dentro de la misma ciudad. Para
+    // combos que cruzan de zona (ej. cluster sur), el clima MOSTRADO al
+    // final (mas abajo) sí se busca fresco para la ubicación real del
+    // panorama elegido, así el dato que ve el cliente es siempre honesto.
+    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima_usuario };
     const rankeados = D.algoritmos.rankearCombos(combosValidos, perfilRanking, contexto);
     if (!rankeados.length) return { sinResultados: true };
 
@@ -300,7 +324,11 @@
       comboCompleto.origen_nombre = perfil.origen.nombre || null;
     }
 
-    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, perfil.contexto.clima, perfil.grupo.gustos_divergentes);
+    const climaPanorama = comboCompleto.actividades.length
+      ? await obtenerClimaPanorama(D, comboCompleto.actividades[0].ubicacion, perfil.fechas)
+      : null;
+
+    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, climaPanorama, perfil.grupo.gustos_divergentes, perfil.contexto.clima_usuario);
     if (perfil.ocasion_especial) texto = `Para tu ${perfil.ocasion_especial}, esto lo hace inolvidable. ${texto}`;
     const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
     if (addon && perfil.intent_score.confianza >= 0.7) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;
@@ -314,7 +342,7 @@
   // y regiones es trabajo aparte para cuando exista más catálogo real.
   const IDS_PLAN_SUR = ['a11', 'a12', 'a13'];
 
-  function proponerPlanMultiDia(D, perfil) {
+  async function proponerPlanMultiDia(D, perfil) {
     const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
     const plan = D.tools.armarPlanMultiDia(IDS_PLAN_SUR, {
       fechaInicio: perfil.fechas,
@@ -324,7 +352,14 @@
     if (!plan) return null;
     if (!plan.tiene_cupo) return { sinResultados: true };
 
-    const texto = D.plantillas.formatearPlanMultiDia(plan, perfil.arquetipos, perfil.contexto.clima);
+    // Clima real del primer destino del plan (no el del cliente) — el
+    // resto de los dias quedan sin dato especifico por ahora (multi-clima
+    // por dia es una mejora futura, ver README).
+    const climaPanorama = plan.dias.length
+      ? await obtenerClimaPanorama(D, plan.dias[0].actividad.ubicacion, plan.dias[0].fecha)
+      : null;
+
+    const texto = D.plantillas.formatearPlanMultiDia(plan, perfil.arquetipos, climaPanorama);
     return { texto, plan };
   }
 
@@ -360,7 +395,7 @@
       arquetipos: perfil.arquetipos, afinidades: afinidadesMap, presupuesto: perfil.presupuesto,
       grupo: perfil.grupo, restricciones: perfil.restricciones, historial_ids: perfil.historial_ids,
     };
-    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima };
+    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima_usuario };
     const rankeados = D.algoritmos.rankearCombos(combosCandidatos, perfilRanking, contexto);
     if (!rankeados.length) return { sinResultados: true };
 
@@ -377,7 +412,7 @@
     return { texto: D.plantillas.formatearRelacionados(top3, base), relacionados: top3 };
   }
 
-  function procesarMensaje(sessionId, textoUsuario) {
+  async function procesarMensaje(sessionId, textoUsuario) {
     const D = window.PickmapDarwin;
     const perfil = cargarPerfil(sessionId);
 
@@ -441,7 +476,7 @@
         debug.relacionados = resultado.relacionados;
       }
     } else if (esPlanMultiDia(textoUsuario)) {
-      const resultado = proponerPlanMultiDia(D, perfil);
+      const resultado = await proponerPlanMultiDia(D, perfil);
       if (!resultado) {
         texto = 'No pude armar el plan de varios días ahora mismo — cuéntame más y lo ajusto.';
       } else if (resultado.sinResultados) {
@@ -461,7 +496,7 @@
       const base = D.plantillas.preguntaClarificadora(perfil);
       texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
     } else {
-      const resultado = proponerCombos(D, perfil, quiereExplorar(textoUsuario));
+      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario));
       if (!resultado) {
         texto = 'No tengo panoramas que calcen 100% con eso ahora mismo, pero cuéntame más (categoría, fecha o presupuesto) y busco la opción más cercana.';
       } else if (resultado.sinResultados) {

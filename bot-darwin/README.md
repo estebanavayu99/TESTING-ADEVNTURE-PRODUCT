@@ -46,7 +46,7 @@ separados del resto justo para eso.
 | `js/algoritmos.js` — calcularConfianza, rankearCombos | **Real**, matemática de la spec |
 | `data/catalogo.mock.js` | **Placeholder**. El usuario va a pasar la BD real — ver "Cómo conectar la BD real" abajo |
 | `js/tools.js` — buscar/detalle/disponibilidad/traza/armar_combo | Real, pero lee del catálogo placeholder |
-| `js/contexto.js` — clima, hora_solar (Open-Meteo) / calcular_ruta, optimizar_itinerario (OSRM) | **Llamadas de red reales**, gratis, sin API key. No se pueden probar en este sandbox (sin salida a internet) pero funcionan apenas el bot corra en un navegador con red |
+| `js/contexto.js` — clima, hora_solar (Open-Meteo) / calcular_ruta, optimizar_itinerario (OSRM) | **Llamadas de red reales**, gratis, sin API key. No se pueden probar en este sandbox (sin salida a internet) pero funcionan apenas el bot corra en un navegador con red. Ver "Clima: dos factores separados" abajo |
 | `js/contexto.js` — hora_local | Real, cálculo local con `Intl`, sin red |
 | `js/afluencia.js` — afluencia, eventos_locales | **Heurística/placeholder** — reemplazar por datos reales de reservas y calendario de feriados/festivales cuando existan |
 | `js/motor.js`, `js/plantillas.js` | Reglas del system prompt v4 implementadas como código determinístico (sin LLM) |
@@ -96,6 +96,47 @@ Catálogo mock (`data/catalogo.mock.js`) ahora tiene 2 actividades de
 ejemplo más (`a9` fiesta, `a10` explorador) para que esos dos arquetipos
 nuevos sean alcanzables de punta a punta en el preview, no solo en la
 detección de texto.
+
+## Clima: dos factores separados (`clima_panorama` vs. `clima_usuario`)
+
+Bug real reportado por el usuario tras probar el flujo de práctica: el
+motor pedía el clima UNA vez para la ubicación actual del usuario
+(`perfil.origen`) y mostraba ese mismo dato como si fuera el clima del
+panorama recomendado — incorrecto apenas el panorama queda en otra
+comuna/región. La spec (`pickmap_system_prompt_v4.pdf`) pide justamente
+dos factores distintos:
+1. **Clima del panorama** (dónde va a estar la actividad, en la fecha
+   del plan) — el dato relevante para decidir qué ropa llevar. Es el
+   factor primario, se muestra siempre primero.
+2. **Clima donde está el usuario ahora** — dato secundario, solo de
+   referencia (ej. si va a hacer mucho más frío/calor en destino que en
+   su ubicación actual).
+
+Implementación (`js/motor.js`):
+- `perfil.contexto.clima_usuario` guarda el clima de `perfil.origen`
+  (se sigue pidiendo una sola vez, vía `actualizarClimaPara` en
+  `preview.js`, apenas el usuario comparte ubicación).
+- `obtenerClimaPanorama(D, ubicacion, fecha)` pide el clima real de la
+  ubicación del combo/actividad recién antes de responder — con
+  try/catch que degrada a `null` sin romper el mensaje si la red falla.
+- Esto obligó a volver `async` toda la cadena de diálogo:
+  `procesarMensaje` → `proponerCombos`/`proponerPlanMultiDia` →
+  `obtenerClimaPanorama`. `preview.js` ahora hace
+  `await D.motor.procesarMensaje(...)`.
+- `plantillas.js`/`fraseClima(climaPanorama, climaUsuario)` compone las
+  dos líneas por separado: "☀️/🌧️ En el panorama: ..." (siempre, si hay
+  dato) + "🌡️ Donde estás tú ahora: ... (dato secundario, para
+  referencia)." (solo si también hay `climaUsuario`).
+- El ranking/filtros duros de `rankear_combos` siguen usando
+  `clima_usuario` como aproximación de zona para puntuar candidatos
+  ANTES de tener un combo elegido (documentado como simplificación
+  conocida en el código) — la diferencia real entre panorama/usuario
+  solo importa para lo que se le MUESTRA al cliente, que es donde
+  estaba el bug.
+- Verificado con Playwright mockeando `PickmapDarwin.contexto.clima`
+  para que resuelva con valores distintos a `clima_usuario`: las dos
+  líneas se muestran correctas y diferenciadas (18°–27°C panorama vs.
+  5°–14°C usuario, en el caso de prueba).
 
 ## Cómo probarlo localmente
 
