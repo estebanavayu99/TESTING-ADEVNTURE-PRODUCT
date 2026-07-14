@@ -56,6 +56,12 @@
   // explora, acompañalo con curiosidad" — el default (1 opcion directa) ya
   // sirve al apurado; esto detecta al que quiere explorar/comparar.
   const PATRON_QUIERE_EXPLORAR = /cu[eé]ntame m[aá]s|qu[eé] opciones (tienes|hay)|dame m[aá]s opciones|mu[eé]strame opciones|quiero ver m[aá]s|comparar opciones|otras alternativas/;
+  // Pedido explicito de "paquete/combo": el cliente quiere 2+ actividades,
+  // no una sola — sin esto, rankear_combos podia igual elegir el combo de
+  // 1 actividad si puntuaba mas alto, dejando al cliente con "1 opcion"
+  // pese a haber pedido un paquete (bug real reportado: "quierp paquete"
+  // devolvia la misma opcion unica de siempre).
+  const PATRON_QUIERE_PAQUETE = /\bpaquete\b|\bcombo\b|combinad[oa]|\bpack\b|dos actividades|m[aá]s de una actividad|junto con algo m[aá]s/;
   // Deteccion explicita del caso "plan de varios dias" (cabaña + termas +
   // trekking en el sur) — hoy es una demo puntual de esta secuencia
   // exacta, no un planificador general de N dias/categorias (eso necesita
@@ -134,6 +140,7 @@
   function esDescarte(texto) { return PATRON_DESCARTE.test(sinAcentos(texto)); }
   function esSaludoVacio(texto) { return PATRON_SALUDO.test(sinAcentos(texto)); }
   function quiereExplorar(texto) { return PATRON_QUIERE_EXPLORAR.test(sinAcentos(texto)); }
+  function quierePaquete(texto) { return PATRON_QUIERE_PAQUETE.test(sinAcentos(texto)); }
   function esPlanMultiDia(texto) { return PATRON_PLAN_MULTIDIA.test(sinAcentos(texto)); }
   function pideRelacionados(texto) { return PATRON_VER_RELACIONADOS.test(sinAcentos(texto)); }
 
@@ -220,7 +227,7 @@
     }
   }
 
-  async function proponerCombos(D, perfil, explorar = false) {
+  async function proponerCombos(D, perfil, explorar = false, forzarPaquete = false) {
     // D3: si el grupo tiene gustos en conflicto detectados esta sesión, la
     // secuencia la define QUIEN SE MENCIONÓ PRIMERO (no el score de
     // afinidad) — el objetivo es que cada persona vea que se consideró lo
@@ -277,8 +284,23 @@
       combosCompletos.push(...candidatosZona.slice(0, 3).map((c) => D.tools.armarCombo([c.id], opciones)));
     } else {
       if (top3.length >= 2) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[1].id], opciones));
-      if (top3.length >= 1) combosCompletos.push(D.tools.armarCombo([top3[0].id], opciones));
+      // Si pidió explícitamente un paquete/combo, no se ofrece la opción de
+      // 1 sola actividad como alternativa — el cliente ya dijo que quiere
+      // 2+, dejarla competir en el ranking es como no haberlo escuchado.
+      if (!forzarPaquete && top3.length >= 1) combosCompletos.push(D.tools.armarCombo([top3[0].id], opciones));
       if (top3.length >= 3) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[2].id], opciones));
+      // Caso real del bug: la categoría de interés solo tiene 1 actividad
+      // en el catálogo (top3.length === 1), así que no hay con qué armar un
+      // 2do combo por categoría. Si igual pidió paquete, se complementa esa
+      // única actividad con algo cercano (cualquier categoría, mismo radio
+      // que "panoramas cerca de ahí") en vez de devolverle 1 sola opción.
+      if (forzarPaquete && top3.length === 1 && !combosCompletos.length) {
+        const base = top3[0];
+        const complemento = candidatos.find((c) => c.id !== base.id && D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
+          || D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id] })
+            .find((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
+        if (complemento) combosCompletos.push(D.tools.armarCombo([base.id, complemento.id], opciones));
+      }
     }
     const combosValidos = combosCompletos.filter(Boolean);
     if (!combosValidos.length) return null;
@@ -496,7 +518,7 @@
       const base = D.plantillas.preguntaClarificadora(perfil);
       texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
     } else {
-      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario));
+      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario), quierePaquete(textoUsuario));
       if (!resultado) {
         texto = 'No tengo panoramas que calcen 100% con eso ahora mismo, pero cuéntame más (categoría, fecha o presupuesto) y busco la opción más cercana.';
       } else if (resultado.sinResultados) {
@@ -511,6 +533,7 @@
         else if (estadoEmocional === 'dudando') prefijo = `${D.plantillas.reforzarDuda(perfil)}\n\n`;
         texto = prefijo + resultado.texto;
         debug.combos = resultado.combosRankeados;
+        debug.comboCompleto = resultado.comboElegido;
         perfil.carrito = [{ combo_id: resultado.comboElegido.combo_id, precio: resultado.comboElegido.precio_total }];
       }
     }

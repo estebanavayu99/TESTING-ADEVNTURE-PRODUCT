@@ -142,6 +142,18 @@
     return `${emoji} Desde ${nombre}: ~${minutos} min ${modo} (~${km ?? '?'} km).`;
   }
 
+  // Bug real reportado: se informaba la distancia/tiempo pero se asumía en
+  // silencio que el cliente maneja su propio auto, sin ofrecerle ayuda real
+  // con el traslado (bus, transfer, auto compartido) — "ni me ofrece la
+  // ayuda con los buses o traslado". Se ofrece proactivamente apenas algún
+  // tramo (origen→panorama o entre panoramas) no es caminable.
+  function fraseAyudaTraslado(kmOrigen, kmEntrePanoramas) {
+    const necesitaVehiculo = (kmOrigen !== undefined && kmOrigen > KM_CAMINABLE)
+      || (kmEntrePanoramas !== undefined && kmEntrePanoramas > KM_CAMINABLE);
+    if (!necesitaVehiculo) return null;
+    return '🚌 ¿Te ayudo a coordinar el traslado? Puedo buscarte opción de bus, transfer compartido o auto propio, lo que prefieras.';
+  }
+
   // Solo se muestra si hay un dato REAL de la tool `clima` (regla E5: no
   // prometer lo que las tools no confirman) — sin esto, no se inventa nada.
   // "panorama" (que ropa llevar allá) es el dato principal; "usuario"
@@ -200,6 +212,7 @@
 
     const lineaClima = fraseClima(climaPanorama, climaUsuario);
     const lineaDivergencia = fraseDivergencia(gustosDivergentes, acts.map((a) => a.categoria));
+    const lineaAyudaTraslado = fraseAyudaTraslado(comboCompleto.distancia_desde_origen_km, comboCompleto.distancia_traslado_total_km);
 
     const planB = comboCompleto.plan_b
       ? `Si ${comboCompleto.plan_b.gatillo === 'lluvia' ? 'llueve' : comboCompleto.plan_b.gatillo}, lo cambiamos por ${comboCompleto.plan_b.reemplazo} — ya tienes plan B.`
@@ -215,6 +228,7 @@
       ...(lineaOrigen ? [lineaOrigen, ``] : []),
       ...bloques.flatMap((b) => [b, ``]),
       ...(lineaTraslado ? [lineaTraslado, ``] : []),
+      ...(lineaAyudaTraslado ? [lineaAyudaTraslado, ``] : []),
       ...(lineaClima ? [lineaClima, ``] : []),
       ...(planB ? [planB, ``] : []),
       frasePorQue(comboRankeado.razones),
@@ -253,6 +267,8 @@
     });
 
     const lineaClima = fraseClima(clima);
+    const kmMaxTramo = Math.max(0, ...plan.dias.map((d) => d.distancia_desde_anterior_km || 0));
+    const lineaAyudaTraslado = fraseAyudaTraslado(undefined, kmMaxTramo);
 
     return [
       tono.intro,
@@ -261,6 +277,7 @@
       `${formatoPrecio(plan.precio_total)} total por persona`,
       ``,
       ...bloquesDias.flatMap((b) => [b, ``]),
+      ...(lineaAyudaTraslado ? [lineaAyudaTraslado, ``] : []),
       ...(lineaClima ? [lineaClima, ``] : []),
       `¿Te lo dejo apartado completo, con alojamiento y las ${plan.dias.length - 1} actividades incluidas?`,
     ].join('\n').replace(/\n{3,}/g, '\n\n');

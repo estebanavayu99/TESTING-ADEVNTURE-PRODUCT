@@ -138,6 +138,58 @@ Implementación (`js/motor.js`):
   líneas se muestran correctas y diferenciadas (18°–27°C panorama vs.
   5°–14°C usuario, en el caso de prueba).
 
+## Fixes del feedback de la práctica real (screenshots del usuario)
+
+Tras la práctica guiada, el usuario mandó screenshots de su web real
+(`panoramas.js`, vista "TU RUTA" con mapas embebidos) y reportó 2 bugs
+puntuales más en el mismo mensaje: "me sigue dando 1 opción y ni me
+ofrece el ayuda con los buses o traslado". Los tres arreglos:
+
+**1. "Quiero paquete" seguía dando 1 sola opción.** No existía ninguna
+detección de la intención explícita de "paquete/combo" — el mensaje
+"quierp paquete" no tenía categorías nuevas que detectar, así que
+`proponerCombos` repetía exactamente el mismo combo de la respuesta
+anterior. Además, aunque se detectara, `rankear_combos` podía igual
+elegir el combo de 1 sola actividad si puntuaba más alto que las
+combinaciones de 2. Fix en `js/motor.js`:
+- `PATRON_QUIERE_PAQUETE` / `quierePaquete(texto)` detecta "paquete",
+  "combo", "combinado", "pack", etc.
+- Con la intención detectada, `proponerCombos` deja de ofrecer el combo
+  de 1 sola actividad como alternativa en el ranking.
+- Si la categoría de interés solo tiene 1 actividad en el catálogo (el
+  caso real del bug — ninguna categoría del mock tiene 2+ actividades
+  "románticas"), se complementa esa única actividad con algo cercano de
+  **otra** categoría (mismo radio que "panoramas cerca de ahí",
+  `RADIO_CERCA_KM = 80`) en vez de devolver 1 sola opción.
+
+**2. Nunca se ofrecía ayuda con el traslado (bus/transfer).** Se
+mostraba la distancia/tiempo pero se asumía en silencio que el cliente
+maneja su propio auto. Fix: `fraseAyudaTraslado(kmOrigen,
+kmEntrePanoramas)` en `js/plantillas.js` — ofrece proactivamente
+coordinar bus/transfer/auto compartido apenas algún tramo (origen→primer
+panorama, entre panoramas del combo, o el tramo más largo de un plan
+multi-día) supera `KM_CAMINABLE` (1.2 km). Se agregó tanto a
+`formatearCombo` como a `formatearPlanMultiDia`.
+
+**3. Falta el panel "Tu Ruta" con mapas reales** (el usuario mandó
+captura de cómo se ve hoy en `panoramas.js`: chips de día/tramo + mapas
+de Google Maps embebidos entre las zonas de las actividades). Se replicó
+el mismo truco sin API key que ya usa el sitio real
+(`legEmbedHTML`/`mapsEmbedHTML` en `js/panoramas.js`:
+`https://www.google.com/maps?saddr=...&daddr=...&output=embed` en un
+`<iframe>`), con una diferencia: acá se usan coordenadas `lat,lng` reales
+del catálogo de Darwin en vez de nombres de calle/comuna (el catálogo
+mock de panoramas.js no trae lat/lng reales, el de Darwin sí). Nuevo
+panel `#darwinRuta` en `preview.html`/`preview.css`/`preview.js`
+(tercera sección, no en `js/motor.js`/`js/plantillas.js` porque es
+puramente de presentación — el motor solo expone `debug.comboCompleto` /
+`debug.plan` con los datos de actividades+ubicación, y `preview.js` arma
+el HTML con los tramos origen→actividad→actividad). No se puede ver el
+mapa real renderizado en este sandbox sin internet, pero se verificó con
+Playwright que la estructura (labels, distancias/tiempos, URLs de los
+`iframe` con las coordenadas correctas) es correcta — apenas se abra en
+un navegador con red, el mapa se ve real.
+
 ## Cómo probarlo localmente
 
 ```bash

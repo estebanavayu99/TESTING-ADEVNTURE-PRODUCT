@@ -40,6 +40,14 @@ body {
   .darwin-layout { grid-template-columns: 1fr; height: auto; }
 }
 
+.darwin-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+.darwin-col .darwin-panel { flex: 1; min-height: 220px; }
+
 .darwin-panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -136,3 +144,35 @@ body {
   cursor: pointer;
 }
 .darwin-quick button:hover { background: #f7f7f7; }
+
+/* "Tu ruta": mismo truco de mapa embebido sin API key que ya usa
+   panoramas.js (saddr/daddr/output=embed en un iframe), pero con
+   coordenadas reales lat/lng del catálogo en vez de nombres de calle. */
+.darwin-ruta {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+.darwin-ruta__empty { margin: 0; font-size: 13px; color: var(--muted); }
+.darwin-ruta__leg { margin-bottom: 14px; }
+.darwin-ruta__leg-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.darwin-ruta__leg-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #fdf1e9;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.darwin-ruta__embed { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.darwin-ruta__embed iframe { display: block; }
+.darwin-ruta__caption { margin: 4px 0 0; font-size: 11.5px; color: var(--muted); text-align: center; }

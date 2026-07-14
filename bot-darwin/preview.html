@@ -26,13 +26,24 @@
       </form>
     </section>
 
-    <section class="darwin-panel">
-      <div class="darwin-panel__header">
-        <h2>Debug: perfil interno / intent_score / combos</h2>
-        <button id="darwinClima" type="button">📍 Usar mi ubicación real (clima + distancia)</button>
-      </div>
-      <div class="darwin-debug" id="darwinDebug">Envía un mensaje para ver el estado interno acá.</div>
-    </section>
+    <div class="darwin-col">
+      <section class="darwin-panel">
+        <div class="darwin-panel__header">
+          <h2>🗺️ Tu ruta</h2>
+          <button id="darwinClima" type="button">📍 Usar mi ubicación real (clima + distancia)</button>
+        </div>
+        <div class="darwin-ruta" id="darwinRuta">
+          <p class="darwin-ruta__empty">Cuéntale a Darwin qué panorama buscas y acá aparece el mapa real entre las zonas de tu plan (mismo truco de Google Maps sin API key que ya usa panoramas.js en el sitio).</p>
+        </div>
+      </section>
+
+      <section class="darwin-panel">
+        <div class="darwin-panel__header">
+          <h2>Debug: perfil interno / intent_score / combos</h2>
+        </div>
+        <div class="darwin-debug" id="darwinDebug">Envía un mensaje para ver el estado interno acá.</div>
+      </section>
+    </div>
   </div>
 
   <script src="data/catalogo.mock.js"></script>

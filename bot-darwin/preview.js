@@ -28,6 +28,52 @@
     debugEl.textContent = JSON.stringify({ perfil, debug }, null, 2);
   }
 
+  // "Tu ruta": replica el truco de mapa sin API key que ya usa panoramas.js
+  // en el sitio real (https://www.google.com/maps?saddr=...&daddr=...&output=embed
+  // en un <iframe>), pero con coordenadas reales lat/lng del catálogo — acá
+  // no hace falta el truco de "nombre de calle + comuna" de panoramas.js
+  // porque el catálogo de Darwin sí trae lat/lng reales por actividad.
+  const rutaEl = document.getElementById('darwinRuta');
+
+  function paradaDesdeActividad(act) {
+    return { nombre: act.nombre, lat: act.ubicacion.lat, lng: act.ubicacion.lng };
+  }
+
+  function construirParadas(perfil, comboCompleto, plan) {
+    const paradas = [];
+    if (perfil.origen && perfil.origen.lat !== undefined) {
+      paradas.push({ nombre: perfil.origen.nombre || 'Tu ubicación', lat: perfil.origen.lat, lng: perfil.origen.lng });
+    }
+    if (plan) {
+      for (const dia of plan.dias) paradas.push(paradaDesdeActividad(dia.actividad));
+    } else if (comboCompleto) {
+      for (const act of comboCompleto.actividades) paradas.push(paradaDesdeActividad(act));
+    }
+    return paradas;
+  }
+
+  function legEmbedHTML(a, b) {
+    const saddr = encodeURIComponent(`${a.lat},${a.lng}`);
+    const daddr = encodeURIComponent(`${b.lat},${b.lng}`);
+    const url = `https://www.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
+    const km = Math.round(D.tools._internas.haversineKm(a, b) * 10) / 10;
+    const min = D.tools._internas.estimarTrasladoMin({ ubicacion: a }, { ubicacion: b });
+    return `
+      <div class="darwin-ruta__leg">
+        <p class="darwin-ruta__leg-label">${a.nombre} → ${b.nombre} <span class="darwin-ruta__leg-chip">🚗 ${km} km · ~${min} min</span></p>
+        <div class="darwin-ruta__embed">
+          <iframe src="${url}" width="100%" height="180" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ruta de ${a.nombre} a ${b.nombre}"></iframe>
+        </div>
+      </div>`;
+  }
+
+  function mostrarRuta(perfil, debug) {
+    const paradas = construirParadas(perfil, debug.comboCompleto, debug.plan);
+    if (paradas.length < 2) return; // sin origen real o solo 1 actividad: se deja el panel como estaba
+    const legs = paradas.slice(1).map((p, i) => legEmbedHTML(paradas[i], p)).join('');
+    rutaEl.innerHTML = `${legs}<p class="darwin-ruta__caption">📍 Vista referencial en Google Maps entre las zonas de tu plan</p>`;
+  }
+
   async function enviar(texto) {
     if (!texto.trim()) return;
     agregarMensaje(texto, 'user');
@@ -37,6 +83,7 @@
     const { texto: respuesta, perfil, debug } = await D.motor.procesarMensaje(SID, texto);
     agregarMensaje(respuesta, 'bot');
     mostrarDebug(perfil, debug);
+    mostrarRuta(perfil, debug);
   }
 
   form.addEventListener('submit', (e) => {
