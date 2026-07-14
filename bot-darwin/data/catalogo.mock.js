@@ -17,6 +17,11 @@
  *     Se usa para armar planes de varios días (ver armarPlanMultiDia en
  *     tools.js): una actividad `hospedaje` ancla las noches del plan,
  *     el resto son actividades de día alrededor de esa base.
+ *   es_gema_oculta?: boolean — dato de experto local (D2 del system
+ *     prompt): pocos turistas la conocen, vale la pena destacarlo.
+ *   evita_trampa?: string — si existe, describe la "trampa turística"
+ *     sobrevalorada/masificada que esta actividad evita (D2). Ambos
+ *     opcionales, ausentes = sin dato (no se inventa nada en la copy).
  * }
  */
 (() => {
@@ -73,6 +78,8 @@
       incluye: ['guía de montaña', 'seguro de actividad'],
       no_incluye: ['equipo personal', 'comida'],
       restricciones: ['condición física media-alta'],
+      es_gema_oculta: true,
+      evita_trampa: 'las cascadas masificadas cerca del acceso principal, con fila de más de 1 hora en temporada alta',
       cupos: cuposParaProximosDias({ '08:30': 10, '09:30': 6 }),
     },
     {
@@ -157,6 +164,8 @@
       incluye: ['copa de espumante', 'manta'],
       no_incluye: ['transporte'],
       restricciones: [],
+      es_gema_oculta: true,
+      evita_trampa: 'el mirador turístico masivo del centro, con aglomeración y poco espacio para sentarse',
       cupos: cuposParaProximosDias({ '18:30': 6, '19:00': 6 }),
     },
     {
@@ -241,6 +250,7 @@
       incluye: ['guía local', 'degustación en el huerto'],
       no_incluye: ['transporte'],
       restricciones: [],
+      es_gema_oculta: true,
       cupos: cuposParaProximosDias({ '09:30': 10 }),
     },
     // --- Cluster sur de Chile (Pucón), para el caso de uso de plan de
@@ -287,6 +297,8 @@
       incluye: ['entrada a pozones naturales'],
       no_incluye: ['transporte', 'toallas'],
       restricciones: [],
+      es_gema_oculta: true,
+      evita_trampa: 'las termas grandes cerca del centro de Pucón, saturadas los fines de semana largos',
       cupos: cuposParaProximosDias({ '10:00': 15, '14:00': 15 }),
     },
     {

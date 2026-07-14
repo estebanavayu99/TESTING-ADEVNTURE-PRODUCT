@@ -47,6 +47,15 @@
   const PATRON_OCASION = /aniversario|cumplea[ñn]os|luna de miel|pedida de mano|propuesta de matrimonio/;
   const PATRON_OBJECION_PRECIO = /caro|muy caro|precio alto|se me pasa (del|de mi) presupuesto/;
   const PATRON_OBJECION_PIENSO = /lo pienso|despu[ée]s veo|no s[ée] a[uú]n|lo consulto/;
+  // C7: re-enganche. Un saludo "vacio" (sin categoria/señal nueva) con un
+  // carrito pendiente = el patron de "cliente que volvio" en una sesion
+  // sin memoria entre visitas reales — se retoma en vez de preguntar desde
+  // cero como si nunca hubiera pasado nada.
+  const PATRON_SALUDO = /^\s*(hola|hey|buenas|holi|ola)\b/;
+  // D5: ritmo conversacional. "Al apurado, dale la mejor opcion ya; al que
+  // explora, acompañalo con curiosidad" — el default (1 opcion directa) ya
+  // sirve al apurado; esto detecta al que quiere explorar/comparar.
+  const PATRON_QUIERE_EXPLORAR = /cu[eé]ntame m[aá]s|qu[eé] opciones (tienes|hay)|dame m[aá]s opciones|mu[eé]strame opciones|quiero ver m[aá]s|comparar opciones|otras alternativas/;
   // Deteccion explicita del caso "plan de varios dias" (cabaña + termas +
   // trekking en el sur) — hoy es una demo puntual de esta secuencia
   // exacta, no un planificador general de N dias/categorias (eso necesita
@@ -56,11 +65,53 @@
   // sitio real (nearbyItems + boton "+" para agregar), pero rankeado con
   // el motor multifactorial real en vez de solo proximidad+categoria.
   const PATRON_VER_RELACIONADOS = /que mas hay cerca|algo mas cerca|otras opciones cerca|agregar algo mas|panoramas cerca|ideas relacionadas/;
+  // D3 del system prompt: grupo con gustos en conflicto ("a mi me gusta X
+  // pero a mi pareja/amigo Y"). Detecta la estructura contrastiva, no solo
+  // que se mencionen 2 categorias (eso ya pasa cuando UNA persona quiere
+  // dos cosas para si misma, que no es lo mismo que un conflicto real).
+  const PATRON_DIVERGENCIA = /\bpero\b.{0,25}\ba (mi pareja|mi (amigo|amiga|marido|esposa|polola|pololo|hijo|hija)|ella|el|su)\b/;
 
   function detectarCategorias(texto) {
     const t = sinAcentos(texto);
     return Object.keys(CATEGORIA_KEYWORDS).filter((cat) => CATEGORIA_KEYWORDS[cat].some((kw) => t.includes(sinAcentos(kw))));
   }
+
+  // Orden en que aparecen las categorias EN EL TEXTO (no en el orden fijo
+  // de CATEGORIA_KEYWORDS) — importa para D3: quien se menciona primero es
+  // quien va primero en el plan ("en la mañana lo tuyo, cerramos con lo de
+  // tu pareja").
+  function categoriasEnOrdenDeAparicion(texto, categoriasDetectadas) {
+    const t = sinAcentos(texto);
+    return categoriasDetectadas
+      .map((cat) => {
+        const posiciones = CATEGORIA_KEYWORDS[cat].map((kw) => t.indexOf(sinAcentos(kw))).filter((i) => i !== -1);
+        return { cat, idx: posiciones.length ? Math.min(...posiciones) : Infinity };
+      })
+      .sort((a, b) => a.idx - b.idx)
+      .map((x) => x.cat);
+  }
+
+  function detectarDivergencia(texto, categoriasDetectadas) {
+    const t = sinAcentos(texto);
+    const m = PATRON_DIVERGENCIA.exec(t);
+    if (!m) return null;
+    if (categoriasDetectadas.length < 2) return null;
+    // La frase de contraste ("a mi pareja", "a mi amigo"...) puede contener
+    // una palabra que TAMBIEN es keyword de una categoria (ej. "pareja" es
+    // keyword de romantico) sin que el cliente este pidiendo esa categoria
+    // — solo esta diciendo CON QUIEN va. Se descarta cualquier categoria
+    // cuyo unico indicio caiga dentro de ese tramo del texto.
+    const spanInicio = m.index;
+    const spanFin = m.index + m[0].length;
+    const categoriasReales = categoriasDetectadas.filter((cat) => {
+      const posiciones = CATEGORIA_KEYWORDS[cat].map((kw) => t.indexOf(sinAcentos(kw))).filter((i) => i !== -1);
+      return posiciones.some((p) => p < spanInicio || p >= spanFin);
+    });
+    if (categoriasReales.length < 2) return null;
+    const ordenadas = categoriasEnOrdenDeAparicion(texto, categoriasReales);
+    return [ordenadas[0], ordenadas[1]];
+  }
+
   function detectarEstadoEmocional(texto) {
     const t = sinAcentos(texto);
     for (const [estado, patron] of Object.entries(PATRONES_EMOCION)) if (patron.test(t)) return estado;
@@ -81,6 +132,8 @@
   }
   function esConfirmacion(texto) { return PATRON_CONFIRMACION.test(sinAcentos(texto)); }
   function esDescarte(texto) { return PATRON_DESCARTE.test(sinAcentos(texto)); }
+  function esSaludoVacio(texto) { return PATRON_SALUDO.test(sinAcentos(texto)); }
+  function quiereExplorar(texto) { return PATRON_QUIERE_EXPLORAR.test(sinAcentos(texto)); }
   function esPlanMultiDia(texto) { return PATRON_PLAN_MULTIDIA.test(sinAcentos(texto)); }
   function pideRelacionados(texto) { return PATRON_VER_RELACIONADOS.test(sinAcentos(texto)); }
 
@@ -149,12 +202,18 @@
     fiesta: 'una segunda ronda de tragos', explorador: 'un almuerzo típico del lugar',
   };
 
-  function proponerCombos(D, perfil) {
-    const categoriasObjetivo = perfil.intereses
-      .filter((i) => (i.afinidad || 0) >= 0 || perfil.intereses.length <= 2)
-      .sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0))
-      .slice(0, 2)
-      .map((i) => i.categoria);
+  function proponerCombos(D, perfil, explorar = false) {
+    // D3: si el grupo tiene gustos en conflicto detectados esta sesión, la
+    // secuencia la define QUIEN SE MENCIONÓ PRIMERO (no el score de
+    // afinidad) — el objetivo es que cada persona vea que se consideró lo
+    // suyo, en el orden que lo pidió, no que el motor elija por afinidad.
+    const categoriasObjetivo = (perfil.grupo.gustos_divergentes && perfil.grupo.gustos_divergentes.length === 2)
+      ? perfil.grupo.gustos_divergentes
+      : perfil.intereses
+        .filter((i) => (i.afinidad || 0) >= 0 || perfil.intereses.length <= 2)
+        .sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0))
+        .slice(0, 2)
+        .map((i) => i.categoria);
 
     let candidatos = D.tools.buscarActividades({ categorias: categoriasObjetivo.length ? categoriasObjetivo : undefined, excluir_ids: perfil.descartados });
     // Solo se abre a todo el catálogo si NO hay ningún candidato de la
@@ -172,11 +231,37 @@
     const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
     const opciones = { fecha: perfil.fechas, personas };
 
+    const hayDivergencia = perfil.grupo.gustos_divergentes && perfil.grupo.gustos_divergentes.length === 2;
     const combosCompletos = [];
     const top3 = candidatos.slice(0, 3);
-    if (top3.length >= 2) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[1].id], opciones));
-    if (top3.length >= 1) combosCompletos.push(D.tools.armarCombo([top3[0].id], opciones));
-    if (top3.length >= 3) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[2].id], opciones));
+    if (hayDivergencia) {
+      // Con gustos en conflicto, se toma UNA actividad representante de
+      // CADA categoría explícitamente — candidatos.slice(0,2) no sirve
+      // acá porque si hay 2+ actividades de la primera categoría, ambas
+      // quedan antes que la segunda al ordenar por categoriasObjetivo, y
+      // el combo terminaría siendo "lo mismo para los dos", no la
+      // secuencia que pidió cada persona.
+      const primera = candidatos.find((c) => c.categoria === categoriasObjetivo[0]);
+      const segunda = candidatos.find((c) => c.categoria === categoriasObjetivo[1]);
+      if (primera && segunda) combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+    } else if (explorar) {
+      // Comparar de verdad = actividades distintas entre si, no "A" vs
+      // "A+B" (una opcion no puede contener a la otra adentro, si no no
+      // hay nada que decidir). Ademas, un combo de 1 sola actividad no
+      // paga el costo de traslado entre zonas (no hay "entre" que medir),
+      // asi que sin filtro geografico se podia comparar un trekking en
+      // Santiago contra uno a 700km en Pucon como si fueran alternativas
+      // reales para el mismo fin de semana — se descarta lo que no esta
+      // en la misma zona que la primera opcion.
+      const RADIO_MISMA_ZONA_KM = 150;
+      const ancla = candidatos[0];
+      const candidatosZona = candidatos.filter((c) => D.tools._internas.haversineKm(ancla.ubicacion, c.ubicacion) <= RADIO_MISMA_ZONA_KM);
+      combosCompletos.push(...candidatosZona.slice(0, 3).map((c) => D.tools.armarCombo([c.id], opciones)));
+    } else {
+      if (top3.length >= 2) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[1].id], opciones));
+      if (top3.length >= 1) combosCompletos.push(D.tools.armarCombo([top3[0].id], opciones));
+      if (top3.length >= 3) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[2].id], opciones));
+    }
     const combosValidos = combosCompletos.filter(Boolean);
     if (!combosValidos.length) return null;
 
@@ -192,6 +277,16 @@
     if (!rankeados.length) return { sinResultados: true };
 
     const mapaCompletos = new Map(combosValidos.map((c) => [c.combo_id, c]));
+
+    // D5: "al que explora, acompañalo con curiosidad" — si pidió comparar
+    // y hay 2+ opciones reales (no aplica en modo divergencia, que ya
+    // fuerza una sola combinación a propósito), se comparan en vez de
+    // empujar 1 sola directo.
+    if (explorar && !hayDivergencia && rankeados.length >= 2) {
+      const opciones = rankeados.slice(0, 2).map((r) => ({ rankeado: r, completo: mapaCompletos.get(r.combo_id) }));
+      return { texto: D.plantillas.formatearOpcionesComparadas(opciones), combosRankeados: rankeados, comboElegido: opciones[0].completo, esComparacion: true };
+    }
+
     const mejor = rankeados[0];
     const comboCompleto = mapaCompletos.get(mejor.combo_id);
 
@@ -205,7 +300,7 @@
       comboCompleto.origen_nombre = perfil.origen.nombre || null;
     }
 
-    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, perfil.contexto.clima);
+    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, perfil.contexto.clima, perfil.grupo.gustos_divergentes);
     if (perfil.ocasion_especial) texto = `Para tu ${perfil.ocasion_especial}, esto lo hace inolvidable. ${texto}`;
     const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
     if (addon && perfil.intent_score.confianza >= 0.7) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;
@@ -295,12 +390,14 @@
     const descarte = esDescarte(textoUsuario);
     const presupuesto = extraerPresupuesto(textoUsuario);
     const fecha = extraerFecha(textoUsuario);
+    const divergencia = detectarDivergencia(textoUsuario, categorias);
 
     for (const c of categorias) if (!perfil.intereses.find((i) => i.categoria === c)) perfil.intereses.push({ categoria: c, afinidad: 0 });
     if (presupuesto) perfil.presupuesto.banda = [Math.round(presupuesto * 0.8), Math.round(presupuesto * 1.2)];
     if (fecha) perfil.fechas = fecha;
     if (ocasion) perfil.ocasion_especial = ocasion;
     if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
+    if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
 
     const eventosDeEsteTurno = [];
     if (categorias.length) eventosDeEsteTurno.push({ tipo: 'busqueda', atributos: categorias });
@@ -331,6 +428,10 @@
       texto = '¡Que lo disfrutes muchísimo! Cuando vuelvas, cuéntame cómo te fue y te tengo el próximo panorama listo 🎉';
     } else if (perfil.etapa_embudo === 'decision') {
       texto = 'Perfecto, te lo dejo apartado. En breve te llega la confirmación con el punto de encuentro y todo el detalle.';
+    } else if (perfil.carrito.length && esSaludoVacio(textoUsuario) && !categorias.length && !señales.length) {
+      // C7: retoma el carrito pendiente en vez de tratarlo como cliente
+      // nuevo — "¿seguimos con el combo del sábado que te gustó?".
+      texto = D.plantillas.reenganche(perfil.carrito[perfil.carrito.length - 1]);
     } else if (pideRelacionados(textoUsuario)) {
       const resultado = sugerirRelacionados(D, perfil);
       if (!resultado || resultado.sinResultados) {
@@ -360,7 +461,7 @@
       const base = D.plantillas.preguntaClarificadora(perfil);
       texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
     } else {
-      const resultado = proponerCombos(D, perfil);
+      const resultado = proponerCombos(D, perfil, quiereExplorar(textoUsuario));
       if (!resultado) {
         texto = 'No tengo panoramas que calcen 100% con eso ahora mismo, pero cuéntame más (categoría, fecha o presupuesto) y busco la opción más cercana.';
       } else if (resultado.sinResultados) {

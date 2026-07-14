@@ -55,6 +55,10 @@ separados del resto justo para eso.
 | Distancia/tiempo real (origen→panorama, entre panoramas, plan multi-día) | **Real**, matemática haversine + velocidad por tramo (30 km/h ciudad, 80 km/h interurbano >50km) |
 | Plan de varios días (`armarPlanMultiDia`) | **Real** para la secuencia demo cabaña+termas+trekking (sur de Chile); generalizar a cualquier combinación/región es trabajo pendiente (ver Pendiente) |
 | "Panoramas cerca de ahí" (`sugerirRelacionados`) | **Real**, rankeo multifactorial + filtro de radio real (80 km) — no solo categoría+proximidad como el nearbyItems() actual del sitio |
+| D2 Gemas locales / anti-trampa (`fraseGemaLocal`) | Real, pero solo para las actividades marcadas `es_gema_oculta`/`evita_trampa` en el catálogo placeholder — no se inventa para el resto |
+| D3 Grupos con gustos divergentes (`detectarDivergencia`) | Real: detecta "a mí me gusta X pero a mi pareja Y" y fuerza un combo que cubra ambas categorías en el orden mencionado, en vez de dejar que el ranking elija solo la de mejor puntaje |
+| C7 Re-enganche (`reenganche`) | Conectado — antes existía la plantilla pero nunca se llamaba desde el motor |
+| D5 Ritmo conversacional (`quiereExplorar`) | Real: "cuéntame más opciones" compara 2 actividades distintas de la misma zona, en vez de la única opción directa por defecto |
 
 ## Taxonomía de categorías (ampliada con datos reales)
 
@@ -115,8 +119,9 @@ arreglo de actividades con la misma forma que documenta
 `data/catalogo.mock.js` (id, nombre, categoria, tags, precio,
 duracion_min, ubicacion{lat,lng,comuna}, energia, exterior, indoor_alt,
 accesible, experiencia_estimada, hero_moment, horarios, punto_encuentro,
-incluye, no_incluye, restricciones, cupos por fecha/hora). Con eso
-enchufado, nada más en el motor cambia.
+incluye, no_incluye, restricciones, cupos por fecha/hora, y los opcionales
+tipo/es_gema_oculta/evita_trampa). Con eso enchufado, nada más en el motor
+cambia.
 
 ## Fases (según pickmap_fuentes_a_conectar.pdf)
 

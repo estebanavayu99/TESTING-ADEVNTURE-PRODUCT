@@ -50,6 +50,17 @@
     return LLEGADA_POR_CATEGORIA[categoria] || 'Te confirmamos la dirección exacta y accesos al reservar.';
   }
 
+  // D2 del system prompt: "aporta el dato que solo un local sabe... y aleja
+  // al cliente de trampas turísticas sobrevaloradas — esto genera confianza
+  // brutal y fideliza." Solo se muestra si el dato existe en el catálogo
+  // (es_gema_oculta/evita_trampa) — nunca se inventa para una actividad que
+  // no lo tiene marcado.
+  function fraseGemaLocal(act) {
+    if (act.evita_trampa) return `🔍 Dato de local: te alejo de ${act.evita_trampa} — esto es lo que reservan los que conocen la zona.`;
+    if (act.es_gema_oculta) return '🔍 Dato de local: pocos turistas conocen este lugar todavía.';
+    return null;
+  }
+
   function formatoPrecio(n) {
     return `$${n.toLocaleString('es-CL')}`;
   }
@@ -139,7 +150,24 @@
     return `${emoji} Para esa fecha: ${clima.temp_min}°–${clima.temp_max}°C, ${Math.round((clima.lluvia_prob || 0) * 100)}% de probabilidad de lluvia.`;
   }
 
-  function formatearCombo(comboRankeado, comboCompleto, arquetipos, clima) {
+  // D3 del system prompt: "si el grupo tiene intereses en conflicto,
+  // encuentra el traslape o secuencia... 'en la mañana la aventura que tú
+  // quieres, y cerramos con la viña que le gusta a ella'." Misma idea acá.
+  const ETIQUETA_CATEGORIA = {
+    enologia: 'el vino', aventura: 'la aventura', relax: 'relajarse', cultural: 'la cultura',
+    foodie: 'la buena comida', romantico: 'lo romántico', familiar: 'algo en familia',
+    fiesta: 'la fiesta', explorador: 'algo distinto y auténtico',
+  };
+  function fraseDivergencia(gustosDivergentes, categoriasDelCombo) {
+    if (!gustosDivergentes || gustosDivergentes.length !== 2) return null;
+    const [cat1, cat2] = gustosDivergentes;
+    if (!categoriasDelCombo.includes(cat1) || !categoriasDelCombo.includes(cat2)) return null;
+    const et1 = ETIQUETA_CATEGORIA[cat1] || cat1;
+    const et2 = ETIQUETA_CATEGORIA[cat2] || cat2;
+    return `🤝 Sé que a uno le tinca ${et1} y al otro ${et2} — por eso parte con lo primero y cierra con lo segundo, así ninguno se queda sin lo suyo.`;
+  }
+
+  function formatearCombo(comboRankeado, comboCompleto, arquetipos, clima, gustosDivergentes) {
     const tono = tonoPara(arquetipos);
     const acts = comboCompleto.actividades || [];
     const emoji = emojiCategoria(acts[0] && acts[0].categoria);
@@ -151,7 +179,8 @@
         `🕐 ${hora} · ${a.nombre} (${formatoDuracion(a.duracion_min)}, ritmo ${ENERGIA_HUMANA[a.energia] || a.energia})${cumbre}`,
         `📍 ${a.punto_encuentro}`,
         `🅿️ ${fraseLlegada(a.categoria)}`,
-      ].join('\n');
+        fraseGemaLocal(a),
+      ].filter(Boolean).join('\n');
     });
 
     const lineaTraslado = acts.length > 1 && comboCompleto.tiempo_traslado_total_min !== undefined
@@ -163,6 +192,7 @@
       : null;
 
     const lineaClima = fraseClima(clima);
+    const lineaDivergencia = fraseDivergencia(gustosDivergentes, acts.map((a) => a.categoria));
 
     const planB = comboCompleto.plan_b
       ? `Si ${comboCompleto.plan_b.gatillo === 'lluvia' ? 'llueve' : comboCompleto.plan_b.gatillo}, lo cambiamos por ${comboCompleto.plan_b.reemplazo} — ya tienes plan B.`
@@ -174,6 +204,7 @@
       `${emoji} ${tituloCombo(acts)}`,
       `${formatoPrecio(comboCompleto.precio_total)} por persona`,
       ``,
+      ...(lineaDivergencia ? [lineaDivergencia, ``] : []),
       ...(lineaOrigen ? [lineaOrigen, ``] : []),
       ...bloques.flatMap((b) => [b, ``]),
       ...(lineaTraslado ? [lineaTraslado, ``] : []),
@@ -210,6 +241,7 @@
         lineaHorario,
         `📍 ${act.punto_encuentro}`,
         `🅿️ ${fraseLlegada(act.categoria)}`,
+        fraseGemaLocal(act),
       ].filter(Boolean).join('\n');
     });
 
@@ -243,6 +275,27 @@
       ...filas,
       ``,
       '¿Agrego alguno a tu plan?',
+    ].join('\n');
+  }
+
+  // D5 del prompt: "al que explora, acompañalo con curiosidad" — versión
+  // comparativa y compacta (no repite el molde completo 2 veces, eso
+  // satura) para cuando el cliente pide ver más de una opción.
+  function formatearOpcionesComparadas(opciones) {
+    const filas = opciones.map(({ rankeado, completo }, i) => {
+      const acts = completo.actividades || [];
+      const nombre = tituloCombo(acts);
+      const razon = (rankeado.razones && rankeado.razones.find((r) => r.tipo === 'afinidad'))
+        ? fraseAfinidad(rankeado.razones.find((r) => r.tipo === 'afinidad').categoria)
+        : 'calza con lo que me has contado';
+      return `${i + 1}. ${emojiCategoria(acts[0] && acts[0].categoria)} ${nombre} — ${formatoPrecio(completo.precio_total)} p/p (${razon})`;
+    });
+    return [
+      'Buena idea comparar antes de decidir. Tengo estas 2:',
+      ``,
+      ...filas,
+      ``,
+      '¿Cuál te tinca más, o prefieres que te arme el día completo con las dos?',
     ].join('\n');
   }
 
@@ -284,6 +337,6 @@
 
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.plantillas = {
-    formatearCombo, formatearPlanMultiDia, formatearRelacionados, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
+    formatearCombo, formatearPlanMultiDia, formatearRelacionados, formatearOpcionesComparadas, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara,
   };
 })();
