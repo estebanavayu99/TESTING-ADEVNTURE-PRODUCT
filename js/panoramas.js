@@ -234,7 +234,7 @@
     extremo: ['Cajón del Maipo', 'San José de Maipo', 'El Ingenio, Cajón del Maipo'],
     nieve: ['Farellones', 'La Parva', 'Valle Nevado'],
     playa: ['Algarrobo', 'El Quisco', 'El Tabo'],
-    relax: ['Termas de Colina', 'Valle de Colina'],
+    relax: ['Termas de Colina', 'Baños Morales, Cajón del Maipo', 'Termas de Jahuel, San Felipe'],
     gastronomia: ['Barrio Italia, Providencia', 'Av. Italia, Providencia', 'Condell, Providencia'],
     vidanocturna: ['Barrio Bellavista', 'Pío Nono, Providencia', 'Constitución, Providencia'],
     cultura: ['Barrio Lastarria', 'Villavicencio, Santiago', 'Merced, Santiago'],
@@ -245,7 +245,7 @@
     familia: ['La Reina', 'Príncipe de Gales, La Reina'],
     amigos: ['Ñuñoa', 'Plaza Ñuñoa', 'Irarrázaval, Ñuñoa'],
     trabajo: ['Las Condes', 'Apoquindo, Las Condes', 'El Golf, Las Condes'],
-    solo: ['San José de Maipo', 'El Ingenio, Cajón del Maipo'],
+    solo: ['San José de Maipo', 'Cerro San Cristóbal', 'Parque Bicentenario, Vitacura'],
     general: ['Santiago Centro', 'Providencia'],
   };
   function getZoneLandmark(item) {
@@ -909,8 +909,20 @@
   // route (multi-stop "+to:" waypoints get dropped in the embedded view), so
   // every consecutive leg gets its own small, real, connected map.
   function legEmbedHTML(a, b) {
-    const saddr = encodeURIComponent(`${getZoneLandmark(a.item)}, Santiago, Chile`);
-    const daddr = encodeURIComponent(`${getZoneLandmark(b.item)}, Santiago, Chile`);
+    const landmarkA = getZoneLandmark(a.item);
+    let landmarkB = getZoneLandmark(b.item);
+    // A key-less Maps embed can't draw a route between two identical (or
+    // near-identical) points — it silently falls back to the zoomed-out
+    // world map instead. If both legs resolved to the same landmark (most
+    // common when consecutive activities share a category with a thin
+    // landmark pool), force the destination to the next entry in its pool.
+    if (landmarkA === landmarkB) {
+      const pool = ZONE_LANDMARKS[b.item.category] || ZONE_LANDMARKS.general;
+      const idx = pool.indexOf(landmarkB);
+      landmarkB = pool[(idx + 1) % pool.length];
+    }
+    const saddr = encodeURIComponent(`${landmarkA}, Santiago, Chile`);
+    const daddr = encodeURIComponent(`${landmarkB}, Santiago, Chile`);
     const url = `https://www.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
     return `
       <div class="reserve-map__embed-leg">
