@@ -37,12 +37,21 @@
   const PATRONES_SENAL = {
     disponibilidad_fecha: /disponib|qu[ée] d[ií]a|fecha|cu[aá]ndo/,
     precio_final: /precio final|cu[aá]nto (cuesta|sale|vale)|total/,
-    me_gusta: /me gusta|me encanta esta|esa me gusta/,
-    carrito: /agr[ée]galo|res[ée]rvalo|apart[aá]lo|carrito/,
+    // Bug real: "no me gusta esa, sácala" hacía match con "me gusta" por
+    // simple substring, registrando una señal POSITIVA justo en el mismo
+    // mensaje que rechaza la actividad. El lookbehind excluye el caso de
+    // negación más común ("no me gusta") sin tocar "me gusta esta" real.
+    me_gusta: /(?<!no )me gusta|me encanta esta|esa me gusta/,
+    carrito: /agr[ée]galo|res[ée]rva(?:lo|la)|apart[aá](?:lo|la)|carrito/,
     logistica: /d[oó]nde nos juntamos|punto de encuentro|c[oó]mo llego/,
   };
 
-  const PATRON_CONFIRMACION = /confirmo|dale,? res[ée]rvalo|s[ií],? res[ée]rvalo|apart[aá]lo ya|quiero reservar/;
+  // Bug real: el quick-reply exacto del preview ("Me gusta esa, resérvala")
+  // no confirmaba nada — el patrón original solo reconocía "resérvalo"
+  // (masculino) y encima solo tras "dale,"/"sí,". Se agrega la forma
+  // femenina y una versión "suelta" (sin prefijo) para que un cliente real
+  // que solo escribe "resérvala"/"apártala" también confirme.
+  const PATRON_CONFIRMACION = /confirmo|dale,? res[ée]rva(?:lo|la)|s[ií],? res[ée]rva(?:lo|la)|apart[aá](?:lo|la) ya|quiero reservar|\bres[ée]rva(?:lo|la)\b|\bapart[aá](?:lo|la)\b/;
   const PATRON_DESCARTE = /no me gusta|quita|sac[aá]lo|elimina/;
   const PATRON_OCASION = /aniversario|cumplea[ñn]os|luna de miel|pedida de mano|propuesta de matrimonio/;
   const PATRON_OBJECION_PRECIO = /caro|muy caro|precio alto|se me pasa (del|de mi) presupuesto/;
@@ -504,12 +513,33 @@
     if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
     if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
 
+    // Bug real: "no me gusta esa, sácala" se detectaba (esDescarte) pero
+    // nunca excluía la actividad — Darwin volvía a recomendar EXACTAMENTE
+    // lo mismo que el cliente acababa de rechazar. "Esa" se refiere a lo
+    // último mostrado (perfil.carrito), no a una categoría nueva en el
+    // texto, así que esto corre pase o no haya categorías en el mensaje.
+    let categoriasDescarte = categorias;
+    if (descarte && perfil.carrito.length) {
+      const idsDescartados = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      perfil.descartados = [...new Set([...(perfil.descartados || []), ...idsDescartados])];
+      if (!categoriasDescarte.length) {
+        // Si el mensaje no nombra una categoría ("sácala" a secas), se
+        // infiere del catálogo para que la señal negativa de confianza
+        // igual se registre contra la categoría real que se rechazó.
+        categoriasDescarte = [...new Set(idsDescartados.map((id) => D.tools.detalleActividad(id)).filter(Boolean).map((a) => a.categoria))];
+      }
+      // El combo/oferta que se acaba de rechazar ya no es "el que te
+      // gustó" ni algo para seguir ofreciendo combinar.
+      perfil.carrito = [];
+      perfil.oferta_combo = null;
+    }
+
     const eventosDeEsteTurno = [];
     if (categorias.length) eventosDeEsteTurno.push({ tipo: 'busqueda', atributos: categorias });
     if (señales.includes('me_gusta') && categorias.length) { eventosDeEsteTurno.push({ tipo: 'favorito', atributos: categorias }); perfil.favoritos.push(...categorias); }
     if (señales.includes('carrito') && categorias.length) eventosDeEsteTurno.push({ tipo: 'carrito', atributos: categorias });
     if ((señales.includes('disponibilidad_fecha') || señales.includes('precio_final')) && categorias.length) eventosDeEsteTurno.push({ tipo: 'click_cta', atributos: categorias });
-    if (descarte && categorias.length) { eventosDeEsteTurno.push({ tipo: 'descarte', atributos: categorias }); }
+    if (descarte && categoriasDescarte.length) { eventosDeEsteTurno.push({ tipo: 'descarte', atributos: categoriasDescarte }); }
     for (const ev of eventosDeEsteTurno) D.tools.registrarInteraccion(sessionId, ev);
 
     const eventos = D.tools.obtenerEventos(sessionId);
@@ -537,6 +567,18 @@
       // C7: retoma el carrito pendiente en vez de tratarlo como cliente
       // nuevo — "¿seguimos con el combo del sábado que te gustó?".
       texto = D.plantillas.reenganche(perfil.carrito[perfil.carrito.length - 1]);
+    } else if (perfil.carrito.length && !categorias.length && señales.includes('precio_final')) {
+      // Bug real: "¿Cuánto cuesta en total?" (una de las quick-replies del
+      // preview) no tenía respuesta propia — el motor volvía a proponer un
+      // combo desde cero e ignoraba la pregunta. Responde directo con el
+      // precio ya calculado del carrito, sin re-correr la recomendación.
+      texto = D.plantillas.respuestaPrecio(perfil.carrito[perfil.carrito.length - 1]);
+    } else if (perfil.carrito.length && !categorias.length && señales.includes('logistica')) {
+      // Mismo bug con "¿Dónde nos juntamos?" — responde con el punto de
+      // encuentro real de las actividades del combo actual.
+      const idsCombo = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const actividadesCombo = idsCombo.map((id) => D.tools.detalleActividad(id)).filter(Boolean);
+      texto = D.plantillas.respuestaLogistica(actividadesCombo);
     } else if (pideRelacionados(textoUsuario)) {
       const resultado = sugerirRelacionados(D, perfil);
       if (!resultado || resultado.sinResultados) {
@@ -589,7 +631,12 @@
         texto = prefijo + resultado.texto;
         debug.combos = resultado.combosRankeados;
         debug.comboCompleto = resultado.comboElegido;
-        perfil.carrito = [{ combo_id: resultado.comboElegido.combo_id, precio: resultado.comboElegido.precio_total }];
+        perfil.carrito = [{
+          combo_id: resultado.comboElegido.combo_id,
+          precio: resultado.comboElegido.precio_total,
+          precio_por_persona: resultado.comboElegido.precio_por_persona,
+          personas: resultado.comboElegido.personas,
+        }];
         perfil.oferta_combo = resultado.ofertaComplemento
           ? { base_id: resultado.ofertaComplemento.base_id, complemento_id: resultado.ofertaComplemento.complemento_id }
           : null;

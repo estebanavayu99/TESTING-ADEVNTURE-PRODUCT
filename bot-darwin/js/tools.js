@@ -151,10 +151,18 @@
       if (alt) planB = { gatillo: 'lluvia', reemplazo: alt.nombre };
     }
 
+    // Bug real encontrado con 2+ personas: el texto mostraba precio_total
+    // (ya multiplicado por personas) etiquetado como "por persona" — con
+    // personas=2 un panorama de $22.000 pp aparecía como "$44.000 por
+    // persona", el doble de lo real. Se expone también el precio SIN
+    // multiplicar para que plantillas.js pueda mostrar ambos sin ambigüedad.
+    const precioPorPersona = actividades.reduce((s, a) => s + a.precio, 0);
     return {
       combo_id: actividades.map((a) => a.id).join('-'),
       actividades,
-      precio_total: actividades.reduce((s, a) => s + a.precio, 0) * personas,
+      precio_total: precioPorPersona * personas,
+      precio_por_persona: precioPorPersona,
+      personas,
       tiempo_traslado_total_min: tiempoTrasladoTotal,
       distancia_traslado_total_km: Math.round(distanciaTrasladoTotalKm * 10) / 10,
       tiene_cupo: tieneCupo,
@@ -215,10 +223,13 @@
       nombreAnterior = act.nombre;
     });
 
+    const precioPorPersonaPlan = actividades.reduce((s, a) => s + a.precio, 0);
     return {
       plan_id: actividades.map((a) => a.id).join('-'),
       dias,
-      precio_total: actividades.reduce((s, a) => s + a.precio, 0) * personas,
+      precio_total: precioPorPersonaPlan * personas,
+      precio_por_persona: precioPorPersonaPlan,
+      personas,
       tiene_cupo: tieneCupo,
     };
   }

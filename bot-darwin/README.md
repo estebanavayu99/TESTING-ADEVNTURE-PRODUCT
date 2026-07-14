@@ -235,6 +235,54 @@ turno 2 ("sí, dale" → combo completo + 2 mapas + `oferta_combo` vuelve a
 escenarios (aniversario, relacionados, plan multi-día, divergencia,
 reenganche, explorar, clima dual, paquete explícito) siguen correctos.
 
+## Pasada de "arregla todo lo que puedas" — bugs reales encontrados probando
+
+El usuario pidió una pasada libre para arreglar y mejorar todo lo posible
+del bot (sin tocar código del sitio real, eso es otra sesión). Probando
+sistemáticamente cada quick-reply y variación de mensaje del preview
+aparecieron 5 bugs reales, todos corregidos y verificados con Playwright:
+
+1. **Precio total mal etiquetado con 2+ personas**: `precio_total` (ya
+   multiplicado por `personas`) se mostraba con la etiqueta "por persona" —
+   con 2 personas, un panorama de $22.000 pp aparecía como "$44.000 por
+   persona" (el doble de lo real). `armarCombo`/`armarPlanMultiDia`
+   (`js/tools.js`) ahora exponen también `precio_por_persona` y `personas`;
+   `plantillas.js` (`fraseTotal`/`fraseTotalCompacta`) muestra 1 sola línea
+   cuando personas≤1 (caso más común, sin cambios visuales) y desglosa
+   total + por-persona + cantidad de personas cuando son 2+.
+2. **"¿Cuánto cuesta en total?" / "¿Dónde nos juntamos?" no se
+   respondían**: estas 2 preguntas son quick-replies literales del
+   preview, pero las señales `precio_final`/`logistica` solo se
+   registraban como evento de scoring (y solo si el mensaje también traía
+   una categoría) — nunca generaban una respuesta propia, así que el
+   motor volvía a proponer un combo desde cero e ignoraba la pregunta.
+   Ahora responden directo con el precio/punto de encuentro real del
+   carrito actual (`plantillas.respuestaPrecio`/`respuestaLogistica`).
+3. **"No me gusta esa, sácala" no excluía nada**: `esDescarte()` detectaba
+   el rechazo pero `perfil.descartados` nunca se poblaba en ningún lado —
+   Darwin volvía a recomendar EXACTAMENTE la misma actividad rechazada en
+   el turno siguiente. Ahora, al detectar descarte, se agregan las
+   actividades del carrito actual a `perfil.descartados`, se infiere la
+   categoría rechazada del catálogo si el mensaje no la nombra (para que
+   la señal negativa de `calcularConfianza` no se pierda), y se limpian
+   `perfil.carrito`/`perfil.oferta_combo` (ya no son "lo que te gustó").
+4. **"Me gusta esa, resérvala" (quick-reply exacto) no confirmaba nada**:
+   `PATRON_CONFIRMACION` solo reconocía la forma masculina "resérvalo" y
+   encima solo tras el prefijo "dale,"/"sí,". Se agregó la forma femenina
+   ("resérvala"/"apártala") y una versión suelta (sin prefijo obligatorio)
+   para que un cliente real que solo escribe "resérvala" también confirme.
+5. **"No me gusta" registraba una señal positiva**: `me_gusta` hacía
+   match por substring simple con "me gusta", así que "no me gusta esa"
+   activaba la señal `me_gusta` (favorito) en el mismo mensaje que la
+   rechaza. Se agregó un lookbehind negativo (`(?<!no )me gusta`) para el
+   caso de negación más común, sin tocar frases reales como "me gusta
+   esta" o "esa me gusta".
+
+Además se restructuró el flujo por defecto (ver sección de arriba: Darwin
+ahora recomienda 1 sola actividad primero, según expertise, y ofrece
+combinar en vez de imponer un combo de entrada). Regresión completa sin
+cambios tras los 5 fixes: 11/11 algoritmos + todos los escenarios previos.
+
 ## Cómo probarlo localmente
 
 ```bash

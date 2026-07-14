@@ -65,6 +65,21 @@
     return `$${n.toLocaleString('es-CL')}`;
   }
 
+  // Bug real encontrado probando con grupos: el texto mostraba precio_total
+  // (ya multiplicado por personas) etiquetado como "por persona" — con 2
+  // personas, un panorama de $22.000 pp aparecía como "$44.000 por persona"
+  // (el doble de lo real). Con 1 persona (el caso más común) total y
+  // por-persona son el mismo número, así que se sigue mostrando 1 sola
+  // línea; con 2+ se desglosan ambos sin ambigüedad.
+  function fraseTotal(precioTotal, precioPorPersona, personas) {
+    if (!personas || personas <= 1) return `${formatoPrecio(precioPorPersona != null ? precioPorPersona : precioTotal)} por persona`;
+    return `${formatoPrecio(precioTotal)} total (${formatoPrecio(precioPorPersona)} por persona · ${personas} personas)`;
+  }
+  function fraseTotalCompacta(precioTotal, precioPorPersona, personas) {
+    if (!personas || personas <= 1) return `${formatoPrecio(precioPorPersona != null ? precioPorPersona : precioTotal)} p/p`;
+    return `${formatoPrecio(precioTotal)} total (${personas} p.)`;
+  }
+
   function formatoDuracion(min) {
     if (min < 60) return `${min} min`;
     const horas = Math.floor(min / 60);
@@ -231,7 +246,7 @@
       tono.intro,
       ``,
       `${emoji} ${tituloCombo(acts)}`,
-      `${formatoPrecio(comboCompleto.precio_total)} por persona`,
+      fraseTotal(comboCompleto.precio_total, comboCompleto.precio_por_persona, comboCompleto.personas),
       ``,
       ...(lineaDivergencia ? [lineaDivergencia, ``] : []),
       ...(lineaOrigen ? [lineaOrigen, ``] : []),
@@ -283,7 +298,7 @@
       tono.intro,
       ``,
       `🗺️ Plan de ${plan.dias.length} días: ${titulo}`,
-      `${formatoPrecio(plan.precio_total)} total por persona`,
+      fraseTotal(plan.precio_total, plan.precio_por_persona, plan.personas),
       ``,
       ...bloquesDias.flatMap((b) => [b, ``]),
       ...(lineaAyudaTraslado ? [lineaAyudaTraslado, ``] : []),
@@ -321,7 +336,7 @@
       const razon = (rankeado.razones && rankeado.razones.find((r) => r.tipo === 'afinidad'))
         ? fraseAfinidad(rankeado.razones.find((r) => r.tipo === 'afinidad').categoria)
         : 'calza con lo que me has contado';
-      return `${i + 1}. ${emojiCategoria(acts[0] && acts[0].categoria)} ${nombre} — ${formatoPrecio(completo.precio_total)} p/p (${razon})`;
+      return `${i + 1}. ${emojiCategoria(acts[0] && acts[0].categoria)} ${nombre} — ${fraseTotalCompacta(completo.precio_total, completo.precio_por_persona, completo.personas)} (${razon})`;
     });
     return [
       'Buena idea comparar antes de decidir. Tengo estas 2:',
@@ -365,11 +380,26 @@
   }
 
   function reenganche(comboGuardado) {
-    return `¿Seguimos con el combo que te gustó (${formatoPrecio(comboGuardado.precio)})? Sigue apartable.`;
+    return `¿Seguimos con el combo que te gustó (${fraseTotalCompacta(comboGuardado.precio, comboGuardado.precio_por_persona, comboGuardado.personas)})? Sigue apartable.`;
+  }
+
+  // Bug real encontrado probando preguntas de seguimiento: "¿Cuánto cuesta
+  // en total?" o "¿Dónde nos juntamos?" (ambas sugeridas como quick-replies
+  // en el preview) no tenían respuesta dedicada — el motor volvía a correr
+  // la recomendación desde cero e ignoraba la pregunta. Estas dos frases
+  // responden directo con lo que ya hay en el carrito, sin repetir el combo.
+  function respuestaPrecio(carritoItem) {
+    if (!carritoItem) return null;
+    return `${fraseTotal(carritoItem.precio, carritoItem.precio_por_persona, carritoItem.personas)}. ¿Te lo dejo apartado?`;
+  }
+  function respuestaLogistica(actividades) {
+    if (!actividades || !actividades.length) return null;
+    if (actividades.length === 1) return `📍 Nos juntamos en: ${actividades[0].punto_encuentro}.`;
+    return actividades.map((a) => `📍 ${a.nombre}: ${a.punto_encuentro}`).join('\n');
   }
 
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.plantillas = {
-    formatearCombo, formatearPlanMultiDia, formatearRelacionados, formatearOpcionesComparadas, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara, ofertaComplemento,
+    formatearCombo, formatearPlanMultiDia, formatearRelacionados, formatearOpcionesComparadas, preguntaClarificadora, respuestaEmocional, reforzarDuda, objecion, reenganche, tonoPara, ofertaComplemento, respuestaPrecio, respuestaLogistica,
   };
 })();
