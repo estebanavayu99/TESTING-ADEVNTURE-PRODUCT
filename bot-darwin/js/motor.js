@@ -54,6 +54,15 @@
   const PATRON_CONFIRMACION = /confirmo|dale,? res[ée]rva(?:lo|la)|s[ií],? res[ée]rva(?:lo|la)|apart[aá](?:lo|la) ya|quiero reservar|\bres[ée]rva(?:lo|la)\b|\bapart[aá](?:lo|la)\b/;
   const PATRON_DESCARTE = /no me gusta|quita|sac[aá]lo|elimina/;
   const PATRON_OCASION = /aniversario|cumplea[ñn]os|luna de miel|pedida de mano|propuesta de matrimonio/;
+  // Restricciones duras reales: el filtro ya existía en algoritmos.js
+  // (violaRestriccion → tipo 'accesible' revisa a.accesible===false por
+  // actividad, tipo 'sin_X' excluye por tag) pero nada en esta capa de NLU
+  // poblaba perfil.restricciones desde texto real. Bug real encontrado: un
+  // cliente que escribía "voy en silla de ruedas, necesito que sea
+  // accesible" igual recibía una actividad marcada accesible:false en el
+  // catálogo — el motor simplemente nunca se enteraba de la restricción.
+  const PATRON_RESTRICCION_ACCESIBLE = /silla de ruedas|accesib(?:le|ilidad)|movilidad reducida/;
+  const PATRON_RESTRICCION_SIN_ALCOHOL = /sin alcohol|no (?:tomamos|bebemos|consumimos) alcohol|no queremos alcohol/;
   const PATRON_OBJECION_PRECIO = /caro|muy caro|precio alto|se me pasa (del|de mi) presupuesto/;
   const PATRON_OBJECION_PIENSO = /lo pienso|despu[ée]s veo|no s[ée] a[uú]n|lo consulto/;
   // C7: re-enganche. Un saludo "vacio" (sin categoria/señal nueva) con un
@@ -147,6 +156,16 @@
   }
   function detectarOcasion(texto) {
     return PATRON_OCASION.test(sinAcentos(texto)) ? sinAcentos(texto).match(PATRON_OCASION)[0] : null;
+  }
+  // Devuelve strings en el formato exacto que espera parseRestriccion en
+  // algoritmos.js ('accesible', 'sin_<tag>') para que el filtro duro de
+  // rankear_combos que ya existía finalmente reciba la señal real.
+  function detectarRestricciones(texto) {
+    const t = sinAcentos(texto);
+    const restricciones = [];
+    if (PATRON_RESTRICCION_ACCESIBLE.test(t)) restricciones.push('accesible');
+    if (PATRON_RESTRICCION_SIN_ALCOHOL.test(t)) restricciones.push('sin_contiene_alcohol');
+    return restricciones;
   }
   function detectarObjecion(texto) {
     const t = sinAcentos(texto);
@@ -264,12 +283,12 @@
         .slice(0, 2)
         .map((i) => i.categoria);
 
-    let candidatos = D.tools.buscarActividades({ categorias: categoriasObjetivo.length ? categoriasObjetivo : undefined, excluir_ids: perfil.descartados });
+    let candidatos = D.tools.buscarActividades({ categorias: categoriasObjetivo.length ? categoriasObjetivo : undefined, excluir_ids: perfil.descartados, restricciones: perfil.restricciones });
     // Solo se abre a todo el catálogo si NO hay ningún candidato de la
     // categoría de interés — con 1 solo candidato real igual se prioriza
     // por sobre "traer todo" (antes esto ahogaba categorías nuevas que
     // todavía tienen pocas actividades de prueba, como fiesta/explorador).
-    if (!candidatos.length) candidatos = D.tools.buscarActividades({ excluir_ids: perfil.descartados });
+    if (!candidatos.length) candidatos = D.tools.buscarActividades({ excluir_ids: perfil.descartados, restricciones: perfil.restricciones });
     if (!candidatos.length) return null;
     // buscarActividades devuelve en orden de catálogo, no de preferencia:
     // reordenamos para que la categoría con mayor afinidad quede primero.
@@ -327,7 +346,7 @@
       if (top3.length === 1 && !combosCompletos.length) {
         const base = top3[0];
         const complemento = candidatos.find((c) => c.id !== base.id && D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
-          || D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id] })
+          || D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id], restricciones: perfil.restricciones })
             .find((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
         if (complemento) combosCompletos.push(D.tools.armarCombo([base.id, complemento.id], opciones));
       }
@@ -399,7 +418,7 @@
     const esRecomendacionUnica = !hayDivergencia && !explorar && !forzarPaquete && !aceptaOferta && comboCompleto.actividades.length === 1;
     if (esRecomendacionUnica) {
       const base = comboCompleto.actividades[0];
-      const cercano = D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id] })
+      const cercano = D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id], restricciones: perfil.restricciones })
         .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
         .sort((a, b) => D.tools._internas.haversineKm(base.ubicacion, a.ubicacion) - D.tools._internas.haversineKm(base.ubicacion, b.ubicacion))[0];
       if (cercano) {
@@ -461,7 +480,7 @@
     if (!base) return null;
 
     const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
-    const candidatos = D.tools.buscarActividades({ excluir_ids: [...idsCombo, ...perfil.descartados] })
+    const candidatos = D.tools.buscarActividades({ excluir_ids: [...idsCombo, ...perfil.descartados], restricciones: perfil.restricciones })
       .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
     const combosCandidatos = candidatos
       .map((c) => D.tools.armarCombo([c.id], { fecha: perfil.fechas, personas }))
@@ -505,6 +524,7 @@
     const presupuesto = extraerPresupuesto(textoUsuario);
     const fecha = extraerFecha(textoUsuario);
     const divergencia = detectarDivergencia(textoUsuario, categorias);
+    const restriccionesDetectadas = detectarRestricciones(textoUsuario);
 
     for (const c of categorias) if (!perfil.intereses.find((i) => i.categoria === c)) perfil.intereses.push({ categoria: c, afinidad: 0 });
     if (presupuesto) perfil.presupuesto.banda = [Math.round(presupuesto * 0.8), Math.round(presupuesto * 1.2)];
@@ -512,6 +532,7 @@
     if (ocasion) perfil.ocasion_especial = ocasion;
     if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
     if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
+    if (restriccionesDetectadas.length) perfil.restricciones = [...new Set([...(perfil.restricciones || []), ...restriccionesDetectadas])];
 
     // Bug real: "no me gusta esa, sácala" se detectaba (esDescarte) pero
     // nunca excluía la actividad — Darwin volvía a recomendar EXACTAMENTE

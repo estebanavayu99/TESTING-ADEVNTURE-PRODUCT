@@ -16,16 +16,30 @@
 
   function catalogo() { return fuenteCatalogo() || []; }
 
+  // Mismo formato de restricción que parseRestriccion en algoritmos.js
+  // ('accesible', 'sin_<tag>') pero aplicado a una actividad individual,
+  // no a un combo — así buscarActividades puede filtrar duro desde el
+  // origen (búsquedas de complemento/"cerca de ahí" que nunca pasan por
+  // rankearCombos, donde vivía el único filtro real hasta ahora).
+  function actividadViolaRestriccion(a, regla) {
+    if (regla === 'accesible') return a.accesible === false;
+    const m = /^sin_(.+)$/.exec(regla);
+    if (m) return (a.tags || []).includes(m[1]);
+    return false;
+  }
+
   function buscarActividades(filtros = {}) {
-    const { categoria, categorias, texto, precio_max, comuna, excluir_ids } = filtros;
+    const { categoria, categorias, texto, precio_max, comuna, excluir_ids, restricciones } = filtros;
     const cats = categorias || (categoria ? [categoria] : null);
     const excluir = new Set(excluir_ids || []);
+    const restr = restricciones || [];
     return catalogo()
       .filter((a) => !excluir.has(a.id))
       .filter((a) => !cats || cats.includes(a.categoria))
       .filter((a) => precio_max === undefined || a.precio <= precio_max)
       .filter((a) => !comuna || a.ubicacion.comuna.toLowerCase() === String(comuna).toLowerCase())
       .filter((a) => !texto || `${a.nombre} ${a.categoria}`.toLowerCase().includes(String(texto).toLowerCase()))
+      .filter((a) => !restr.some((r) => actividadViolaRestriccion(a, r)))
       .map((a) => ({
         id: a.id, nombre: a.nombre, categoria: a.categoria, precio: a.precio,
         ubicacion: a.ubicacion, duracion_min: a.duracion_min,

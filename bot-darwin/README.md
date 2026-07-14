@@ -316,6 +316,56 @@ paquete de 2 actividades, plan multi-día, divergencia, grupo de 2
 personas, clima dual) — mismo contenido, nuevo orden, sin regresiones
 (11/11 algoritmos + todos los escenarios previos).
 
+## Restricciones reales: accesibilidad y exclusiones (bug de seguridad/usabilidad)
+
+Preguntando "qué más podemos reforzar", se probó sistemáticamente el
+manejo de restricciones y apareció un gap real y serio: un cliente que
+escribía *"voy en silla de ruedas, necesito que sea accesible"* igual
+recibía "Trekking cascada escondida" — una actividad marcada
+`accesible: false` en el catálogo. El filtro duro correspondiente
+(`violaRestriccion` en `js/algoritmos.js`, tipo `'accesible'`/`'sin_<tag>'`)
+ya existía y funcionaba bien, pero **nada en la capa de NLU de
+`js/motor.js` poblaba `perfil.restricciones` desde texto real** — el
+mecanismo estaba construido pero desconectado del cliente.
+
+Fix:
+- `detectarRestricciones(texto)` (nuevo, en `js/motor.js`) reconoce
+  necesidad de accesibilidad ("silla de ruedas", "accesible",
+  "movilidad reducida") y exclusión de alcohol ("sin alcohol", "no
+  tomamos/bebemos/consumimos alcohol"), devolviendo los strings en el
+  formato exacto que ya esperaba `parseRestriccion` (`'accesible'`,
+  `'sin_contiene_alcohol'`).
+- Se descubrió un segundo problema al verificar: el filtro duro de
+  `rankear_combos` solo corría sobre los candidatos armados en
+  `proponerCombos` — pero las 3 búsquedas de "complemento cercano" (oferta
+  después de la recomendación única, fallback de "quiero paquete" con 1
+  sola actividad en categoría, y "panoramas cerca de ahí") usaban
+  `buscarActividades` directo, sin pasar por ese filtro. Un cliente podía
+  pedir algo accesible, recibir la actividad correcta, y aun así que se le
+  **ofreciera agregar** un complemento no accesible. Se agregó soporte de
+  `restricciones` directo a `buscarActividades` (`js/tools.js`,
+  `actividadViolaRestriccion`) y se pasó `perfil.restricciones` en los 5
+  puntos donde se buscan actividades.
+- Efecto secundario bueno no buscado: como ninguna de las 3 actividades
+  `aventura` del catálogo mock es accesible, pedir "aventura accesible"
+  ahora activa honestamente el fallback a todo el catálogo (ya filtrado
+  por restricción) y ofrece otra categoría que sí califica, en vez de
+  fallar en seco o (peor) recomendar igual la no-accesible.
+
+Verificado con Playwright: pedir "aventura, accesible" sin alternativa
+accesible en esa categoría → recomienda otra categoría real y accesible;
+pedir "relax, accesible" (con alternativa disponible) → recomienda
+correctamente y la oferta de complemento también es accesible; pedir
+"enología, sin alcohol" → excluye la única cata de vinos del catálogo
+(tag `contiene_alcohol`) y recomienda otra cosa. Regresión completa sin
+cambios: 11/11 algoritmos + todos los escenarios previos.
+
+**Limitación conocida**: `armarPlanMultiDia` (la secuencia demo fija
+cabaña+termas+trekking) todavía no aplica `restricciones` — es un plan
+hardcodeado documentado como demo de punta a punta, no un buscador
+dinámico; aplicar restricciones ahí espera a que se generalice (ver
+Pendiente).
+
 ## Cómo probarlo localmente
 
 ```bash
