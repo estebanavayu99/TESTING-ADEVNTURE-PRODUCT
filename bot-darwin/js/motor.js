@@ -671,6 +671,11 @@
   window.PickmapDarwin = window.PickmapDarwin || {};
   window.PickmapDarwin.motor = {
     procesarMensaje, cargarPerfil, guardarPerfil, perfilPorDefecto,
+    // proponerCombos/proponerPlanMultiDia expuestos para integraciones que
+    // arman el perfil directo (ej. onboarding real del sitio) en vez de
+    // pasar por la detección de texto de procesarMensaje — mismo motor,
+    // sin necesitar un mensaje de chat escrito.
+    proponerCombos, proponerPlanMultiDia,
     _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo },
   };
 })();

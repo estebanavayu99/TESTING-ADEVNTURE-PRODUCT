@@ -1,18 +1,22 @@
-# Darwin — bot inteligente (en construcción, NO conectado al sitio real)
+# Darwin — bot inteligente (laboratorio + conectado al dashboard real)
 
-Esta carpeta es un laboratorio aislado: nada de lo que hay acá está
-enlazado desde el sitio ni desde el nav (mismo patrón que
+Esta carpeta sigue siendo un laboratorio aislado: nada de lo que hay acá
+está enlazado desde el sitio ni desde el nav (mismo patrón que
 `notificaciones-preview.html`: `noindex, nofollow`, sin links entrantes).
-"Conectado al sitio" significa integrado al flujo real de usuario
-(reemplazar `js/beto-chat.js` por una versión que llame a
-`PickmapDarwin.motor.procesarMensaje(...)`) — eso sigue sin pasar.
 
-**Sí está desplegado en producción** (`pickmap.cl/bot-darwin/preview.html`,
-reachable por URL directa) — instrucción explícita del usuario para
-poder testear "de forma real" con acceso desde cualquier navegador, no
-solo con el archivo HTML descargable. Sigue sin enlace entrante ni
-indexado; el catálogo real de negocios (`catalogo.real-sample.js`) sigue
-sin comitear, así que lo que hay en vivo usa el catálogo mock de prueba.
+**El motor SÍ está conectado al dashboard real del sitio** (fuera de
+esta carpeta): `js/darwin-backend.js` + `dashboard.html` — ver la sección
+"Darwin backend conectado al dashboard real" más abajo. Es una segunda
+superficie distinta al widget de soporte general (`js/beto-chat.js`, no
+se toca, sigue siendo un chat interactivo de ayuda/orientación) — esta
+es silenciosa, sin chat: lee la sesión real del viajero logueado y
+muestra directo la combinación que Darwin arma para él.
+
+`bot-darwin/preview.html` también está desplegado en producción
+(`pickmap.cl/bot-darwin/preview.html`, reachable por URL directa,
+instrucción explícita del usuario) para poder seguir probando el motor
+turno a turno fuera del dashboard real. Sigue sin enlace entrante ni
+indexado.
 
 Basado en los 3 documentos que armó el usuario:
 - `pickmap_fuentes_a_conectar.pdf` — qué fuente conecta cada tool, por prioridad.
@@ -373,7 +377,7 @@ hardcodeado documentado como demo de punta a punta, no un buscador
 dinámico; aplicar restricciones ahí espera a que se generalice (ver
 Pendiente).
 
-## Catálogo de muestra con negocios reales (testing, NO comiteado a git)
+## Catálogo de muestra con negocios reales (testing, SÍ comiteado a git)
 
 El usuario pasó un directorio real de negocios turísticos chilenos
 (`chile_experiences_OK_1.csv`: ~28.220 negocios, 178 categorías reales, las
@@ -385,11 +389,14 @@ confirmadas por el usuario:
    (con heurísticas razonables, no al azar), marcado explícitamente como
    estimado — el nombre del negocio, la categoría real y la ubicación
    (lat/lng, extraídas de la URL de Google Maps del negocio) sí son reales.
-2. **NO comitear** estos datos reales a git todavía (instrucción explícita:
-   "no quiero que la subas" / "mantenerlo solo en esta sesión"). El archivo
-   generado (`data/catalogo.real-sample.js`) vive en `.gitignore` — **nunca
-   se sube**, y por eso este README tampoco lista nombres de negocios
-   reales, ni siquiera como ejemplo.
+2. **SÍ comitear** estos datos reales a git — decisión que el usuario
+   reversó explícitamente ("si es necesario subir a GitHub los negocios
+   reales para poder testear bien y real, hagámoslo") para poder validar
+   el motor de punta a punta en el sitio real, con cuentas reales. Es
+   **data temporal de testing**: se reemplaza por los negocios ya
+   firmados más adelante — no debería quedar como catálogo definitivo de
+   producción. (Nota histórica: este archivo vivió excluido de git vía
+   `.gitignore` mientras el usuario decidía; ya no aplica.)
 3. **Muestra representativa** de ~200 negocios (≈22 por cada uno de los 9
    buckets/arquetipos), no el CSV completo — un motor 100% cliente sin
    backend/paginación no tiene por qué cargar 28 mil filas para poder
@@ -427,6 +434,69 @@ el archivo no existe en el checkout (ej. sesión nueva sin regenerar), el
 botón avisa en vez de fallar en silencio. El botón queda embebido también
 en el HTML autocontenido que se le manda al usuario, siempre que el
 archivo exista al momento de generarlo.
+
+## Darwin backend conectado al dashboard real (`js/darwin-backend.js`)
+
+Instrucción explícita del usuario: quería poder crearse una cuenta real
+en el sitio y ver si Darwin "realmente entiende" y le ofrece panoramas
+con sentido — no otro archivo de testing, sino conectado al flujo real.
+Aclaró que hay **dos superficies distintas** donde Darwin razona:
+
+1. **El widget** (`js/beto-chat.js`, sin tocar): soporte general,
+   conversacional, responde cualquier pregunta.
+2. **Darwin backend** (`js/darwin-backend.js`, nuevo, vive fuera de
+   `/bot-darwin/` porque se conecta a una página real del sitio): trabaja
+   "por detrás", sin chat — lee la sesión real del viajero logueado y
+   muestra directo la combinación que arma para él.
+
+Implementación:
+- Vive en `js/darwin-backend.js` (raíz del sitio, no en `/bot-darwin/`) +
+  una tarjeta nueva en `dashboard.html` (`#darwinBackendCard`, justo
+  después del saludo) + estilos en `css/dashboard.css`
+  (`.dash__darwin-backend`/`.darwin-backend__*`).
+- Lee la sesión real (`localStorage.pickmap_users` /
+  `pickmap_current_user`) y traduce las respuestas reales de
+  `onboarding.html` a un perfil de bot-darwin:
+  - `tastes[]` → bucket de Darwin (tabla `TASTE_A_BUCKET`; el vocabulario
+    de onboarding es más simple que los 9 buckets — "shopping"/"ymas" no
+    tienen equivalente real todavía y se ignoran, no se inventa un
+    mapeo falso). Si `difficulty` incluye "extremo", refuerza el bucket
+    `aventura` un punto más.
+  - `company[]` → `perfil.grupo.tipo` (primer valor); "pareja" implica 2
+    adultos si no hay dato explícito.
+  - `budget[]` → `perfil.presupuesto.banda` (rango numérico por tramo).
+  - Afinidad de cada bucket se asigna DIRECTO (no pasa por el sistema de
+    eventos/repetición de `calcularConfianza`, pensado para señales de
+    comportamiento en una conversación, no para una declaración explícita
+    de onboarding) — `0.4 + 0.15 * cantidad_de_señales`, tope 0.95.
+- `perfil.origen` viene de `navigator.geolocation` real (no de la ciudad
+  de texto libre de onboarding, que no trae lat/lng) — cae a Santiago
+  Centro como referencia si se niega el permiso o no hay soporte.
+- Usa el catálogo real de negocios (`catalogo.real-sample.js`), configurado
+  explícito vía `configurarFuenteCatalogo` — no el mock.
+- Llama directo a `D.motor.proponerCombos(D, perfil, false, false, false)`
+  — **expuesto recién en `motor.js`** (antes solo vivía interno, se usaba
+  a través de `procesarMensaje`) específicamente para integraciones que
+  arman el perfil directo, sin pasar por un mensaje de chat escrito.
+- Si Darwin ofrece un complemento, se muestra un botón "Sí, arma el plan
+  completo" que llama de nuevo a `proponerCombos` con `aceptaOferta=true`
+  — mismo mecanismo exacto que ya usa `bot-darwin/preview.js`.
+
+Verificado con Playwright simulando el flujo real completo (usuario con
+onboarding real → dashboard real): recomendación única con negocio real +
+distancia real desde geolocalización real → aceptar oferta → combo de 2
+negocios reales con precio/distancia recalculados. Probado también sin
+permiso de geolocalización (cae a Santiago Centro) y con gustos sin
+mapeo real (shopping/ymas, se ignoran sin romper nada). Regresión
+completa de `bot-darwin/preview.html` sin cambios tras exportar
+`proponerCombos`/`proponerPlanMultiDia`.
+
+**Bug real encontrado y corregido en el camino** (no relacionado al
+motor): el fondo degradado nuevo de `.dash__darwin-backend` se apagaba a
+transparente total hacia el fondo de la tarjeta, dejando ver el arte
+oscuro de `.skyline` por debajo y tapando texto — fix: layer doble
+(degradé de tinte + la base translúcida `rgba(255,255,255,.62)` de
+`.dcard`, nunca solo el degradé solo).
 
 ## Cómo probarlo localmente
 

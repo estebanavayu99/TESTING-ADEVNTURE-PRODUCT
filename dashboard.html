@@ -71,6 +71,10 @@ if ('serviceWorker' in navigator) {
       <p class="dash__sub">Esto es lo que Pickmap armó para ti esta semana.</p>
     </div>
 
+    <section class="dcard dash__darwin-backend" id="darwinBackendCard">
+      <p class="darwin-backend__empty">Buscando tu combinación perfecta…</p>
+    </section>
+
     <section class="dcard dash__settings">
       <h2 class="dcard__title">Configura tu cuenta</h2>
       <form id="settingsForm" class="dash__settings-form">
@@ -159,5 +163,18 @@ if ('serviceWorker' in navigator) {
 
 <script src="js/skyline.js"></script>
 <script src="js/dashboard.js"></script>
+<!-- Darwin backend: motor real de bot-darwin, silencioso (sin chat) —
+     ver js/darwin-backend.js. Data de testing (negocios reales, precio/
+     duración estimados), se reemplaza cuando el usuario conecte su BD/
+     CRM real. -->
+<script src="bot-darwin/data/catalogo.real-sample.js"></script>
+<script src="bot-darwin/data/taxonomia-categorias.js"></script>
+<script src="bot-darwin/js/algoritmos.js"></script>
+<script src="bot-darwin/js/tools.js"></script>
+<script src="bot-darwin/js/contexto.js"></script>
+<script src="bot-darwin/js/afluencia.js"></script>
+<script src="bot-darwin/js/plantillas.js"></script>
+<script src="bot-darwin/js/motor.js"></script>
+<script src="js/darwin-backend.js"></script>
 </body>
 </html>

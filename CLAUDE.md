@@ -237,14 +237,40 @@ vivo tras seguir iterando en la rama de desarrollo: repetir el mismo
 merge (`git fetch origin claude/funly-platform-website-huzmqt`,
 `git checkout -b tmp-merge origin/claude/funly-platform-website-huzmqt`,
 `git merge claude/intelligent-bot-dev-51wg6w`, verificar que el diff
-contra `origin/claude/funly-platform-website-huzmqt` solo toque
-`bot-darwin/`+`.gitignore`+`CLAUDE.md` antes de pushear, luego `git push
-origin tmp-merge:claude/funly-platform-website-huzmqt`, borrar la rama
-temporal). **Importante**: `bot-darwin/data/catalogo.real-sample.js`
-(muestra de negocios reales, ver más abajo) está en `.gitignore` a
-propósito y NUNCA se comitea — el bot en producción solo tiene el
-catálogo mock de prueba, no el de negocios reales, hasta que el usuario
-decida lo contrario.
+contra `origin/claude/funly-platform-website-huzmqt` solo toque los
+archivos esperados antes de pushear, luego `git push origin
+tmp-merge:claude/funly-platform-website-huzmqt`, borrar la rama
+temporal).
+
+**`bot-darwin/data/catalogo.real-sample.js` (muestra de ~200 negocios
+reales) SÍ está comiteado** — cambio de decisión explícito del usuario
+("si es necesario subir a GitHub los negocios reales para poder testear
+bien y real, hagámoslo"), reversando la instrucción anterior de no
+subirlo. Es **data temporal de testing**: nombre/categoría/ubicación son
+reales, precio/duración/horario/accesibilidad son ESTIMADOS por
+categoría (ver header del archivo y `bot-darwin/scripts/
+generar_catalogo_real_sample.py`). Se reemplaza por los negocios ya
+firmados más adelante.
+
+**Segunda superficie: "Darwin backend" conectado al sitio real**
+(`js/darwin-backend.js` + `dashboard.html`, fuera de `/bot-darwin/`,
+instrucción explícita del usuario). A diferencia del widget de soporte
+general (`js/beto-chat.js`, sigue intacto, no se toca acá), esta
+superficie trabaja **silenciosa, sin chat**: lee la sesión real del
+viajero logueado (`pickmap_users`/`pickmap_current_user`), traduce sus
+respuestas reales de `onboarding.html` (tastes/company/difficulty/
+budget) a un perfil de bot-darwin, usa geolocalización real del
+navegador para origen/clima, y llama directo a
+`PickmapDarwin.motor.proponerCombos` (exportado en `motor.js` junto a
+`proponerPlanMultiDia` específicamente para esto) — sin pasar por
+`procesarMensaje`/detección de texto. Se muestra como una tarjeta nueva
+en `dashboard.html` justo después del saludo ("🧠 Así piensa Darwin por
+ti ahora mismo"), con un botón para aceptar la oferta de combo si
+Darwin la hizo. Usa el catálogo real de negocios (arriba), no el mock.
+Mapeo de gustos de onboarding (vocabulario más simple) a los 9 buckets
+de bot-darwin documentado en el header de `js/darwin-backend.js` —
+"shopping"/"ymas" no tienen bucket equivalente todavía y se ignoran
+honestamente (no se inventa un mapeo falso).
 
 Decisiones tomadas para esta etapa (pueden revisarse más adelante):
 - Motor **sin LLM real**: reglas/heurísticas deterministas

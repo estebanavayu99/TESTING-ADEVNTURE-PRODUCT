@@ -1,5 +1,8 @@
-# Datos reales de negocios de terceros — NUNCA comitear (instrucción
-# explícita del usuario: "no quiero que la subas todavía" / "mantenerlo
-# solo en esta sesión"). Vive solo en el checkout local; se regenera desde
-# el CSV que el usuario sube en cada sesión si hace falta.
-bot-darwin/data/catalogo.real-sample.js
+# Nota histórica: bot-darwin/data/catalogo.real-sample.js vivió acá
+# (excluido de git) mientras el usuario decidía si quería subir datos
+# reales de negocios para testing. El usuario autorizó explícitamente
+# subirlo ("si es necesario subir a GitHub los negocios reales para poder
+# testear bien y real, hagámoslo") para poder probar el motor con nombres/
+# ubicaciones reales end-to-end en el sitio real — se va a reemplazar por
+# los negocios ya firmados más adelante, momento en el que este archivo
+# se vuelve a regenerar o se borra.
