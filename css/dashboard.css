@@ -372,3 +372,18 @@ html { font-size: 90%; }
   .dash__cta { padding: 20px; }
   .dash__cta-text strong { font-size: 1.1rem; }
 }
+
+/* Darwin backend (js/darwin-backend.js): motor real, sin chat — muestra
+   la combinación que Darwin arma en base al onboarding + ubicación real. */
+.dash__darwin-backend {
+  border: 1px solid rgba(245, 94, 97, 0.25);
+  /* Capa de tinte MÁS la base translúcida de .dcard — sin el segundo layer
+     rgba(255,255,255,.62), el degradé se apaga a transparente total al
+     fondo de la tarjeta y deja ver el arte oscuro de .skyline por debajo
+     (bug real, confirmado con screenshot). */
+  background: linear-gradient(180deg, rgba(246, 205, 76, 0.14), rgba(255, 255, 255, 0)), rgba(255, 255, 255, 0.62);
+}
+.darwin-backend__label { margin: 0 0 10px; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.02em; color: var(--coral); text-transform: uppercase; }
+.darwin-backend__texto { white-space: pre-line; font-size: 0.92rem; line-height: 1.55; color: var(--navy-2); }
+.darwin-backend__empty { margin: 0; font-size: 0.9rem; color: var(--slate); }
+.darwin-backend__aceptar { margin-top: 16px; }
