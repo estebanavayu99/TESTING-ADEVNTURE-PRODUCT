@@ -59,6 +59,16 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   tocar layout, orden ni breakpoints. Si hace falta ajustar la densidad
   de desktop o mobile de nuevo, tocar el valor correspondiente de este
   mismo bloque en vez de ir cambiando tamaños sueltos por componente.
+- **El tamaño de las tarjetas de panorama NO es puramente `rem`**: a
+  diferencia del resto de `css/panoramas.css`, `.pano-row__scroll
+  .pano-card` (ancho fijo, 216px), `.pano-grid` (`minmax(234px, 1fr)`) y
+  `.pano-card__photo` (alto fijo, 118px) están en `px` a propósito
+  (scroll-snap y grid necesitan un ancho de columna estable). Por eso
+  bajar el `font-size` raíz en `css/dashboard.css` encoge el texto/padding
+  interno de la tarjeta pero no su ancho ni el alto de la foto — para
+  achicar la tarjeta en sí hay que tocar estos tres valores en px
+  directamente (ya se bajaron una vez de 240/260/132px a 216/234/118px;
+  si se pide achicar más, bajar estos tres juntos y proporcionalmente).
 - **La IA se llama "Darwin"** en todo el texto visible del sitio (antes
   "Beto"). Los identificadores internos de código quedaron sin tocar a
   propósito — clases (`.beto-chat`, `.beto__profile`), IDs
