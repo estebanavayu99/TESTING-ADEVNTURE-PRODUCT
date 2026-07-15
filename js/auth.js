@@ -118,6 +118,8 @@
     kicker.textContent = KICKERS[which];
     errorBox.hidden = true;
     successBox.hidden = true;
+    const authNote = document.getElementById('authNote');
+    if (authNote) authNote.hidden = !showsTabs;
   }
 
   function showError(message) {

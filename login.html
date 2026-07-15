@@ -108,7 +108,10 @@ if ('serviceWorker' in navigator) {
     </form>
 
     <form class="auth-form" id="formVerify" hidden>
-      <p class="auth-verify-note">Te enviamos un correo de confirmación a <strong id="verifyEmailLabel"></strong>. Abre el enlace desde tu bandeja de entrada para activar tu cuenta — después vuelve acá e inicia sesión.</p>
+      <div class="auth-verify-icon">📬</div>
+      <p class="auth-verify-note" style="text-align:center;">Te enviamos un correo de confirmación a</p>
+      <p class="auth-verify-email"><strong id="verifyEmailLabel"></strong></p>
+      <p class="auth-verify-note" style="text-align:center;">Abre el enlace desde tu bandeja de entrada para activar tu cuenta — después vuelve acá e inicia sesión.</p>
       <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="resendCode">Reenviar correo</button></p>
       <p class="auth-switch"><button type="button" class="auth-link" id="verifyBack">← Volver a iniciar sesión</button></p>
     </form>
@@ -132,7 +135,7 @@ if ('serviceWorker' in navigator) {
       <button type="submit" class="btn btn--primary auth-submit">Cambiar contraseña</button>
     </form>
 
-    <p class="auth-note">Tu cuenta Pickmap es real: usa una contraseña que efectivamente vayas a recordar.</p>
+    <p class="auth-note" id="authNote">Tu cuenta Pickmap es real: usa una contraseña que efectivamente vayas a recordar.</p>
   </div>
 </main>
 
