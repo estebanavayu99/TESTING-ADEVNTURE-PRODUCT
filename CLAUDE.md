@@ -84,6 +84,19 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   breakpoints angostos del nav (`.nav__actions`, `.mode-toggle__opt`,
   `.logo`) — probar explícitamente a 390px, 375px y 320px, no solo un
   breakpoint "mobile" genérico.
+- **Teaser del chat de Darwin no se auto-ocultaba**: `js/beto-chat.js`
+  mostraba el globo de saludo (`#betoChatTeaser`) a los 1.6s de cargar la
+  página y lo dejaba abierto indefinidamente hasta que el usuario lo
+  cerrara a mano. En mobile, al ser `position: fixed` sobre el FAB, tapaba
+  permanentemente el final de párrafos y tarjetas mientras se scrolleaba
+  por `#como-funciona`, `#beto`, `#segmentos`, `#funciones`, `#alianzas`,
+  `#puntos`, `#faq` y `#cta` — se veía poco profesional (confirmado con
+  screenshots de Playwright a 390px). Fix: se agregó un segundo
+  `setTimeout` que oculta el teaser solo (6s después de aparecer) si el
+  usuario no interactuó; el cierre manual (botón × o abrir el chat) sigue
+  funcionando igual. Si se vuelve a tocar `beto-chat.js`, no quitar ese
+  auto-hide sin verificar de nuevo con Playwright a 390px que ninguna
+  sección quede tapada.
 
 ## Verificación visual
 

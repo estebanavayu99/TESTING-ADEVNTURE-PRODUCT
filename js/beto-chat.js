@@ -102,7 +102,10 @@
   if (teaser) {
     function hideTeaser() { teaser.hidden = true; }
     setTimeout(() => {
-      if (panel.hidden) teaser.hidden = false;
+      if (panel.hidden) {
+        teaser.hidden = false;
+        setTimeout(hideTeaser, 6000);
+      }
     }, 1600);
     teaserClose.addEventListener('click', (e) => {
       e.stopPropagation();
