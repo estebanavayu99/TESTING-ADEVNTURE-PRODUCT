@@ -3,6 +3,9 @@
 -- Cómo aplicar: pegar este archivo completo en el SQL Editor del proyecto
 -- Supabase real (Project → SQL Editor → New query → pegar → Run). No
 -- requiere el CLI de Supabase ni conexión desde este repo/sandbox.
+-- Seguro de correr más de una vez (cada `create policy`/`create trigger`
+-- va precedida de su `drop ... if exists`): si ya lo corriste antes y
+-- vuelves a pegarlo, no tira "already exists".
 --
 -- Alcance de esta primera migración: viajero + catálogo + perfil de
 -- preferencias de Darwin (Prioridad 1 declarada por el dueño del
@@ -45,14 +48,17 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "profiles: el dueño lee su propio perfil" on public.profiles;
 create policy "profiles: el dueño lee su propio perfil"
   on public.profiles for select
   using (auth.uid() = user_id);
 
+drop policy if exists "profiles: el dueño actualiza su propio perfil" on public.profiles;
 create policy "profiles: el dueño actualiza su propio perfil"
   on public.profiles for update
   using (auth.uid() = user_id);
 
+drop policy if exists "profiles: el dueño crea su propio perfil" on public.profiles;
 create policy "profiles: el dueño crea su propio perfil"
   on public.profiles for insert
   with check (auth.uid() = user_id);
@@ -83,14 +89,17 @@ create table if not exists public.darwin_preferences (
 
 alter table public.darwin_preferences enable row level security;
 
+drop policy if exists "darwin_preferences: el dueño lee su propio perfil" on public.darwin_preferences;
 create policy "darwin_preferences: el dueño lee su propio perfil"
   on public.darwin_preferences for select
   using (auth.uid() = user_id);
 
+drop policy if exists "darwin_preferences: el dueño escribe su propio perfil" on public.darwin_preferences;
 create policy "darwin_preferences: el dueño escribe su propio perfil"
   on public.darwin_preferences for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "darwin_preferences: el dueño actualiza su propio perfil" on public.darwin_preferences;
 create policy "darwin_preferences: el dueño actualiza su propio perfil"
   on public.darwin_preferences for update
   using (auth.uid() = user_id);
@@ -114,10 +123,12 @@ create table if not exists public.preference_signals (
 
 alter table public.preference_signals enable row level security;
 
+drop policy if exists "preference_signals: el dueño lee sus propias señales" on public.preference_signals;
 create policy "preference_signals: el dueño lee sus propias señales"
   on public.preference_signals for select
   using (auth.uid() = user_id);
 
+drop policy if exists "preference_signals: el dueño escribe sus propias señales" on public.preference_signals;
 create policy "preference_signals: el dueño escribe sus propias señales"
   on public.preference_signals for insert
   with check (auth.uid() = user_id);
@@ -166,6 +177,7 @@ create table if not exists public.businesses (
 
 alter table public.businesses enable row level security;
 
+drop policy if exists "businesses: lectura pública" on public.businesses;
 create policy "businesses: lectura pública"
   on public.businesses for select
   using (true);
@@ -186,14 +198,17 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
   before update on public.profiles
   for each row execute function public.tocar_updated_at();
 
+drop trigger if exists darwin_preferences_updated_at on public.darwin_preferences;
 create trigger darwin_preferences_updated_at
   before update on public.darwin_preferences
   for each row execute function public.tocar_updated_at();
 
+drop trigger if exists businesses_updated_at on public.businesses;
 create trigger businesses_updated_at
   before update on public.businesses
   for each row execute function public.tocar_updated_at();
