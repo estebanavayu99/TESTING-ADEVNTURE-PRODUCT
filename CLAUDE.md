@@ -359,14 +359,52 @@ sigue sin tocarse). Las dos superficies deben terminar leyendo/escribiendo
   claves `pickmap_business_*` — la prioridad declarada fue el lado
   viajero + Superficie 2. Tampoco se conectó ningún LLM real (sigue
   siendo el motor de reglas determinista).
-- **Vercel preview**: pendiente de confirmar por el usuario si su
-  proyecto genera deploys de preview para ramas no-productivas (sería el
-  comportamiento por defecto de la integración GitHub↔Vercel) — mientras
-  no se confirme, no mergear esta fase a `claude/funly-platform-website-huzmqt`
-  sin que el usuario haya probado el flujo de auth real contra su
-  proyecto Supabase real primero (a diferencia de otros cambios de este
-  repo, un bug en Auth real puede dejar a clientes reales sin poder
-  entrar a `pickmap.cl`).
+- **Vercel preview**: confirmado — el proyecto SÍ genera deploys de
+  Preview automáticos para ramas no-productivas (comportamiento por
+  defecto de la integración GitHub↔Vercel). Cada deployment individual
+  tiene una URL única que cambia con cada push; además existe una URL
+  "por rama" fija (patrón `<proyecto>-git-<rama>-<team>.vercel.app`,
+  visible en la sección "Domains" de cualquier deployment de esa rama)
+  que siempre apunta a lo último — usarla para no tener que buscar el
+  deployment de turno en cada prueba.
+- **Flujo real verificado end-to-end por el usuario** (julio 2026):
+  registro con Supabase Auth real → correo de confirmación real (SMTP
+  propio vía Resend, dominio `pickmap.cl` verificado, plantilla de marca
+  aplicada en Authentication → Emails → "Confirm signup" y "Reset
+  Password" en el dashboard de Supabase, no en este repo) → onboarding →
+  tarjeta de Darwin en el dashboard. Funcionando de punta a punta.
+  - `emailRedirectTo` explícito en `signUp()`/`resetPasswordForEmail()`
+    (`js/supabase-client.js`) apuntando a `window.location.origin` — sin
+    esto, Supabase usaba el "Site URL" del dashboard (por defecto
+    `localhost:3000`) para el link del correo, rompiendo la confirmación
+    en cualquier dominio real. También hay que agregar
+    `https://*.vercel.app/**` a "Redirect URLs" (Authentication → URL
+    Configuration) para que Supabase acepte el redirect.
+  - Contraseña mínimo 8 caracteres (antes 4) en registro y reset.
+  - `js/comunas-chile.js`: selector oficial de las 346 comunas de Chile
+    (agrupadas por región) reemplazó el campo de texto libre en
+    onboarding — una comuna mal escrita rompía el cálculo de distancia
+    real de Darwin. Generado desde conocimiento de entrenamiento del
+    modelo (sin verificación en vivo contra fuente oficial, por falta de
+    internet en el sandbox) — avisar si se detecta algo desactualizado.
+- **`supabase/data/businesses_batch_XX_de_07.sql`**: carga masiva de
+  negocios reales a la tabla `businesses` — 25.875 negocios (de los
+  ~28.220 del CSV real completo que pasó el usuario, tras filtrar no-
+  turísticos y sin coordenadas), generados con
+  `scripts/generar_sql_businesses_desde_csv.py` (mismo criterio de
+  filtrado/estimación por categoría que
+  `bot-darwin/scripts/generar_catalogo_real_sample.py`, pero sobre el
+  CSV completo, no una muestra de ~200). Se pegan y corren uno por uno en
+  el SQL Editor de Supabase (7 lotes de ~4.000 filas — un solo INSERT
+  gigante de golpe era arriesgado de ejecutar). `js/darwin-backend.js` ya
+  lee la tabla `businesses` primero automáticamente, sin cambios de
+  código necesarios.
+- **Pendiente de confirmar por el usuario**: no mergear esta fase a
+  `claude/funly-platform-website-huzmqt` sin haber corrido los 7 lotes de
+  negocios reales y confirmado que Darwin recomienda bien sobre ese
+  catálogo completo — a diferencia de otros cambios de este repo, un bug
+  en Auth real puede dejar a clientes reales sin poder entrar a
+  `pickmap.cl`.
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
