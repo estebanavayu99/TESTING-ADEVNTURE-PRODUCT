@@ -1,6 +1,7 @@
 (() => {
   const USERS_KEY = 'pickmap_users';
   const SESSION_KEY = 'pickmap_current_user';
+  const S = window.PickmapSupabase;
 
   const email = localStorage.getItem(SESSION_KEY);
   if (!email) {
@@ -63,9 +64,32 @@
     return Array.from(document.querySelectorAll(`#${groupId} .chip.is-selected`)).map((c) => c.dataset.value);
   }
 
-  function saveProfile(profile) {
+  async function saveProfile(profile) {
+    // Espejo legacy (localStorage) para favoritos.js/invita.js/panoramas.js/
+    // dashboard.js, que siguen leyendo pickmap_users directamente.
     const updated = users.map((u) => (u.email === email ? { ...u, ...profile, onboarded: true } : u));
     localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+
+    // Persistencia real: si hay sesión de Supabase, esto es lo que hace
+    // que el perfil sobreviva entre dispositivos/navegadores en vez de
+    // vivir solo en este localStorage. Si Supabase no está configurado
+    // todavía o falla (ej. red), no bloquea el flujo — el espejo legacy
+    // ya quedó guardado y el resto del sitio sigue funcionando; solo no
+    // habrá persistencia cross-device hasta que Supabase esté disponible.
+    if (S && S.configured) {
+      try {
+        const session = await S.auth.getSession();
+        if (session && session.user) {
+          await S.profiles.upsert(session.user.id, {
+            age: profile.age, city: profile.city, company: profile.company,
+            tastes: profile.tastes, difficulty: profile.difficulty, budget: profile.budget,
+            travel_distance: profile.travelDistance, preferred_day: profile.preferredDay,
+            onboarded: true,
+          });
+        }
+      } catch { /* ver comentario arriba: no bloquea el flujo de onboarding */ }
+    }
+
     window.location.href = 'dashboard.html';
   }
 

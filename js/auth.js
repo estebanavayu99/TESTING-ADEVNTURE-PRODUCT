@@ -1,6 +1,7 @@
 (() => {
   const USERS_KEY = 'pickmap_users';
   const SESSION_KEY = 'pickmap_current_user';
+  const S = window.PickmapSupabase;
 
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
@@ -39,32 +40,44 @@
     });
   }
 
-  function getUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-    } catch {
-      return [];
-    }
+  // Puente con el mecanismo de sesión "legacy" (localStorage) del que
+  // todavía dependen favoritos.js, invita.js, panoramas.js y dashboard.js
+  // para leer name/rut/tastes/company/etc. Esta fase migra la IDENTIDAD
+  // y la SEGURIDAD a Supabase Auth real, pero mantiene este espejo para
+  // no tener que reescribir esas 4 páginas en la misma pasada — quedan
+  // igual de funcionales, solo que ahora alimentadas por datos reales.
+  function getLegacyUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch { return []; }
   }
-
-  function saveUsers(users) {
+  function setLegacySession(email) { localStorage.setItem(SESSION_KEY, email); }
+  function mirrorLegacyUser(fields) {
+    const users = getLegacyUsers();
+    const idx = users.findIndex((u) => u.email === fields.email);
+    if (idx === -1) users.push(fields);
+    else users[idx] = { ...users[idx], ...fields };
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   }
 
-  function setSession(email) {
-    localStorage.setItem(SESSION_KEY, email);
-  }
-
-  function getSession() {
-    return localStorage.getItem(SESSION_KEY);
-  }
-
-  // Already logged in: skip straight to onboarding or the dashboard.
-  const activeEmail = getSession();
-  if (activeEmail) {
-    const activeUser = getUsers().find((u) => u.email === activeEmail);
-    window.location.href = activeUser && activeUser.onboarded ? 'dashboard.html' : 'onboarding.html';
-    return;
+  async function syncLegacyFromSupabase(userId, email) {
+    let profile = null;
+    try { profile = await S.profiles.get(userId); } catch { /* profiles aún no existe para este user_id */ }
+    mirrorLegacyUser({
+      email,
+      supabase_user_id: userId,
+      name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : email.split('@')[0],
+      rut: profile ? profile.rut : '',
+      phone: profile ? profile.phone : '',
+      age: profile ? profile.age : null,
+      city: profile ? profile.city : '',
+      company: profile ? profile.company : [],
+      tastes: profile ? profile.tastes : [],
+      difficulty: profile ? profile.difficulty : [],
+      budget: profile ? profile.budget : [],
+      travelDistance: profile ? profile.travel_distance : [],
+      preferredDay: profile ? profile.preferred_day : [],
+      onboarded: !!(profile && profile.onboarded),
+    });
+    return profile;
   }
 
   const tabLogin = document.getElementById('tabLogin');
@@ -82,7 +95,7 @@
   const KICKERS = {
     login: '🧭 Iniciando sesión como viajero',
     signup: '🧭 Creando tu cuenta de viajero',
-    verify: '🧭 Verifica tu correo',
+    verify: '🧭 Confirma tu correo',
     'forgot-request': '🧭 Recupera tu contraseña',
     'forgot-reset': '🧭 Recupera tu contraseña',
   };
@@ -107,122 +120,52 @@
     successBox.hidden = true;
   }
 
-  function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
-
-  let pendingEmail = null;
-  let pendingRedirect = null;
-
-  function startVerification(email, redirectTo) {
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === email);
-    if (idx === -1) return;
-    const code = genCode();
-    users[idx].verificationCode = code;
-    saveUsers(users);
-    pendingEmail = email;
-    pendingRedirect = redirectTo;
-    document.getElementById('verifyEmailLabel').textContent = email;
-    document.getElementById('verifyCodeDisplay').textContent = code;
-    document.getElementById('verifyCodeInput').value = '';
-    showForm('verify');
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+    successBox.hidden = true;
   }
-
-  formVerify.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = document.getElementById('verifyCodeInput').value.trim();
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === pendingEmail);
-    if (idx === -1) {
-      showForm('login');
-      return;
-    }
-    if (users[idx].verificationCode !== code) {
-      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
-      return;
-    }
-    users[idx].verified = true;
-    delete users[idx].verificationCode;
-    saveUsers(users);
-    setSession(pendingEmail);
-    window.location.href = pendingRedirect;
-  });
-
-  document.getElementById('resendCode').addEventListener('click', () => {
-    if (pendingEmail) startVerification(pendingEmail, pendingRedirect);
-  });
-  document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
-
-  /* ---------- Recuperar contraseña ---------- */
-  let pendingForgotEmail = null;
-
   function showSuccess(message) {
     successBox.textContent = message;
     successBox.hidden = false;
+    errorBox.hidden = true;
   }
 
-  function startForgotReset(email) {
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === email);
-    if (idx === -1) return;
-    const code = genCode();
-    users[idx].resetCode = code;
-    saveUsers(users);
-    pendingForgotEmail = email;
-    document.getElementById('forgotEmailLabel').textContent = email;
-    document.getElementById('forgotCodeDisplay').textContent = code;
-    document.getElementById('forgotCodeInput').value = '';
-    document.getElementById('forgotNewPassword').value = '';
-    showForm('forgot-reset');
+  if (!S || !S.configured) {
+    showError('Supabase todavía no está configurado (js/supabase-config.js) — no se puede iniciar sesión ni crear cuentas reales hasta completar la URL y anon key del proyecto.');
+    // Los formularios siguen visibles pero cualquier submit fallará con
+    // este mismo mensaje (requireClient() lanza), no se bloquea el resto
+    // de la página ni se rompe silenciosamente.
   }
 
-  document.getElementById('forgotLink').addEventListener('click', () => {
-    document.getElementById('forgotEmail').value = '';
-    showForm('forgot-request');
-  });
-  document.getElementById('forgotBackToLogin1').addEventListener('click', () => showForm('login'));
-  document.getElementById('forgotBackToLogin2').addEventListener('click', () => showForm('login'));
-  document.getElementById('forgotResend').addEventListener('click', () => {
-    if (pendingForgotEmail) startForgotReset(pendingForgotEmail);
-  });
+  let pendingSignupEmail = null;
 
-  formForgotRequest.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-    const users = getUsers();
-    if (!users.some((u) => u.email === email)) {
-      showError('No encontramos una cuenta con ese correo.');
-      return;
-    }
-    startForgotReset(email);
-  });
+  // Sesión ya activa (Supabase Auth real) → saltar directo a onboarding o dashboard.
+  (async () => {
+    if (!S || !S.configured) return;
+    try {
+      const session = await S.auth.getSession();
+      if (session && session.user) {
+        setLegacySession(session.user.email);
+        const profile = await syncLegacyFromSupabase(session.user.id, session.user.email);
+        window.location.href = profile && profile.onboarded ? 'dashboard.html' : 'onboarding.html';
+      }
+    } catch { /* sin sesión activa, se queda en el login normal */ }
+  })();
 
-  formForgotReset.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = document.getElementById('forgotCodeInput').value.trim();
-    const newPassword = document.getElementById('forgotNewPassword').value;
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === pendingForgotEmail);
-    if (idx === -1) {
-      showForm('login');
-      return;
-    }
-    if (users[idx].resetCode !== code) {
-      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
-      return;
-    }
-    if (newPassword.length < 4) {
-      showError('La nueva contraseña necesita al menos 4 caracteres.');
-      return;
-    }
-    users[idx].password = newPassword;
-    delete users[idx].resetCode;
-    saveUsers(users);
-    showForm('login');
-    showSuccess('Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
-  });
+  // Recuperación de contraseña: Supabase redirige de vuelta a esta misma
+  // página con una sesión de tipo "recovery" en la URL (no un código que
+  // el usuario copie a mano). Se detecta con el evento PASSWORD_RECOVERY.
+  if (S && S.configured && S.client) {
+    S.client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') showForm('forgot-reset');
+    });
+  }
 
-  tabLogin.addEventListener('click', () => showForm('login'));
-  tabSignup.addEventListener('click', () => showForm('signup'));
+  const tabLoginBtn = tabLogin;
+  const tabSignupBtn = tabSignup;
+  tabLoginBtn.addEventListener('click', () => showForm('login'));
+  tabSignupBtn.addEventListener('click', () => showForm('signup'));
   document.getElementById('goSignup').addEventListener('click', () => showForm('signup'));
   document.getElementById('goLogin').addEventListener('click', () => showForm('login'));
 
@@ -230,12 +173,7 @@
     showForm('signup');
   }
 
-  function showError(message) {
-    errorBox.textContent = message;
-    errorBox.hidden = false;
-  }
-
-  formSignup.addEventListener('submit', (e) => {
+  formSignup.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(formSignup);
     const name = data.get('name').trim();
@@ -252,36 +190,91 @@
       return;
     }
 
-    const users = getUsers();
-    if (users.some((u) => u.email === email)) {
-      showError('Ya existe una cuenta con ese correo. Prueba iniciando sesión.');
-      return;
+    try {
+      const [firstName, ...rest] = name.split(' ');
+      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: rest.join(' ') });
+      if (result.user) {
+        await S.profiles.upsert(result.user.id, {
+          first_name: firstName, last_name: rest.join(' '), rut, onboarded: false,
+        });
+      }
+      if (result.session) {
+        // Confirmación de correo desactivada en el proyecto Supabase: la
+        // sesión queda activa de inmediato, igual que antes con el código
+        // falso — se sigue directo a onboarding sin pantalla intermedia.
+        setLegacySession(email);
+        mirrorLegacyUser({ email, name, rut, onboarded: false, supabase_user_id: result.user.id });
+        window.location.href = 'onboarding.html';
+        return;
+      }
+      pendingSignupEmail = email;
+      document.getElementById('verifyEmailLabel').textContent = email;
+      showForm('verify');
+    } catch (err) {
+      showError(err.message || 'No pudimos crear tu cuenta. Intenta de nuevo.');
     }
-
-    users.push({ name, rut, email, password, onboarded: false, verified: false });
-    saveUsers(users);
-    startVerification(email, 'onboarding.html');
   });
 
-  formLogin.addEventListener('submit', (e) => {
+  document.getElementById('resendCode').addEventListener('click', async () => {
+    if (!pendingSignupEmail || !S.client) return;
+    try {
+      await S.client.auth.resend({ type: 'signup', email: pendingSignupEmail });
+      showSuccess('Correo reenviado.');
+    } catch (err) {
+      showError(err.message || 'No pudimos reenviar el correo.');
+    }
+  });
+  document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
+
+  formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(formLogin);
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    const users = getUsers();
-    const match = users.find((u) => u.email === email && u.password === password);
-    if (!match) {
-      showError('Correo o contraseña incorrectos.');
+    try {
+      const result = await S.auth.signIn(email, password);
+      setLegacySession(email);
+      const profile = await syncLegacyFromSupabase(result.user.id, email);
+      window.location.href = profile && profile.onboarded ? 'dashboard.html' : 'onboarding.html';
+    } catch (err) {
+      const msg = /confirm/i.test(err.message || '') ? 'Confirma tu correo antes de iniciar sesión — revisa tu bandeja de entrada.' : 'Correo o contraseña incorrectos.';
+      showError(msg);
+    }
+  });
+
+  /* ---------- Recuperar contraseña (real, vía Supabase) ---------- */
+  document.getElementById('forgotLink').addEventListener('click', () => {
+    document.getElementById('forgotEmail').value = '';
+    showForm('forgot-request');
+  });
+  document.getElementById('forgotBackToLogin1').addEventListener('click', () => showForm('login'));
+
+  formForgotRequest.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    try {
+      await S.auth.resetPasswordForEmail(email, window.location.origin + window.location.pathname);
+      showForm('login');
+      showSuccess('Si esa cuenta existe, te enviamos un enlace para restablecer tu contraseña.');
+    } catch (err) {
+      showError(err.message || 'No pudimos enviar el enlace de recuperación.');
+    }
+  });
+
+  formForgotReset.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPassword = document.getElementById('forgotNewPassword').value;
+    if (newPassword.length < 4) {
+      showError('La nueva contraseña necesita al menos 4 caracteres.');
       return;
     }
-
-    if (!match.verified) {
-      startVerification(email, match.onboarded ? 'dashboard.html' : 'onboarding.html');
-      return;
+    try {
+      await S.auth.updatePassword(newPassword);
+      showForm('login');
+      showSuccess('Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
+    } catch (err) {
+      showError(err.message || 'No pudimos actualizar tu contraseña.');
     }
-
-    setSession(email);
-    window.location.href = match.onboarded ? 'dashboard.html' : 'onboarding.html';
   });
 })();

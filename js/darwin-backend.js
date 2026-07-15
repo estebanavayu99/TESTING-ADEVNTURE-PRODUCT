@@ -2,36 +2,30 @@
  *
  * Segunda superficie donde Darwin razona (la primera es el widget de
  * soporte general, js/beto-chat.js — no se toca acá). Esta trabaja "por
- * detrás": lee la sesión real del viajero (localStorage pickmap_users /
- * pickmap_current_user), traduce sus respuestas reales de onboarding.html
- * a un perfil de bot-darwin, y llama directo a D.motor.proponerCombos
- * (sin pasar por un mensaje de chat escrito) para mostrar la combinación
- * que arma para ese cliente específico.
+ * detrás": lee la sesión REAL de Supabase Auth, el perfil declarado en
+ * onboarding y el perfil de preferencias de Darwin desde Supabase
+ * (supabase/schema.sql: profiles + darwin_preferences), y llama directo
+ * a D.motor.proponerCombos (sin pasar por un mensaje de chat escrito)
+ * para mostrar la combinación que arma para ese cliente específico.
  *
- * DATA DE TESTING: usa bot-darwin/data/catalogo.real-sample.js (negocios
- * reales, precio/duración/horario ESTIMADOS por categoría) — se
- * reemplaza por el catálogo definitivo cuando el usuario conecte su BD/
- * CRM real. Requiere que bot-darwin/js/*.js estén cargados antes que
- * este archivo (ver script tags en dashboard.html).
+ * PRIORIDAD 1 de la fase de backend real (instrucción explícita del
+ * dueño del producto): esta es la superficie que se prueba primero,
+ * antes que el widget de chat.
+ *
+ * Catálogo: intenta leer negocios reales desde la tabla `businesses` de
+ * Supabase (poblada por scripts/importar_ghl_a_supabase.js desde el CRM
+ * real). Si esa tabla todavía está vacía (import no corrido) o Supabase
+ * no está configurado, cae de vuelta a bot-darwin/data/catalogo.real-sample.js
+ * para no dejar la tarjeta en blanco mientras se completa la migración.
+ *
+ * Requiere que bot-darwin/js/*.js y js/supabase-client.js estén cargados
+ * antes que este archivo (ver script tags en dashboard.html).
  */
 (() => {
-  const USERS_KEY = 'pickmap_users';
-  const SESSION_KEY = 'pickmap_current_user';
-
-  const email = localStorage.getItem(SESSION_KEY);
-  if (!email) return; // dashboard.js ya redirige a login.html
-
-  const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-  const user = users.find((u) => u.email === email);
-  if (!user || !user.onboarded) return; // dashboard.js ya redirige a onboarding.html
-
   const D = window.PickmapDarwin;
+  const S = window.PickmapSupabase;
   const cardEl = document.getElementById('darwinBackendCard');
   if (!D || !D.motor || !D.tools || !cardEl) return;
-
-  D.tools.configurarFuenteCatalogo(() => (
-    (window.PickmapDarwinData && window.PickmapDarwinData.CATALOGO_REAL_SAMPLE) || []
-  ));
 
   // Onboarding real usa un vocabulario de gustos más simple que los 9
   // buckets de bot-darwin — mapeo honesto: "shopping" y "ymas" no tienen
@@ -47,19 +41,57 @@
   };
   const SANTIAGO_CENTRO = { lat: -33.4372, lng: -70.6506, nombre: 'Santiago Centro (referencia)' };
 
-  // Traduce las respuestas reales de onboarding.html a perfil.intereses:
-  // cada bucket que aparece (por gusto declarado, reforzado si "extremo"
-  // también fue elegido como nivel de exigencia) recibe una afinidad
-  // directa — no pasa por el sistema de eventos/repetición de
-  // calcularConfianza (pensado para señales de comportamiento en una
-  // conversación, no para una declaración explícita de onboarding).
-  function construirPerfilDesdeOnboarding(perfil, u) {
+  // Mapea una fila de la tabla `businesses` (snake_case, columnas SQL)
+  // al mismo contrato de objeto que ya consumen tools.js/motor.js (ver
+  // header de bot-darwin/data/catalogo.mock.js) — así no hay que tocar
+  // ni una línea del motor para cambiar la fuente del catálogo.
+  function filaANegocio(fila) {
+    return {
+      id: fila.id, nombre: fila.nombre, categoria: fila.categoria, tags: fila.tags || [],
+      precio: fila.precio, duracion_min: fila.duracion_min,
+      ubicacion: { lat: fila.lat, lng: fila.lng, comuna: fila.comuna },
+      energia: fila.energia, exterior: fila.exterior, indoor_alt: fila.indoor_alt,
+      accesible: fila.accesible, experiencia_estimada: fila.experiencia_estimada,
+      hero_moment: fila.hero_moment, horarios: fila.horarios || [],
+      punto_encuentro: fila.punto_encuentro, incluye: fila.incluye || [],
+      no_incluye: fila.no_incluye || [], restricciones: fila.restricciones || [],
+      cupos: fila.cupos || {}, tipo: fila.tipo || undefined,
+      es_gema_oculta: fila.es_gema_oculta || undefined, evita_trampa: fila.evita_trampa || undefined,
+    };
+  }
+
+  async function configurarCatalogo() {
+    let negociosSupabase = [];
+    if (S && S.configured) {
+      try {
+        const filas = await S.businesses.listAll();
+        negociosSupabase = filas.map(filaANegocio);
+      } catch {
+        // Tabla `businesses` sin permisos/aún no migrada — cae al fallback local.
+      }
+    }
+    const catalogoFallback = () => (
+      (window.PickmapDarwinData && window.PickmapDarwinData.CATALOGO_REAL_SAMPLE) || []
+    );
+    D.tools.configurarFuenteCatalogo(() => (
+      negociosSupabase.length ? negociosSupabase : catalogoFallback()
+    ));
+  }
+
+  // Traduce las respuestas reales de onboarding (fila `profiles`) a
+  // perfil.intereses: cada bucket que aparece (por gusto declarado,
+  // reforzado si "extremo" también fue elegido como nivel de exigencia)
+  // recibe una afinidad directa — no pasa por el sistema de eventos/
+  // repetición de calcularConfianza (pensado para señales de
+  // comportamiento en una conversación, no para una declaración
+  // explícita de onboarding).
+  function construirPerfilDesdeOnboarding(perfil, profile) {
     const conteoPorBucket = {};
-    for (const taste of u.tastes || []) {
+    for (const taste of profile.tastes || []) {
       const bucket = TASTE_A_BUCKET[taste];
       if (bucket) conteoPorBucket[bucket] = (conteoPorBucket[bucket] || 0) + 1;
     }
-    if ((u.difficulty || []).includes('extremo')) {
+    if ((profile.difficulty || []).includes('extremo')) {
       conteoPorBucket.aventura = (conteoPorBucket.aventura || 0) + 1;
     }
 
@@ -68,10 +100,10 @@
     }));
     perfil.arquetipos = D.motor._internas.calcularArquetipos(perfil);
 
-    perfil.grupo.tipo = (u.company || [])[0] || null;
-    if (!perfil.grupo.adultos) perfil.grupo.adultos = (u.company || []).includes('pareja') ? 2 : 1;
+    perfil.grupo.tipo = (profile.company || [])[0] || null;
+    if (!perfil.grupo.adultos) perfil.grupo.adultos = (profile.company || []).includes('pareja') ? 2 : 1;
 
-    const banda = BUDGET_A_BANDA[(u.budget || [])[0]];
+    const banda = BUDGET_A_BANDA[(profile.budget || [])[0]];
     if (banda) perfil.presupuesto.banda = banda;
 
     return perfil;
@@ -87,8 +119,6 @@
       );
     });
   }
-
-  function sessionIdDarwin() { return `real::${email}`; }
 
   function renderResultado(resultado) {
     if (!resultado || resultado.sinResultados) {
@@ -108,20 +138,51 @@
     if (btn) btn.addEventListener('click', () => aceptarOferta(resultado.ofertaComplemento));
   }
 
+  let sessionIdActual = null;
+  let userIdActual = null;
+
+  async function guardarPerfilPersistente(perfil) {
+    D.motor.guardarPerfil(sessionIdActual, perfil);
+    if (!S || !S.configured || !userIdActual) return;
+    try {
+      await S.darwinPreferences.upsert(userIdActual, {
+        intereses: perfil.intereses, arquetipos: perfil.arquetipos, grupo: perfil.grupo,
+        presupuesto: perfil.presupuesto, origen: perfil.origen, contexto: perfil.contexto,
+        restricciones: perfil.restricciones, oferta_combo: perfil.oferta_combo,
+        favoritos: perfil.favoritos, descartados: perfil.descartados, historial_ids: perfil.historial_ids,
+      });
+    } catch { /* la sesión local (motor.guardarPerfil) ya quedó al día; persistencia cross-device queda pendiente hasta que Supabase responda */ }
+  }
+
   async function aceptarOferta(ofertaComplemento) {
-    const sessionId = sessionIdDarwin();
-    const perfil = D.motor.cargarPerfil(sessionId);
+    const perfil = D.motor.cargarPerfil(sessionIdActual);
     perfil.oferta_combo = { base_id: ofertaComplemento.base_id, complemento_id: ofertaComplemento.complemento_id };
-    D.motor.guardarPerfil(sessionId, perfil);
+    await guardarPerfilPersistente(perfil);
     cardEl.innerHTML = '<p class="darwin-backend__empty">Armando tu plan completo…</p>';
     const resultado = await D.motor.proponerCombos(D, perfil, false, false, true);
     renderResultado(resultado);
   }
 
   async function mostrarRecomendacionDarwin() {
-    const sessionId = sessionIdDarwin();
-    let perfil = D.motor.cargarPerfil(sessionId);
-    perfil = construirPerfilDesdeOnboarding(perfil, user);
+    if (!S || !S.configured) {
+      cardEl.innerHTML = '<p class="darwin-backend__empty">Supabase todavía no está configurado (js/supabase-config.js) — Darwin no puede calcular tu recomendación real todavía.</p>';
+      return;
+    }
+    const session = await S.auth.getSession();
+    if (!session || !session.user) return; // dashboard.js ya redirige a login.html si no hay sesión
+
+    const profile = await S.profiles.get(session.user.id);
+    if (!profile || !profile.onboarded) return; // dashboard.js ya redirige a onboarding.html si falta
+
+    userIdActual = session.user.id;
+    sessionIdActual = `real::${session.user.id}`;
+
+    await configurarCatalogo();
+
+    const existente = await S.darwinPreferences.get(userIdActual);
+    let perfil = D.motor.cargarPerfil(sessionIdActual);
+    if (existente) perfil = { ...perfil, ...existente };
+    perfil = construirPerfilDesdeOnboarding(perfil, profile);
     perfil.origen = await obtenerOrigenReal();
 
     try {
@@ -131,7 +192,15 @@
       // con honestidad, el clima simplemente no aparece en el texto.
     }
 
-    D.motor.guardarPerfil(sessionId, perfil);
+    await guardarPerfilPersistente(perfil);
+    if (S.configured) {
+      try {
+        await S.preferenceSignals.log(userIdActual, null, 'onboarding', null, {
+          evento: 'recalculo_dashboard', intereses: perfil.intereses,
+        });
+      } catch { /* el log de trazabilidad no debe bloquear la recomendación */ }
+    }
+
     const resultado = await D.motor.proponerCombos(D, perfil, false, false, false);
     renderResultado(resultado);
   }

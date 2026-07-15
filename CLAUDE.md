@@ -274,6 +274,100 @@ Decisiones tomadas para esta etapa (pueden revisarse más adelante):
 - Afluencia/eventos locales (`js/afluencia.js`): heurística/placeholder,
   a reemplazar por datos reales de reservas y feriados/festivales.
 
+## Fase backend real: Supabase + GHL (julio 2026, en curso)
+
+Instrucción explícita del dueño del producto: dejar de ser demo pura y
+empezar a trabajar "en serio" — ya subió negocios reales a su CRM
+(GoHighLevel) y la prioridad declarada es que la **recomendación directa
+de panoramas sin pasar por chat** (Superficie 2 — `js/darwin-backend.js`)
+funcione con auth real, perfil persistente y catálogo real, antes que
+seguir invirtiendo en el widget de chat (Superficie 1 — `js/beto-chat.js`,
+sigue sin tocarse). Las dos superficies deben terminar leyendo/escribiendo
+**el mismo perfil de preferencias compartido** en Supabase.
+
+- **`supabase/schema.sql`**: tablas `profiles` (reemplaza `pickmap_users`),
+  `darwin_preferences` (mirror exacto de `perfilPorDefecto()` en
+  `bot-darwin/js/motor.js` — intereses/arquetipos/grupo/presupuesto/
+  origen/contexto/restricciones/oferta_combo — para no rediseñar el shape
+  que el motor ya entiende), `preference_signals` (log append-only de
+  trazabilidad: cada ajuste de afinidad queda con su fuente —
+  onboarding/inferido/chat/reserva/reseña — aunque hoy solo se escribe el
+  evento `onboarding` desde `darwin-backend.js`; inferido/chat/reserva/
+  reseña quedan sin poblar todavía, es infraestructura para cuando se
+  conecten esas señales), y `businesses` (mismo contrato que
+  `bot-darwin/data/catalogo.mock.js`, con `datos_estimados boolean` y
+  `ghl_id` para el mapeo con el CRM real). Todo con RLS por `auth.uid()`.
+  Aplicar pegando el archivo completo en el SQL Editor del proyecto
+  Supabase real — no requiere el CLI ni conexión desde este repo.
+- **Auth real, no falsa**: `js/auth.js` + `login.html` ahora usan
+  Supabase Auth real (`signUp`/`signInWithPassword`/`resetPasswordForEmail`/
+  `updateUser`) en vez de contraseñas en `localStorage` y códigos de
+  verificación mostrados en pantalla. La confirmación de correo y el
+  reset de contraseña ahora son flujos de correo real (Supabase envía el
+  email; el reset se detecta por el evento `PASSWORD_RECOVERY` de
+  `onAuthStateChange`, no por un código que el usuario copia a mano).
+- **Puente legacy deliberado**: `js/favoritos.js`, `js/invita.js`,
+  `js/panoramas.js` y `js/dashboard.js` **NO se tocaron** en esta fase —
+  siguen leyendo `pickmap_users`/`pickmap_current_user` de `localStorage`
+  exactamente igual que antes. `auth.js`/`onboarding.js` ahora mantienen
+  ese mismo objeto/clave sincronizado como un espejo derivado de la
+  sesión y el perfil reales de Supabase (`mirrorLegacyUser`/
+  `syncLegacyFromSupabase` en `auth.js`), así que esas 4 páginas siguen
+  funcionando sin cambios aunque la identidad real ahora viva en
+  Supabase. Si se migran esas páginas más adelante a leer Supabase
+  directamente, este puente deja de ser necesario — no borrarlo antes.
+- **`js/darwin-backend.js` reescrito para Supabase** (Prioridad 1): en vez
+  de leer `pickmap_users`, usa `S.auth.getSession()` +
+  `S.profiles.get(userId)` + `S.darwinPreferences.get/upsert(userId)`.
+  El catálogo intenta `S.businesses.listAll()` primero; si la tabla está
+  vacía (import de GHL no corrido todavía) o Supabase no está
+  configurado, cae de vuelta a `catalogo.real-sample.js` — nunca deja la
+  tarjeta en blanco. Cada recomendación además inserta una fila en
+  `preference_signals` (fuente `onboarding`, sin bloquear el flujo si
+  falla).
+- **`js/supabase-client.js`**: wrapper único (`window.PickmapSupabase`)
+  usado por `auth.js`, `onboarding.js` y `darwin-backend.js`, para no
+  reescribir la inicialización del cliente en cada archivo. Si
+  `js/supabase-config.js` sigue con los valores placeholder
+  (`TU-PROYECTO`/`TU-ANON-KEY-AQUI`), `PickmapSupabase.configured` queda
+  `false` y todo se degrada con un mensaje explícito en vez de tirar
+  excepciones — verificado con Playwright (login, dashboard, onboarding
+  siguen sin errores de consola con Supabase sin configurar).
+- **`js/supabase-config.js`**: SÍ se comitea con la anon key real cuando
+  el usuario la pase — es segura de exponer en el navegador porque la
+  seguridad real la da RLS, no ocultar esta key. La **service role key
+  jamás va en ningún archivo del repo**, solo como variable de entorno de
+  `scripts/importar_ghl_a_supabase.js`.
+- **`scripts/importar_ghl_a_supabase.js`**: script Node standalone (sin
+  dependencias npm, usa `fetch` nativo) que lee negocios reales desde la
+  API de GoHighLevel y hace upsert en `businesses` vía la REST API de
+  Supabase (PostgREST) usando la service role key. Aplica la misma
+  heurística de estimación por categoría que
+  `bot-darwin/scripts/generar_catalogo_real_sample.py` (precio/duración/
+  energía/accesibilidad por bucket) porque GHL no tiene esos campos
+  operativos — nombre/categoría/ubicación sí son reales. **No se puede
+  ejecutar desde este sandbox** (sin salida a internet real, confirmado
+  con `curl` → 403 tanto a `services.leadconnectorhq.com` como a
+  `supabase.co`) — lo corre el usuario en su máquina o desde donde haya
+  internet real. **Pendiente de confirmar por el usuario**: si los
+  negocios en su cuenta GHL están guardados como Custom Objects o como
+  Contacts con un tag — el script asume Custom Objects por defecto
+  (`GHL_ORIGEN=custom_objects`), con `GHL_ORIGEN=contacts` como
+  alternativa vía variable de entorno.
+- **Alcance explícito de esta fase**: NO se tocó `negocio-*.html` /
+  `js/auth-empresa.js` (login de empresa sigue 100% localStorage) ni las
+  claves `pickmap_business_*` — la prioridad declarada fue el lado
+  viajero + Superficie 2. Tampoco se conectó ningún LLM real (sigue
+  siendo el motor de reglas determinista).
+- **Vercel preview**: pendiente de confirmar por el usuario si su
+  proyecto genera deploys de preview para ramas no-productivas (sería el
+  comportamiento por defecto de la integración GitHub↔Vercel) — mientras
+  no se confirme, no mergear esta fase a `claude/funly-platform-website-huzmqt`
+  sin que el usuario haya probado el flujo de auth real contra su
+  proyecto Supabase real primero (a diferencia de otros cambios de este
+  repo, un bug en Auth real puede dejar a clientes reales sin poder
+  entrar a `pickmap.cl`).
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo
