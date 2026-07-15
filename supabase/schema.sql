@@ -63,6 +63,33 @@ create policy "profiles: el dueño crea su propio perfil"
   on public.profiles for insert
   with check (auth.uid() = user_id);
 
+-- Crear la fila de `profiles` en el momento del signUp() del cliente
+-- viola RLS: en ese instante (con confirmación de correo activada) todavía
+-- no hay sesión autenticada, así que auth.uid() es null y el insert
+-- directo desde el navegador queda bloqueado ("new row violates row-level
+-- security policy"). Patrón estándar de Supabase: un trigger con
+-- `security definer` en auth.users crea la fila automáticamente, sin
+-- depender de que el cliente tenga sesión todavía.
+create or replace function public.crear_perfil_para_nuevo_usuario()
+returns trigger as $$
+begin
+  insert into public.profiles (user_id, first_name, last_name, rut)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'first_name',
+    new.raw_user_meta_data->>'last_name',
+    new.raw_user_meta_data->>'rut'
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.crear_perfil_para_nuevo_usuario();
+
 -- ============================================================
 -- 2. darwin_preferences — el "perfil" que consume motor.js
 -- ============================================================

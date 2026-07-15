@@ -192,12 +192,12 @@
 
     try {
       const [firstName, ...rest] = name.split(' ');
-      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: rest.join(' ') });
-      if (result.user) {
-        await S.profiles.upsert(result.user.id, {
-          first_name: firstName, last_name: rest.join(' '), rut, onboarded: false,
-        });
-      }
+      // La fila de `profiles` la crea un trigger en la base de datos (ver
+      // supabase/schema.sql: on_auth_user_created) a partir de estos
+      // metadatos — no se escribe directo desde el navegador porque en
+      // este instante (con confirmación de correo activada) todavía no
+      // hay sesión autenticada y RLS lo bloquearía.
+      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: rest.join(' '), rut });
       if (result.session) {
         // Confirmación de correo desactivada en el proyecto Supabase: la
         // sesión queda activa de inmediato, igual que antes con el código
