@@ -176,13 +176,14 @@
   formSignup.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(formSignup);
-    const name = data.get('name').trim();
+    const firstName = data.get('firstName').trim();
+    const lastName = data.get('lastName').trim();
     const rut = formatRut(data.get('rut'));
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    if (!name || !email || password.length < 4) {
-      showError('Revisa los datos: el nombre no puede estar vacío y la contraseña necesita al menos 4 caracteres.');
+    if (!firstName || !lastName || !email || password.length < 4) {
+      showError('Revisa los datos: nombre y apellido no pueden estar vacíos, y la contraseña necesita al menos 4 caracteres.');
       return;
     }
     if (!isValidRut(rut)) {
@@ -191,13 +192,13 @@
     }
 
     try {
-      const [firstName, ...rest] = name.split(' ');
       // La fila de `profiles` la crea un trigger en la base de datos (ver
       // supabase/schema.sql: on_auth_user_created) a partir de estos
       // metadatos — no se escribe directo desde el navegador porque en
       // este instante (con confirmación de correo activada) todavía no
       // hay sesión autenticada y RLS lo bloquearía.
-      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: rest.join(' '), rut });
+      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: lastName, rut });
+      const name = `${firstName} ${lastName}`.trim();
       if (result.session) {
         // Confirmación de correo desactivada en el proyecto Supabase: la
         // sesión queda activa de inmediato, igual que antes con el código
