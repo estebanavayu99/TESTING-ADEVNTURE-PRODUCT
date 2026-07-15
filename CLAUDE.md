@@ -45,6 +45,16 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   establecido) pero sin las viñetas de match de preferencias, ya que esa
   página no tiene acceso al perfil de onboarding, solo al snapshot
   guardado del item favorito.
+- **Escala compacta de las páginas logueadas**: `css/dashboard.css` (cargado
+  por dashboard, panoramas, favoritos, invita, negocio-*, pickpoints — no
+  por index/login/onboarding) trae `html { font-size: 90%; }` porque a
+  100% de zoom por defecto en el navegador el usuario lo sentía
+  demasiado grande. Como casi todo ese CSS usa `rem`, bajar el font-size
+  raíz encoge tipografía y espaciados de forma proporcional en cascada
+  sin tocar layout, orden ni breakpoints (los `max-width` de los media
+  queries son px físicos de viewport, no se ven afectados). Si hace falta
+  ajustar la densidad de esas páginas de nuevo, tocar ese único valor en
+  vez de ir cambiando tamaños sueltos por componente.
 - **La IA se llama "Darwin"** en todo el texto visible del sitio (antes
   "Beto"). Los identificadores internos de código quedaron sin tocar a
   propósito — clases (`.beto-chat`, `.beto__profile`), IDs
