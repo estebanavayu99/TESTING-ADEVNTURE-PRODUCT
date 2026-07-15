@@ -184,8 +184,8 @@
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    if (!firstName || !lastName || !email || password.length < 4) {
-      showError('Revisa los datos: nombre y apellido no pueden estar vacíos, y la contraseña necesita al menos 4 caracteres.');
+    if (!firstName || !lastName || !email || password.length < 8) {
+      showError('Revisa los datos: nombre y apellido no pueden estar vacíos, y la contraseña necesita al menos 8 caracteres.');
       return;
     }
     if (!isValidRut(rut)) {
@@ -268,8 +268,8 @@
   formForgotReset.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newPassword = document.getElementById('forgotNewPassword').value;
-    if (newPassword.length < 4) {
-      showError('La nueva contraseña necesita al menos 4 caracteres.');
+    if (newPassword.length < 8) {
+      showError('La nueva contraseña necesita al menos 8 caracteres.');
       return;
     }
     try {
