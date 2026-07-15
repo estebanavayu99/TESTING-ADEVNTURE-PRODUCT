@@ -11,5 +11,5 @@
  * supabase-client.js lo detecta y no intenta conectar (falla explícito,
  * no un error críptico de red).
  */
-window.PICKMAP_SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-window.PICKMAP_SUPABASE_ANON_KEY = 'TU-ANON-KEY-AQUI';
+window.PICKMAP_SUPABASE_URL = 'https://igevnfsbteilvxkypgeo.supabase.co';
+window.PICKMAP_SUPABASE_ANON_KEY = 'sb_publishable_4ohrbxnBqlZuac80uOs6GA_SDrozb4h';
