@@ -33,8 +33,15 @@
   }
 
   async function signUp(email, password, meta) {
+    // emailRedirectTo explícito: sin esto, Supabase usa el "Site URL"
+    // configurado en el dashboard (por defecto localhost:3000) para el
+    // link del correo de confirmación — rompía el flujo en cualquier
+    // dominio real (preview de Vercel, producción). Con
+    // window.location.origin funciona automáticamente sea cual sea el
+    // dominio desde el que alguien se registre.
     const { data, error } = await requireClient().auth.signUp({
-      email, password, options: { data: meta || {} },
+      email, password,
+      options: { data: meta || {}, emailRedirectTo: `${window.location.origin}/login.html` },
     });
     if (error) throw error;
     return data;
