@@ -1384,7 +1384,14 @@
     const filteredRecommended = applySort(applyAdvFilters(recommended));
     renderRow('rowSimple', filteredRecommended.filter((i) => i.kind === 'simple').slice(0, 8));
     renderRow('rowPaquete', filteredRecommended.filter((i) => i.kind === 'paquete').slice(0, 8));
-    renderRow('rowTodos', filteredRecommended.slice(0, 8));
+    // Bug real reportado por el usuario: la fila "Todos" decía mostrar
+    // TODO el catálogo pero en realidad usaba `recommended` (el mismo
+    // subconjunto personalizado de Combos/Simples) — así que el cliente
+    // nunca tenía forma de ver el catálogo completo sin filtrar por Darwin
+    // si su mood no calzaba con lo recomendado. "Todos" ahora sale de
+    // `general` (catálogo completo, sin personalizar) a propósito.
+    const filteredGeneral = applySort(applyAdvFilters(general));
+    renderRow('rowTodos', filteredGeneral.slice(0, 8));
   }
 
   function renderExplore() {
@@ -1425,15 +1432,20 @@
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const filter = link.dataset.targetFilter;
+      // "Ver todo" de Combos/Simples sigue llevando a la pestaña
+      // personalizada (esas filas SÍ son 100% Darwin) — pero el de "Todos"
+      // debe caer en "General" (sin IA), para que el cliente pueda elegir
+      // algo distinto si no está en el mood de lo que Darwin recomendó.
+      const tabDestino = filter === 'todos' ? 'general' : 'recomendado';
       activeFilter = filter;
-      activeTab = 'recomendado';
+      activeTab = tabDestino;
       activeCategory = 'todas';
       activeDistance = 'todas';
       activePrice = 'todos';
       activeDay = 'todos';
       activeSort = 'recomendado';
       document.querySelectorAll('.pano-filter').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === filter));
-      document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === 'recomendado'));
+      document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tabDestino));
       if (categorySelect) categorySelect.value = 'todas';
       document.getElementById('filterDistance').value = 'todas';
       document.getElementById('filterPrice').value = 'todos';
