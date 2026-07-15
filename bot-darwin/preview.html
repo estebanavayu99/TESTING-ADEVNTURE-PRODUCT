@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Darwin — consola de pruebas (no publico)</title>
+<link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <div class="darwin-banner">
+    🧪 <strong>Consola interna de pruebas</strong> — bot-darwin no está conectado al sitio ni a producción. Cat&aacute;logo con datos de prueba (placeholder) hasta recibir la BD real.
+  </div>
+
+  <div class="darwin-layout">
+    <section class="darwin-panel">
+      <div class="darwin-panel__header">
+        <h2>Chat con Darwin (motor de reglas)</h2>
+        <div class="darwin-panel__header-actions">
+          <button id="darwinCatalogo" type="button">🗂️ Catálogo: prueba</button>
+          <button id="darwinReset" type="button">Reiniciar sesión</button>
+        </div>
+      </div>
+      <div class="darwin-quick" id="darwinQuick"></div>
+      <div id="darwinMensajes"></div>
+      <form id="darwinForm">
+        <input id="darwinInput" type="text" autocomplete="off" placeholder="Escribe como si fueras un viajero…">
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <div class="darwin-col">
+      <section class="darwin-panel">
+        <div class="darwin-panel__header">
+          <h2>🗺️ Tu ruta</h2>
+          <button id="darwinClima" type="button">📍 Usar mi ubicación real (clima + distancia)</button>
+        </div>
+        <div class="darwin-ruta" id="darwinRuta">
+          <p class="darwin-ruta__empty">Cuéntale a Darwin qué panorama buscas y acá aparece el mapa real entre las zonas de tu plan (mismo truco de Google Maps sin API key que ya usa panoramas.js en el sitio).</p>
+        </div>
+      </section>
+
+      <section class="darwin-panel">
+        <div class="darwin-panel__header">
+          <h2>Debug: perfil interno / intent_score / combos</h2>
+        </div>
+        <div class="darwin-debug" id="darwinDebug">Envía un mensaje para ver el estado interno acá.</div>
+      </section>
+    </div>
+  </div>
+
+  <script src="data/catalogo.mock.js"></script>
+  <!-- catalogo.real-sample.js: NO está comiteado a git (ver .gitignore) —
+       muestra de negocios reales generada solo para esta sesión de
+       testing. Si no existe (ej. clon nuevo del repo), este <script> da
+       404 en la consola y no rompe nada más — el resto de la página sigue
+       cargando normal, el botón "Catálogo: prueba" simplemente no
+       encuentra window.PickmapDarwinData.CATALOGO_REAL_SAMPLE y avisa. -->
+  <script src="data/catalogo.real-sample.js"></script>
+  <script src="data/taxonomia-categorias.js"></script>
+  <script src="js/algoritmos.js"></script>
+  <script src="js/tools.js"></script>
+  <script src="js/contexto.js"></script>
+  <script src="js/afluencia.js"></script>
+  <script src="js/plantillas.js"></script>
+  <script src="js/motor.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>

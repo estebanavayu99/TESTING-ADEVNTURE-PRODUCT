@@ -1,0 +1,676 @@
+/* PickMap — Darwin — Motor de dialogo (orquestador)
+ *
+ * Implementa las reglas de decision del system prompt v4 (PARTE A-E) de
+ * forma 100% deterministica: sin LLM real (decision del usuario para
+ * esta etapa), asi que "entender" al cliente es deteccion por
+ * palabras clave + los dos algoritmos de pickmap_algoritmos_spec.pdf, y
+ * "hablar" es plantillas.js. Es una base honesta y testeable; el dia
+ * que se conecte un LLM real, este motor pasa a ser las TOOLS que el
+ * LLM invoca (calcularConfianza/rankearCombos/etc ya viven separadas en
+ * algoritmos.js y tools.js para eso).
+ */
+(() => {
+  function sinAcentos(s) {
+    return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // Taxonomia real (178 categorias del listado de negocios del usuario,
+  // agrupadas en 9 buckets) — ver data/taxonomia-categorias.js. Antes esto
+  // era una lista de 7 categorias inventadas de juguete; ahora la deteccion
+  // de intencion reconoce el vocabulario real de categorias de experiencias
+  // en Chile, no solo un puñado de sinonimos genericos.
+  const TAXONOMIA = window.PickmapDarwinData.TAXONOMIA_CATEGORIAS;
+  const CATEGORIA_KEYWORDS = {};
+  const CATEGORIA_A_ARQUETIPO = {};
+  for (const [bucket, data] of Object.entries(TAXONOMIA)) {
+    CATEGORIA_KEYWORDS[bucket] = data.keywords;
+    CATEGORIA_A_ARQUETIPO[bucket] = data.arquetipo;
+  }
+
+  const PATRONES_EMOCION = {
+    frustrado: /no funciona|p[ée]simo|malo|molesto|frustrad|enojad|esto no sirve|fatal/,
+    abrumado: /no s[ée] (cu[aá]l|qu[ée])|muchas opciones|estoy perdid|no tengo idea|me confund/,
+    dudando: /tal vez|no estoy segur|no s[ée] si|quiz[aá]s|lo pienso/,
+    entusiasmado: /genial|me encanta|perfecto|s[uú]per|buen[ií]simo|dale no?m[aá]s/,
+  };
+
+  const PATRONES_SENAL = {
+    disponibilidad_fecha: /disponib|qu[ée] d[ií]a|fecha|cu[aá]ndo/,
+    precio_final: /precio final|cu[aá]nto (cuesta|sale|vale)|total/,
+    // Bug real: "no me gusta esa, sácala" hacía match con "me gusta" por
+    // simple substring, registrando una señal POSITIVA justo en el mismo
+    // mensaje que rechaza la actividad. El lookbehind excluye el caso de
+    // negación más común ("no me gusta") sin tocar "me gusta esta" real.
+    me_gusta: /(?<!no )me gusta|me encanta esta|esa me gusta/,
+    carrito: /agr[ée]galo|res[ée]rva(?:lo|la)|apart[aá](?:lo|la)|carrito/,
+    logistica: /d[oó]nde nos juntamos|punto de encuentro|c[oó]mo llego/,
+  };
+
+  // Bug real: el quick-reply exacto del preview ("Me gusta esa, resérvala")
+  // no confirmaba nada — el patrón original solo reconocía "resérvalo"
+  // (masculino) y encima solo tras "dale,"/"sí,". Se agrega la forma
+  // femenina y una versión "suelta" (sin prefijo) para que un cliente real
+  // que solo escribe "resérvala"/"apártala" también confirme.
+  const PATRON_CONFIRMACION = /confirmo|dale,? res[ée]rva(?:lo|la)|s[ií],? res[ée]rva(?:lo|la)|apart[aá](?:lo|la) ya|quiero reservar|\bres[ée]rva(?:lo|la)\b|\bapart[aá](?:lo|la)\b/;
+  const PATRON_DESCARTE = /no me gusta|quita|sac[aá]lo|elimina/;
+  const PATRON_OCASION = /aniversario|cumplea[ñn]os|luna de miel|pedida de mano|propuesta de matrimonio/;
+  // Restricciones duras reales: el filtro ya existía en algoritmos.js
+  // (violaRestriccion → tipo 'accesible' revisa a.accesible===false por
+  // actividad, tipo 'sin_X' excluye por tag) pero nada en esta capa de NLU
+  // poblaba perfil.restricciones desde texto real. Bug real encontrado: un
+  // cliente que escribía "voy en silla de ruedas, necesito que sea
+  // accesible" igual recibía una actividad marcada accesible:false en el
+  // catálogo — el motor simplemente nunca se enteraba de la restricción.
+  const PATRON_RESTRICCION_ACCESIBLE = /silla de ruedas|accesib(?:le|ilidad)|movilidad reducida/;
+  const PATRON_RESTRICCION_SIN_ALCOHOL = /sin alcohol|no (?:tomamos|bebemos|consumimos) alcohol|no queremos alcohol/;
+  const PATRON_OBJECION_PRECIO = /caro|muy caro|precio alto|se me pasa (del|de mi) presupuesto/;
+  const PATRON_OBJECION_PIENSO = /lo pienso|despu[ée]s veo|no s[ée] a[uú]n|lo consulto/;
+  // C7: re-enganche. Un saludo "vacio" (sin categoria/señal nueva) con un
+  // carrito pendiente = el patron de "cliente que volvio" en una sesion
+  // sin memoria entre visitas reales — se retoma en vez de preguntar desde
+  // cero como si nunca hubiera pasado nada.
+  const PATRON_SALUDO = /^\s*(hola|hey|buenas|holi|ola)\b/;
+  // D5: ritmo conversacional. "Al apurado, dale la mejor opcion ya; al que
+  // explora, acompañalo con curiosidad" — el default (1 opcion directa) ya
+  // sirve al apurado; esto detecta al que quiere explorar/comparar.
+  const PATRON_QUIERE_EXPLORAR = /cu[eé]ntame m[aá]s|qu[eé] opciones (tienes|hay)|dame m[aá]s opciones|mu[eé]strame opciones|quiero ver m[aá]s|comparar opciones|otras alternativas/;
+  // Pedido explicito de "paquete/combo": el cliente quiere 2+ actividades,
+  // no una sola — sin esto, rankear_combos podia igual elegir el combo de
+  // 1 actividad si puntuaba mas alto, dejando al cliente con "1 opcion"
+  // pese a haber pedido un paquete (bug real reportado: "quierp paquete"
+  // devolvia la misma opcion unica de siempre).
+  const PATRON_QUIERE_PAQUETE = /\bpaquete\b|\bcombo\b|combinad[oa]|\bpack\b|dos actividades|m[aá]s de una actividad|junto con algo m[aá]s/;
+  // Flujo real del sitio (confirmado por el usuario con capturas de
+  // panoramas.js): PRIMERO una recomendación única "según tu expertise",
+  // DESPUÉS se ofrece combinarla con algo cercano — pero solo se arma el
+  // combo (y aparecen los mapas de "Tu Ruta") si el cliente ACEPTA esa
+  // oferta. Afirmaciones simples ("sí", "dale", "agrégalo"...) cuentan como
+  // aceptación SOLO cuando hay una oferta pendiente (perfil.oferta_combo) y
+  // el mensaje no trae una categoría nueva — si no, un "sí" suelto en medio
+  // de otra conversación se malinterpretaría como aceptar una oferta vieja.
+  const PATRON_ACEPTA_OFERTA = /^\s*(s[ií]|dale|bueno|ok(?:ay)?|de acuerdo|me parece|perfecto|listo|agr[ée]galo|s[uú]malo|hazlo|el plan completo)\b/;
+  // Deteccion explicita del caso "plan de varios dias" (cabaña + termas +
+  // trekking en el sur) — hoy es una demo puntual de esta secuencia
+  // exacta, no un planificador general de N dias/categorias (eso necesita
+  // más catálogo real para generalizar; ver README).
+  const PATRON_PLAN_MULTIDIA = /caban|fin de semana.*sur|sur.*fin de semana|plan de.*dias|termas.*trekking|trekking.*termas/;
+  // "Panoramas cerca de ahi": mismo patron que ya usa panoramas.js en el
+  // sitio real (nearbyItems + boton "+" para agregar), pero rankeado con
+  // el motor multifactorial real en vez de solo proximidad+categoria.
+  const PATRON_VER_RELACIONADOS = /que mas hay cerca|algo mas cerca|otras opciones cerca|agregar algo mas|panoramas cerca|ideas relacionadas/;
+  // D3 del system prompt: grupo con gustos en conflicto ("a mi me gusta X
+  // pero a mi pareja/amigo Y"). Detecta la estructura contrastiva, no solo
+  // que se mencionen 2 categorias (eso ya pasa cuando UNA persona quiere
+  // dos cosas para si misma, que no es lo mismo que un conflicto real).
+  const PATRON_DIVERGENCIA = /\bpero\b.{0,25}\ba (mi pareja|mi (amigo|amiga|marido|esposa|polola|pololo|hijo|hija)|ella|el|su)\b/;
+
+  function detectarCategorias(texto) {
+    const t = sinAcentos(texto);
+    return Object.keys(CATEGORIA_KEYWORDS).filter((cat) => CATEGORIA_KEYWORDS[cat].some((kw) => t.includes(sinAcentos(kw))));
+  }
+
+  // Orden en que aparecen las categorias EN EL TEXTO (no en el orden fijo
+  // de CATEGORIA_KEYWORDS) — importa para D3: quien se menciona primero es
+  // quien va primero en el plan ("en la mañana lo tuyo, cerramos con lo de
+  // tu pareja").
+  function categoriasEnOrdenDeAparicion(texto, categoriasDetectadas) {
+    const t = sinAcentos(texto);
+    return categoriasDetectadas
+      .map((cat) => {
+        const posiciones = CATEGORIA_KEYWORDS[cat].map((kw) => t.indexOf(sinAcentos(kw))).filter((i) => i !== -1);
+        return { cat, idx: posiciones.length ? Math.min(...posiciones) : Infinity };
+      })
+      .sort((a, b) => a.idx - b.idx)
+      .map((x) => x.cat);
+  }
+
+  function detectarDivergencia(texto, categoriasDetectadas) {
+    const t = sinAcentos(texto);
+    const m = PATRON_DIVERGENCIA.exec(t);
+    if (!m) return null;
+    if (categoriasDetectadas.length < 2) return null;
+    // La frase de contraste ("a mi pareja", "a mi amigo"...) puede contener
+    // una palabra que TAMBIEN es keyword de una categoria (ej. "pareja" es
+    // keyword de romantico) sin que el cliente este pidiendo esa categoria
+    // — solo esta diciendo CON QUIEN va. Se descarta cualquier categoria
+    // cuyo unico indicio caiga dentro de ese tramo del texto.
+    const spanInicio = m.index;
+    const spanFin = m.index + m[0].length;
+    const categoriasReales = categoriasDetectadas.filter((cat) => {
+      const posiciones = CATEGORIA_KEYWORDS[cat].map((kw) => t.indexOf(sinAcentos(kw))).filter((i) => i !== -1);
+      return posiciones.some((p) => p < spanInicio || p >= spanFin);
+    });
+    if (categoriasReales.length < 2) return null;
+    const ordenadas = categoriasEnOrdenDeAparicion(texto, categoriasReales);
+    return [ordenadas[0], ordenadas[1]];
+  }
+
+  function detectarEstadoEmocional(texto) {
+    const t = sinAcentos(texto);
+    for (const [estado, patron] of Object.entries(PATRONES_EMOCION)) if (patron.test(t)) return estado;
+    return null;
+  }
+  function detectarSenales(texto) {
+    const t = sinAcentos(texto);
+    return Object.keys(PATRONES_SENAL).filter((s) => PATRONES_SENAL[s].test(t));
+  }
+  function detectarOcasion(texto) {
+    return PATRON_OCASION.test(sinAcentos(texto)) ? sinAcentos(texto).match(PATRON_OCASION)[0] : null;
+  }
+  // Devuelve strings en el formato exacto que espera parseRestriccion en
+  // algoritmos.js ('accesible', 'sin_<tag>') para que el filtro duro de
+  // rankear_combos que ya existía finalmente reciba la señal real.
+  function detectarRestricciones(texto) {
+    const t = sinAcentos(texto);
+    const restricciones = [];
+    if (PATRON_RESTRICCION_ACCESIBLE.test(t)) restricciones.push('accesible');
+    if (PATRON_RESTRICCION_SIN_ALCOHOL.test(t)) restricciones.push('sin_contiene_alcohol');
+    return restricciones;
+  }
+  function detectarObjecion(texto) {
+    const t = sinAcentos(texto);
+    if (PATRON_OBJECION_PRECIO.test(t)) return 'precio';
+    if (PATRON_OBJECION_PIENSO.test(t)) return 'lo_pienso';
+    return null;
+  }
+  function esConfirmacion(texto) { return PATRON_CONFIRMACION.test(sinAcentos(texto)); }
+  function esDescarte(texto) { return PATRON_DESCARTE.test(sinAcentos(texto)); }
+  function esSaludoVacio(texto) { return PATRON_SALUDO.test(sinAcentos(texto)); }
+  function quiereExplorar(texto) { return PATRON_QUIERE_EXPLORAR.test(sinAcentos(texto)); }
+  function quierePaquete(texto) { return PATRON_QUIERE_PAQUETE.test(sinAcentos(texto)); }
+  function aceptaOfertaCombo(texto) { return PATRON_ACEPTA_OFERTA.test(sinAcentos(texto)); }
+  function esPlanMultiDia(texto) { return PATRON_PLAN_MULTIDIA.test(sinAcentos(texto)); }
+  function pideRelacionados(texto) { return PATRON_VER_RELACIONADOS.test(sinAcentos(texto)); }
+
+  function extraerPresupuesto(texto) {
+    const m = /(\d{4,7})/.exec(texto.replace(/\./g, ''));
+    return m ? Number(m[1]) : null;
+  }
+  function extraerFecha(texto) {
+    const t = sinAcentos(texto);
+    const iso = /(\d{4}-\d{2}-\d{2})/.exec(texto);
+    if (iso) return iso[1];
+    const hoy = new Date();
+    if (/\bhoy\b/.test(t)) return hoy.toISOString().slice(0, 10);
+    if (/manana/.test(t)) { const d = new Date(hoy); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
+    return null;
+  }
+
+  function perfilPorDefecto() {
+    return {
+      arquetipos: [], estado_emocional: null, destino: null, fechas: null,
+      origen: null, // { lat, lng, nombre } — de donde parte el cliente, para distancia real
+      grupo: { adultos: null, ninos: null, tipo: null, gustos_divergentes: [] },
+      presupuesto: { banda: null, sensibilidad: null, gastado_en_combo: 0 },
+      intereses: [], intensidad_preferida: null, energia_acumulada_dia: 0,
+      restricciones: [], motivo_viaje: null, ocasion_especial: null,
+      intent_score: { que_quiere: null, confianza: 0 }, etapa_embudo: null,
+      // clima_usuario: donde esta el cliente AHORA (secundario, poco
+      // relevante para que se ponga, pero se considera igual — cacheado
+      // una vez via el boton de ubicacion real). clima_panorama: el clima
+      // del PANORAMA propuesto (que ropa llevar), se busca fresco en cada
+      // propuesta porque cada combo puede estar en un lugar distinto.
+      contexto: { clima_usuario: null, luz: null, eventos: null, afluencia: null },
+      favoritos: [], descartados: [], historial_ids: [], carrito: [],
+      // oferta_combo: { base_id, complemento_id } — el complemento cercano
+      // que se le ofreció al cliente junto con la última recomendación
+      // única. Se consume (vuelve a null) apenas se acepta o se pide un
+      // paquete explícito; una recomendación nueva la reemplaza o la borra.
+      oferta_combo: null,
+    };
+  }
+
+  function clavePerfil(sessionId) { return `pickmap_darwin_perfil::${sessionId || 'anon'}`; }
+  function cargarPerfil(sessionId) {
+    try {
+      const guardado = JSON.parse(localStorage.getItem(clavePerfil(sessionId)));
+      return guardado ? { ...perfilPorDefecto(), ...guardado } : perfilPorDefecto();
+    } catch { return perfilPorDefecto(); }
+  }
+  function guardarPerfil(sessionId, perfil) {
+    try { localStorage.setItem(clavePerfil(sessionId), JSON.stringify(perfil)); } catch { /* no bloquea el flujo */ }
+  }
+
+  function calcularArquetipos(perfil) {
+    const ordenado = [...perfil.intereses].sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
+    const arquetipos = [];
+    for (const i of ordenado) {
+      const arq = CATEGORIA_A_ARQUETIPO[i.categoria];
+      if (arq && !arquetipos.includes(arq)) arquetipos.push(arq);
+      if (arquetipos.length >= 2) break;
+    }
+    return arquetipos;
+  }
+
+  function detectarEtapaEmbudo(perfil, señales, confirmacion) {
+    if (confirmacion) return 'decision';
+    if (perfil.etapa_embudo === 'decision') return 'post_venta';
+    if (señales.length) return 'intencion';
+    if (perfil.favoritos.length > 0 || perfil.intereses.length >= 2) return 'consideracion';
+    return 'descubrimiento';
+  }
+
+  const ADDON_POR_CATEGORIA = {
+    aventura: 'un traslado ida y vuelta', foodie: 'una copa de vino para acompañar',
+    enologia: 'transporte directo desde tu hotel', romantico: 'un set de fotos profesionales',
+    familiar: 'transporte con silla infantil', relax: 'un upgrade a suite privada', cultural: 'un audioguía en tu idioma',
+    fiesta: 'una segunda ronda de tragos', explorador: 'un almuerzo típico del lugar',
+  };
+
+  // Clima REAL del panorama propuesto (no el del cliente): se busca fresco
+  // en cada propuesta porque cada combo puede quedar en un lugar distinto
+  // — es el dato que importa para "qué ropa llevar". Requiere red real; si
+  // falla (sin internet, como este sandbox) se degrada con honestidad: no
+  // se inventa nada, simplemente no se menciona el clima del panorama.
+  async function obtenerClimaPanorama(D, ubicacion, fecha) {
+    try {
+      return await D.contexto.clima({ lat: ubicacion.lat, lng: ubicacion.lng, fecha });
+    } catch {
+      return null;
+    }
+  }
+
+  async function proponerCombos(D, perfil, explorar = false, forzarPaquete = false, aceptaOferta = false) {
+    // D3: si el grupo tiene gustos en conflicto detectados esta sesión, la
+    // secuencia la define QUIEN SE MENCIONÓ PRIMERO (no el score de
+    // afinidad) — el objetivo es que cada persona vea que se consideró lo
+    // suyo, en el orden que lo pidió, no que el motor elija por afinidad.
+    const categoriasObjetivo = (perfil.grupo.gustos_divergentes && perfil.grupo.gustos_divergentes.length === 2)
+      ? perfil.grupo.gustos_divergentes
+      : perfil.intereses
+        .filter((i) => (i.afinidad || 0) >= 0 || perfil.intereses.length <= 2)
+        .sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0))
+        .slice(0, 2)
+        .map((i) => i.categoria);
+
+    let candidatos = D.tools.buscarActividades({ categorias: categoriasObjetivo.length ? categoriasObjetivo : undefined, excluir_ids: perfil.descartados, restricciones: perfil.restricciones });
+    // Solo se abre a todo el catálogo si NO hay ningún candidato de la
+    // categoría de interés — con 1 solo candidato real igual se prioriza
+    // por sobre "traer todo" (antes esto ahogaba categorías nuevas que
+    // todavía tienen pocas actividades de prueba, como fiesta/explorador).
+    if (!candidatos.length) candidatos = D.tools.buscarActividades({ excluir_ids: perfil.descartados, restricciones: perfil.restricciones });
+    if (!candidatos.length) return null;
+    // buscarActividades devuelve en orden de catálogo, no de preferencia:
+    // reordenamos para que la categoría con mayor afinidad quede primero.
+    if (categoriasObjetivo.length) {
+      candidatos = [...candidatos].sort((a, b) => categoriasObjetivo.indexOf(a.categoria) - categoriasObjetivo.indexOf(b.categoria));
+    }
+
+    const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
+    const opciones = { fecha: perfil.fechas, personas };
+
+    const hayDivergencia = perfil.grupo.gustos_divergentes && perfil.grupo.gustos_divergentes.length === 2;
+    const combosCompletos = [];
+    const top3 = candidatos.slice(0, 3);
+    if (hayDivergencia) {
+      // Con gustos en conflicto, se toma UNA actividad representante de
+      // CADA categoría explícitamente — candidatos.slice(0,2) no sirve
+      // acá porque si hay 2+ actividades de la primera categoría, ambas
+      // quedan antes que la segunda al ordenar por categoriasObjetivo, y
+      // el combo terminaría siendo "lo mismo para los dos", no la
+      // secuencia que pidió cada persona.
+      const primera = candidatos.find((c) => c.categoria === categoriasObjetivo[0]);
+      const segunda = candidatos.find((c) => c.categoria === categoriasObjetivo[1]);
+      if (primera && segunda) combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+    } else if (explorar) {
+      // Comparar de verdad = actividades distintas entre si, no "A" vs
+      // "A+B" (una opcion no puede contener a la otra adentro, si no no
+      // hay nada que decidir). Ademas, un combo de 1 sola actividad no
+      // paga el costo de traslado entre zonas (no hay "entre" que medir),
+      // asi que sin filtro geografico se podia comparar un trekking en
+      // Santiago contra uno a 700km en Pucon como si fueran alternativas
+      // reales para el mismo fin de semana — se descarta lo que no esta
+      // en la misma zona que la primera opcion.
+      const RADIO_MISMA_ZONA_KM = 150;
+      const ancla = candidatos[0];
+      const candidatosZona = candidatos.filter((c) => D.tools._internas.haversineKm(ancla.ubicacion, c.ubicacion) <= RADIO_MISMA_ZONA_KM);
+      combosCompletos.push(...candidatosZona.slice(0, 3).map((c) => D.tools.armarCombo([c.id], opciones)));
+    } else if (aceptaOferta && perfil.oferta_combo) {
+      // El cliente aceptó la oferta de combinar que se le hizo en el turno
+      // anterior ("¿quieres que te arme el plan completo agregando X?") —
+      // se arma EXACTAMENTE ese combo (mismo base + complemento que ya vio),
+      // no uno recalculado de cero, para que la respuesta sea consistente.
+      const combo = D.tools.armarCombo([perfil.oferta_combo.base_id, perfil.oferta_combo.complemento_id], opciones);
+      if (combo) combosCompletos.push(combo);
+    } else if (forzarPaquete) {
+      // Pedido explícito de paquete: se ignora cualquier oferta pendiente
+      // vieja (podría ser de otro tema) y se arma fresco desde los
+      // candidatos actuales — el cliente ya dijo que quiere 2+, no una sola.
+      if (top3.length >= 2) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[1].id], opciones));
+      if (top3.length >= 3) combosCompletos.push(D.tools.armarCombo([top3[0].id, top3[2].id], opciones));
+      // Caso real del bug: la categoría de interés solo tiene 1 actividad
+      // en el catálogo (top3.length === 1), así que no hay con qué armar un
+      // 2do combo por categoría. Si igual pidió paquete, se complementa esa
+      // única actividad con algo cercano (cualquier categoría, mismo radio
+      // que "panoramas cerca de ahí") en vez de devolverle 1 sola opción.
+      if (top3.length === 1 && !combosCompletos.length) {
+        const base = top3[0];
+        const complemento = candidatos.find((c) => c.id !== base.id && D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
+          || D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id], restricciones: perfil.restricciones })
+            .find((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
+        if (complemento) combosCompletos.push(D.tools.armarCombo([base.id, complemento.id], opciones));
+      }
+    } else {
+      // DEFAULT — regla real del sitio (confirmada con capturas de
+      // panoramas.js): primero UNA recomendación según expertise, rankeada
+      // entre varios candidatos individuales (no forzando ya un combo de
+      // 2). Más abajo se ofrece combinarla con algo cercano — el combo de
+      // verdad (y el panel de mapas "Tu Ruta") solo aparecen si el cliente
+      // acepta esa oferta o pide un paquete explícito.
+      for (const c of top3) combosCompletos.push(D.tools.armarCombo([c.id], opciones));
+    }
+    const combosValidos = combosCompletos.filter(Boolean);
+    if (!combosValidos.length) return null;
+
+    const afinidadesMap = {};
+    for (const i of perfil.intereses) afinidadesMap[i.categoria] = i.afinidad || 0;
+
+    const perfilRanking = {
+      arquetipos: perfil.arquetipos, afinidades: afinidadesMap, presupuesto: perfil.presupuesto,
+      grupo: perfil.grupo, restricciones: perfil.restricciones, historial_ids: perfil.historial_ids,
+    };
+    // Nota: el clima usado para RANKEAR (filtro duro de actividades
+    // exteriores + f_clima) es el del cliente como aproximacion de "la
+    // zona" — funciona bien para combos dentro de la misma ciudad. Para
+    // combos que cruzan de zona (ej. cluster sur), el clima MOSTRADO al
+    // final (mas abajo) sí se busca fresco para la ubicación real del
+    // panorama elegido, así el dato que ve el cliente es siempre honesto.
+    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima_usuario };
+    const rankeados = D.algoritmos.rankearCombos(combosValidos, perfilRanking, contexto);
+    if (!rankeados.length) return { sinResultados: true };
+
+    const mapaCompletos = new Map(combosValidos.map((c) => [c.combo_id, c]));
+
+    // D5: "al que explora, acompañalo con curiosidad" — si pidió comparar
+    // y hay 2+ opciones reales (no aplica en modo divergencia, que ya
+    // fuerza una sola combinación a propósito), se comparan en vez de
+    // empujar 1 sola directo.
+    if (explorar && !hayDivergencia && rankeados.length >= 2) {
+      const opciones = rankeados.slice(0, 2).map((r) => ({ rankeado: r, completo: mapaCompletos.get(r.combo_id) }));
+      return { texto: D.plantillas.formatearOpcionesComparadas(opciones), combosRankeados: rankeados, comboElegido: opciones[0].completo, esComparacion: true };
+    }
+
+    const mejor = rankeados[0];
+    const comboCompleto = mapaCompletos.get(mejor.combo_id);
+
+    // Distancia real (haversine) desde donde parte el cliente hasta el
+    // primer panorama — antes solo se calculaba el traslado ENTRE
+    // panoramas de un mismo combo, nunca desde el origen del cliente.
+    if (perfil.origen && comboCompleto.actividades.length) {
+      const primera = comboCompleto.actividades[0];
+      comboCompleto.distancia_desde_origen_km = Math.round(D.tools._internas.haversineKm(perfil.origen, primera.ubicacion) * 10) / 10;
+      comboCompleto.tiempo_desde_origen_min = D.tools._internas.estimarTrasladoMin({ ubicacion: perfil.origen }, primera);
+      comboCompleto.origen_nombre = perfil.origen.nombre || null;
+    }
+
+    const climaPanorama = comboCompleto.actividades.length
+      ? await obtenerClimaPanorama(D, comboCompleto.actividades[0].ubicacion, perfil.fechas)
+      : null;
+
+    let texto = D.plantillas.formatearCombo(mejor, comboCompleto, perfil.arquetipos, climaPanorama, perfil.grupo.gustos_divergentes, perfil.contexto.clima_usuario);
+    if (perfil.ocasion_especial) texto = `Para tu ${perfil.ocasion_especial}, esto lo hace inolvidable. ${texto}`;
+
+    // Oferta de combinar (solo tras la recomendación única default, y solo
+    // si hay un complemento real cerca) — "solo si el cliente quiere": el
+    // combo de 2 actividades y el panel de mapas no se arman hasta que
+    // acepte esto o pida un paquete explícito en un turno futuro.
+    let ofertaComplemento = null;
+    const esRecomendacionUnica = !hayDivergencia && !explorar && !forzarPaquete && !aceptaOferta && comboCompleto.actividades.length === 1;
+    if (esRecomendacionUnica) {
+      const base = comboCompleto.actividades[0];
+      const cercano = D.tools.buscarActividades({ excluir_ids: [...perfil.descartados, base.id], restricciones: perfil.restricciones })
+        .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM)
+        .sort((a, b) => D.tools._internas.haversineKm(base.ubicacion, a.ubicacion) - D.tools._internas.haversineKm(base.ubicacion, b.ubicacion))[0];
+      if (cercano) {
+        const distanciaKm = Math.round(D.tools._internas.haversineKm(base.ubicacion, cercano.ubicacion) * 10) / 10;
+        ofertaComplemento = { base_id: base.id, complemento_id: cercano.id, complemento: cercano, distanciaKm };
+        texto += `\n\n${D.plantillas.ofertaComplemento(cercano, distanciaKm)}`;
+      }
+    }
+
+    const addon = ADDON_POR_CATEGORIA[comboCompleto.actividades[0].categoria];
+    if (addon && perfil.intent_score.confianza >= 0.7 && !ofertaComplemento) texto += `\n\n(Si quieres, le sumo ${addon} 😊)`;
+
+    return { texto, combosRankeados: rankeados, comboElegido: comboCompleto, ofertaComplemento };
+  }
+
+  // Secuencia fija cabaña + termas + trekking (sur de Chile) — demuestra el
+  // plan de varios días de punta a punta con datos reales del catálogo
+  // (a11/a12/a13). Generalizar esto a cualquier combinación de categorías
+  // y regiones es trabajo aparte para cuando exista más catálogo real.
+  const IDS_PLAN_SUR = ['a11', 'a12', 'a13'];
+
+  async function proponerPlanMultiDia(D, perfil) {
+    const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
+    const plan = D.tools.armarPlanMultiDia(IDS_PLAN_SUR, {
+      fechaInicio: perfil.fechas,
+      personas,
+      origen: perfil.origen,
+    });
+    if (!plan) return null;
+    if (!plan.tiene_cupo) return { sinResultados: true };
+
+    // Clima real del primer destino del plan (no el del cliente) — el
+    // resto de los dias quedan sin dato especifico por ahora (multi-clima
+    // por dia es una mejora futura, ver README).
+    const climaPanorama = plan.dias.length
+      ? await obtenerClimaPanorama(D, plan.dias[0].actividad.ubicacion, plan.dias[0].fecha)
+      : null;
+
+    const texto = D.plantillas.formatearPlanMultiDia(plan, perfil.arquetipos, climaPanorama);
+    return { texto, plan };
+  }
+
+  // "Cerca de ahi" es una promesa de distancia, no solo de tema: 80km es
+  // un radio razonable para un mismo dia de panoramas (mas que eso ya es
+  // otra salida). Sin este filtro, rankearCombos podia elegir algo con
+  // buena afinidad pero a cientos de km — bien puntuado, pero no "cerca".
+  const RADIO_CERCA_KM = 80;
+
+  // "Panoramas cerca de ahí": arma candidatos de 1 actividad cada uno
+  // (fuera del combo ya elegido, y dentro de RADIO_CERCA_KM) y los pasa
+  // por rankearCombos real — a diferencia del nearbyItems() del sitio
+  // (solo proximidad+categoría complementaria), acá además pesan perfil,
+  // presupuesto, energía y clima.
+  function sugerirRelacionados(D, perfil) {
+    const ultimoCarrito = perfil.carrito[perfil.carrito.length - 1];
+    if (!ultimoCarrito) return null;
+    const idsCombo = ultimoCarrito.combo_id.split('-');
+    const base = D.tools.detalleActividad(idsCombo[0]);
+    if (!base) return null;
+
+    const personas = (perfil.grupo.adultos || 1) + (perfil.grupo.ninos || 0);
+    const candidatos = D.tools.buscarActividades({ excluir_ids: [...idsCombo, ...perfil.descartados], restricciones: perfil.restricciones })
+      .filter((c) => D.tools._internas.haversineKm(base.ubicacion, c.ubicacion) <= RADIO_CERCA_KM);
+    const combosCandidatos = candidatos
+      .map((c) => D.tools.armarCombo([c.id], { fecha: perfil.fechas, personas }))
+      .filter(Boolean);
+    if (!combosCandidatos.length) return { sinResultados: true };
+
+    const afinidadesMap = {};
+    for (const i of perfil.intereses) afinidadesMap[i.categoria] = i.afinidad || 0;
+    const perfilRanking = {
+      arquetipos: perfil.arquetipos, afinidades: afinidadesMap, presupuesto: perfil.presupuesto,
+      grupo: perfil.grupo, restricciones: perfil.restricciones, historial_ids: perfil.historial_ids,
+    };
+    const contexto = { tiempo_util_del_dia_min: 600, clima: perfil.contexto.clima_usuario };
+    const rankeados = D.algoritmos.rankearCombos(combosCandidatos, perfilRanking, contexto);
+    if (!rankeados.length) return { sinResultados: true };
+
+    const mapaCompletos = new Map(combosCandidatos.map((c) => [c.combo_id, c]));
+    const top3 = rankeados.slice(0, 3).map((r) => {
+      const completo = mapaCompletos.get(r.combo_id);
+      const act = completo.actividades[0];
+      return {
+        actividad: act,
+        distancia_km: Math.round(D.tools._internas.haversineKm(base.ubicacion, act.ubicacion) * 10) / 10,
+        razones: r.razones,
+      };
+    });
+    return { texto: D.plantillas.formatearRelacionados(top3, base), relacionados: top3 };
+  }
+
+  async function procesarMensaje(sessionId, textoUsuario) {
+    const D = window.PickmapDarwin;
+    const perfil = cargarPerfil(sessionId);
+
+    const categorias = detectarCategorias(textoUsuario);
+    const estadoEmocional = detectarEstadoEmocional(textoUsuario);
+    const señales = detectarSenales(textoUsuario);
+    const ocasion = detectarOcasion(textoUsuario);
+    const objecionDetectada = detectarObjecion(textoUsuario);
+    const confirmacion = esConfirmacion(textoUsuario);
+    const descarte = esDescarte(textoUsuario);
+    const presupuesto = extraerPresupuesto(textoUsuario);
+    const fecha = extraerFecha(textoUsuario);
+    const divergencia = detectarDivergencia(textoUsuario, categorias);
+    const restriccionesDetectadas = detectarRestricciones(textoUsuario);
+
+    for (const c of categorias) if (!perfil.intereses.find((i) => i.categoria === c)) perfil.intereses.push({ categoria: c, afinidad: 0 });
+    if (presupuesto) perfil.presupuesto.banda = [Math.round(presupuesto * 0.8), Math.round(presupuesto * 1.2)];
+    if (fecha) perfil.fechas = fecha;
+    if (ocasion) perfil.ocasion_especial = ocasion;
+    if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
+    if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
+    if (restriccionesDetectadas.length) perfil.restricciones = [...new Set([...(perfil.restricciones || []), ...restriccionesDetectadas])];
+
+    // Bug real: "no me gusta esa, sácala" se detectaba (esDescarte) pero
+    // nunca excluía la actividad — Darwin volvía a recomendar EXACTAMENTE
+    // lo mismo que el cliente acababa de rechazar. "Esa" se refiere a lo
+    // último mostrado (perfil.carrito), no a una categoría nueva en el
+    // texto, así que esto corre pase o no haya categorías en el mensaje.
+    let categoriasDescarte = categorias;
+    if (descarte && perfil.carrito.length) {
+      const idsDescartados = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      perfil.descartados = [...new Set([...(perfil.descartados || []), ...idsDescartados])];
+      if (!categoriasDescarte.length) {
+        // Si el mensaje no nombra una categoría ("sácala" a secas), se
+        // infiere del catálogo para que la señal negativa de confianza
+        // igual se registre contra la categoría real que se rechazó.
+        categoriasDescarte = [...new Set(idsDescartados.map((id) => D.tools.detalleActividad(id)).filter(Boolean).map((a) => a.categoria))];
+      }
+      // El combo/oferta que se acaba de rechazar ya no es "el que te
+      // gustó" ni algo para seguir ofreciendo combinar.
+      perfil.carrito = [];
+      perfil.oferta_combo = null;
+    }
+
+    const eventosDeEsteTurno = [];
+    if (categorias.length) eventosDeEsteTurno.push({ tipo: 'busqueda', atributos: categorias });
+    if (señales.includes('me_gusta') && categorias.length) { eventosDeEsteTurno.push({ tipo: 'favorito', atributos: categorias }); perfil.favoritos.push(...categorias); }
+    if (señales.includes('carrito') && categorias.length) eventosDeEsteTurno.push({ tipo: 'carrito', atributos: categorias });
+    if ((señales.includes('disponibilidad_fecha') || señales.includes('precio_final')) && categorias.length) eventosDeEsteTurno.push({ tipo: 'click_cta', atributos: categorias });
+    if (descarte && categoriasDescarte.length) { eventosDeEsteTurno.push({ tipo: 'descarte', atributos: categoriasDescarte }); }
+    for (const ev of eventosDeEsteTurno) D.tools.registrarInteraccion(sessionId, ev);
+
+    const eventos = D.tools.obtenerEventos(sessionId);
+    const intent = D.algoritmos.calcularConfianza(
+      { intereses_declarados: perfil.intereses.map((i) => i.categoria), restricciones: perfil.restricciones },
+      eventos,
+    );
+    perfil.intent_score = { que_quiere: intent.intencion_principal, confianza: intent.confianza };
+    for (const cat of Object.keys(intent.afinidades)) {
+      const existente = perfil.intereses.find((i) => i.categoria === cat);
+      if (existente) existente.afinidad = intent.afinidades[cat]; else perfil.intereses.push({ categoria: cat, afinidad: intent.afinidades[cat] });
+    }
+    perfil.restricciones = [...new Set([...(perfil.restricciones || []), ...intent.restricciones_duras])];
+    perfil.arquetipos = calcularArquetipos(perfil);
+    perfil.etapa_embudo = detectarEtapaEmbudo(perfil, señales, confirmacion);
+
+    let texto;
+    const debug = { intent, señales, estadoEmocional, categorias, etapa: perfil.etapa_embudo };
+
+    if (perfil.etapa_embudo === 'post_venta') {
+      texto = '¡Que lo disfrutes muchísimo! Cuando vuelvas, cuéntame cómo te fue y te tengo el próximo panorama listo 🎉';
+    } else if (perfil.etapa_embudo === 'decision') {
+      texto = 'Perfecto, te lo dejo apartado. En breve te llega la confirmación con el punto de encuentro y todo el detalle.';
+    } else if (perfil.carrito.length && esSaludoVacio(textoUsuario) && !categorias.length && !señales.length) {
+      // C7: retoma el carrito pendiente en vez de tratarlo como cliente
+      // nuevo — "¿seguimos con el combo del sábado que te gustó?".
+      texto = D.plantillas.reenganche(perfil.carrito[perfil.carrito.length - 1]);
+    } else if (perfil.carrito.length && !categorias.length && señales.includes('precio_final')) {
+      // Bug real: "¿Cuánto cuesta en total?" (una de las quick-replies del
+      // preview) no tenía respuesta propia — el motor volvía a proponer un
+      // combo desde cero e ignoraba la pregunta. Responde directo con el
+      // precio ya calculado del carrito, sin re-correr la recomendación.
+      texto = D.plantillas.respuestaPrecio(perfil.carrito[perfil.carrito.length - 1]);
+    } else if (perfil.carrito.length && !categorias.length && señales.includes('logistica')) {
+      // Mismo bug con "¿Dónde nos juntamos?" — responde con el punto de
+      // encuentro real de las actividades del combo actual.
+      const idsCombo = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const actividadesCombo = idsCombo.map((id) => D.tools.detalleActividad(id)).filter(Boolean);
+      texto = D.plantillas.respuestaLogistica(actividadesCombo);
+    } else if (pideRelacionados(textoUsuario)) {
+      const resultado = sugerirRelacionados(D, perfil);
+      if (!resultado || resultado.sinResultados) {
+        texto = 'No encontré más panoramas relacionados cerca de ese por ahora — cuéntame si quieres otra categoría.';
+      } else {
+        texto = resultado.texto;
+        debug.relacionados = resultado.relacionados;
+      }
+    } else if (esPlanMultiDia(textoUsuario)) {
+      const resultado = await proponerPlanMultiDia(D, perfil);
+      if (!resultado) {
+        texto = 'No pude armar el plan de varios días ahora mismo — cuéntame más y lo ajusto.';
+      } else if (resultado.sinResultados) {
+        texto = 'Encontré el plan pero no hay cupo para alguna fecha — probemos otra semana.';
+      } else {
+        texto = resultado.texto;
+        debug.plan = resultado.plan;
+      }
+    } else if (estadoEmocional === 'frustrado') {
+      texto = D.plantillas.respuestaEmocional('frustrado');
+    } else if (objecionDetectada) {
+      texto = D.plantillas.objecion(objecionDetectada);
+    } else if (intent.confianza < 0.4 && !señales.length && estadoEmocional !== 'entusiasmado') {
+      // "Entusiasmado" es la excepcion: A4 pide avanzar rapido al cierre,
+      // no frenarlo con una pregunta aunque la confianza numerica sea baja
+      // (la propia emocion ya es una senal fuerte de que hay que actuar).
+      const base = D.plantillas.preguntaClarificadora(perfil);
+      texto = estadoEmocional === 'abrumado' ? `${D.plantillas.respuestaEmocional('abrumado')} ${base}` : base;
+    } else {
+      const quierePaqueteExplicito = quierePaquete(textoUsuario);
+      // Aceptar una oferta pendiente solo cuenta si hay una oferta real
+      // guardada Y el mensaje no trae categoría nueva (si no, un "sí" que en
+      // realidad es el inicio de otro tema se confundiría con aceptar la
+      // oferta vieja) Y no es ya un pedido explícito de paquete (ese toma
+      // prioridad y arma uno fresco, ignorando la oferta anterior).
+      const aceptaOferta = !!(perfil.oferta_combo && !quierePaqueteExplicito && !categorias.length && aceptaOfertaCombo(textoUsuario));
+      const resultado = await proponerCombos(D, perfil, quiereExplorar(textoUsuario), quierePaqueteExplicito, aceptaOferta);
+      if (!resultado) {
+        texto = 'No tengo panoramas que calcen 100% con eso ahora mismo, pero cuéntame más (categoría, fecha o presupuesto) y busco la opción más cercana.';
+      } else if (resultado.sinResultados) {
+        texto = 'Encontré actividades pero ninguna con cupo/condiciones para armar un combo ahora — probemos con otra fecha u otra categoría.';
+      } else {
+        // Abrumado/dudando con confianza suficiente para proponer: igual se
+        // reconoce el estado antes del combo en vez de ignorarlo (regla A4
+        // del prompt) — abrumado se simplifica, dudando se refuerza con el
+        // dato mas relevante + prueba social (C5).
+        let prefijo = '';
+        if (estadoEmocional === 'abrumado') prefijo = `${D.plantillas.respuestaEmocional('abrumado')}\n\n`;
+        else if (estadoEmocional === 'dudando') prefijo = `${D.plantillas.reforzarDuda(perfil)}\n\n`;
+        texto = prefijo + resultado.texto;
+        debug.combos = resultado.combosRankeados;
+        debug.comboCompleto = resultado.comboElegido;
+        perfil.carrito = [{
+          combo_id: resultado.comboElegido.combo_id,
+          precio: resultado.comboElegido.precio_total,
+          precio_por_persona: resultado.comboElegido.precio_por_persona,
+          personas: resultado.comboElegido.personas,
+        }];
+        perfil.oferta_combo = resultado.ofertaComplemento
+          ? { base_id: resultado.ofertaComplemento.base_id, complemento_id: resultado.ofertaComplemento.complemento_id }
+          : null;
+      }
+    }
+
+    guardarPerfil(sessionId, perfil);
+    return { texto, perfil, debug };
+  }
+
+  window.PickmapDarwin = window.PickmapDarwin || {};
+  window.PickmapDarwin.motor = {
+    procesarMensaje, cargarPerfil, guardarPerfil, perfilPorDefecto,
+    _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo },
+  };
+})();

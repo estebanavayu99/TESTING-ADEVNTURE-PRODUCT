@@ -1,0 +1,5 @@
+# Datos reales de negocios de terceros — NUNCA comitear (instrucción
+# explícita del usuario: "no quiero que la subas todavía" / "mantenerlo
+# solo en esta sesión"). Vive solo en el checkout local; se regenera desde
+# el CSV que el usuario sube en cada sesión si hace falta.
+bot-darwin/data/catalogo.real-sample.js

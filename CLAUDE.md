@@ -188,6 +188,39 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   "dato random" con humor; las demás (cancelaciones, seguridad, reseña
   negativa) se mantienen serias a propósito.
 
+## Bot "Darwin" super inteligente (en construcción, aislado en /bot-darwin/)
+
+El usuario compartió 3 specs (`pickmap_fuentes_a_conectar.pdf`,
+`pickmap_algoritmos_spec.pdf`, `pickmap_system_prompt_v4.pdf`) para un
+agente de turismo mucho más sofisticado que el `js/beto-chat.js` actual
+(catálogo real, clima/rutas reales, dos algoritmos determinísticos —
+`calcular_confianza` y `rankear_combos` — y venta consultiva por
+arquetipo/embudo/estado emocional). Se está construyendo en
+`/bot-darwin/`, **aislado y sin enlazar desde el sitio ni desde el nav**
+(mismo patrón que `notificaciones-preview.html`: `noindex, nofollow`, sin
+links entrantes) — instrucción explícita del usuario de no meter nada a
+producción hasta estar 100% listo. Ver `bot-darwin/README.md` para el
+detalle completo (qué está simulado/placeholder vs. real, cómo probarlo
+con `python3 -m http.server` + `bot-darwin/preview.html`, cómo se
+conecta la BD real cuando el usuario la pase, y el checklist de fases
+pendientes).
+
+Decisiones tomadas para esta etapa (pueden revisarse más adelante):
+- Motor **sin LLM real**: reglas/heurísticas deterministas
+  (`js/motor.js` + `js/plantillas.js`), no llamadas a la API de Claude.
+  Los dos algoritmos y las tools ya están separados del resto del código
+  específicamente para que, el día que se conecte un LLM real, pasen a
+  ser las *tools* que ese LLM invoca sin tener que reescribirlos.
+- Catálogo: placeholder en `data/catalogo.mock.js` hasta que el usuario
+  pase su BD real (contrato de datos documentado en ese archivo y en el
+  README).
+- Clima/rutas (`js/contexto.js`): código real contra Open-Meteo/OSRM
+  (gratis, sin API key) — no se puede probar en este sandbox por falta
+  de salida a internet, pero corre igual cuando el bot esté en un
+  navegador con red.
+- Afluencia/eventos locales (`js/afluencia.js`): heurística/placeholder,
+  a reemplazar por datos reales de reservas y feriados/festivales.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo
