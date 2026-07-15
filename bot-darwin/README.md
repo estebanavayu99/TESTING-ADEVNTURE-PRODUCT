@@ -366,6 +366,61 @@ hardcodeado documentado como demo de punta a punta, no un buscador
 dinámico; aplicar restricciones ahí espera a que se generalice (ver
 Pendiente).
 
+## Catálogo de muestra con negocios reales (testing, NO comiteado a git)
+
+El usuario pasó un directorio real de negocios turísticos chilenos
+(`chile_experiences_OK_1.csv`: ~28.220 negocios, 178 categorías reales, las
+17 regiones de Chile) para poder testear con nombres/ubicaciones reales en
+vez del catálogo placeholder de 13 actividades inventadas. Decisiones
+confirmadas por el usuario:
+
+1. **Estimar** precio/duración/horario/energía/accesibilidad por categoría
+   (con heurísticas razonables, no al azar), marcado explícitamente como
+   estimado — el nombre del negocio, la categoría real y la ubicación
+   (lat/lng, extraídas de la URL de Google Maps del negocio) sí son reales.
+2. **NO comitear** estos datos reales a git todavía (instrucción explícita:
+   "no quiero que la subas" / "mantenerlo solo en esta sesión"). El archivo
+   generado (`data/catalogo.real-sample.js`) vive en `.gitignore` — **nunca
+   se sube**, y por eso este README tampoco lista nombres de negocios
+   reales, ni siquiera como ejemplo.
+3. **Muestra representativa** de ~200 negocios (≈22 por cada uno de los 9
+   buckets/arquetipos), no el CSV completo — un motor 100% cliente sin
+   backend/paginación no tiene por qué cargar 28 mil filas para poder
+   testear el flujo completo.
+
+**Cómo se genera**: `bot-darwin/scripts/generar_catalogo_real_sample.py`
+(sí está comiteado — es solo lógica/heurísticas, no contiene ningún dato
+real de negocios) lee el CSV, mapea cada categoría real a su bucket usando
+la misma tabla que `data/taxonomia-categorias.js`, filtra negocios
+sospechosos de estar mal categorizados (ver abajo), muestrea ~22 por
+bucket con diversidad de región, y escribe el JS con el mismo contrato
+que `catalogo.mock.js`. Se corre así: `python3
+bot-darwin/scripts/generar_catalogo_real_sample.py <ruta_al_csv>`.
+
+**Filtro de negocios mal categorizados**: igual que con el CSV anterior de
+esta misma sesión, el scraping original mezcla negocios no-turísticos
+bajo categorías de turismo (ej. talleres mecánicos bajo "Taller de
+cerámica", universidades bajo "Escuela de equitación", clínicas bajo
+"Masajes"). El script filtra por ~90 palabras clave de rubros no
+turísticos (automotriz, salud/estética, gobierno/municipal, capacitación,
+construcción, etc.), incluyendo variantes/plurales y texto con símbolos
+Unicode "estilizados" (ej. nombres en negrita de Instagram que evaden un
+filtro de texto plano simple — se normalizan con NFKC antes de comparar).
+Aun así, en una muestra de ~200 sobre 28 mil filas sin curar a mano,
+**queda un residual pequeño de ambigüedad** (nombres genéricos tipo
+"Comercial X SpA" o "Taller de Juan" que podrían ser legítimos o no) — es
+una limitación esperada de un filtro por palabras clave, no un bug; se
+puede seguir afinando la lista de palabras si aparece algo obvio al
+testear.
+
+**Cómo probarlo**: en `preview.html`, botón "🗂️ Catálogo: prueba" (junto a
+"Reiniciar sesión") cambia en caliente entre el catálogo placeholder y la
+muestra real vía `configurarFuenteCatalogo` — sin recargar la página. Si
+el archivo no existe en el checkout (ej. sesión nueva sin regenerar), el
+botón avisa en vez de fallar en silencio. El botón queda embebido también
+en el HTML autocontenido que se le manda al usuario, siempre que el
+archivo exista al momento de generarlo.
+
 ## Cómo probarlo localmente
 
 ```bash

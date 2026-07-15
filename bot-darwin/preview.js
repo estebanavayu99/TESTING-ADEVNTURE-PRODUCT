@@ -99,6 +99,32 @@
     enviar(texto);
   });
 
+  // Toggle catálogo mock <-> muestra de negocios reales. La muestra real
+  // (data/catalogo.real-sample.js) NO está comiteada a git — si no existe
+  // en este checkout, el botón avisa en vez de fallar en silencio.
+  const btnCatalogo = document.getElementById('darwinCatalogo');
+  let usandoCatalogoReal = false;
+  btnCatalogo.addEventListener('click', () => {
+    if (!usandoCatalogoReal) {
+      const muestra = window.PickmapDarwinData && window.PickmapDarwinData.CATALOGO_REAL_SAMPLE;
+      if (!muestra || !muestra.length) {
+        agregarMensaje('No encontré el catálogo de muestra con negocios reales en este checkout (data/catalogo.real-sample.js) — no está comiteado a git a propósito, pídele a Darwin que lo regenere en esta sesión.', 'bot');
+        return;
+      }
+      D.tools.configurarFuenteCatalogo(() => muestra);
+      usandoCatalogoReal = true;
+      btnCatalogo.textContent = '🗂️ Catálogo: real (muestra)';
+      btnCatalogo.classList.add('is-real');
+      agregarMensaje(`🗂️ Catálogo cambiado a la muestra de ${muestra.length} negocios reales (nombre/categoría/ubicación reales — precio/duración/horario/accesibilidad son ESTIMADOS por categoría, todavía sin confirmar). Reinicia la sesión para partir de cero con este catálogo.`, 'bot');
+    } else {
+      D.tools.configurarFuenteCatalogo(() => (window.PickmapDarwinData && window.PickmapDarwinData.CATALOGO_MOCK) || []);
+      usandoCatalogoReal = false;
+      btnCatalogo.textContent = '🗂️ Catálogo: prueba';
+      btnCatalogo.classList.remove('is-real');
+      agregarMensaje('🗂️ Catálogo cambiado de vuelta al de prueba (placeholder original).', 'bot');
+    }
+  });
+
   const QUICK_REPLIES = [
     'Quiero algo de aventura para el sábado',
     'Somos pareja, buscamos algo romántico',

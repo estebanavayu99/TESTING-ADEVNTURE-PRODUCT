@@ -74,6 +74,8 @@ body {
   cursor: pointer;
 }
 .darwin-panel__header button:hover { background: #f7f7f7; }
+.darwin-panel__header-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+#darwinCatalogo.is-real { background: #fdf1e9; border-color: var(--accent); color: var(--accent); font-weight: 600; }
 
 #darwinMensajes {
   flex: 1;

@@ -16,7 +16,10 @@
     <section class="darwin-panel">
       <div class="darwin-panel__header">
         <h2>Chat con Darwin (motor de reglas)</h2>
-        <button id="darwinReset" type="button">Reiniciar sesión</button>
+        <div class="darwin-panel__header-actions">
+          <button id="darwinCatalogo" type="button">🗂️ Catálogo: prueba</button>
+          <button id="darwinReset" type="button">Reiniciar sesión</button>
+        </div>
       </div>
       <div class="darwin-quick" id="darwinQuick"></div>
       <div id="darwinMensajes"></div>
@@ -47,6 +50,13 @@
   </div>
 
   <script src="data/catalogo.mock.js"></script>
+  <!-- catalogo.real-sample.js: NO está comiteado a git (ver .gitignore) —
+       muestra de negocios reales generada solo para esta sesión de
+       testing. Si no existe (ej. clon nuevo del repo), este <script> da
+       404 en la consola y no rompe nada más — el resto de la página sigue
+       cargando normal, el botón "Catálogo: prueba" simplemente no
+       encuentra window.PickmapDarwinData.CATALOGO_REAL_SAMPLE y avisa. -->
+  <script src="data/catalogo.real-sample.js"></script>
   <script src="data/taxonomia-categorias.js"></script>
   <script src="js/algoritmos.js"></script>
   <script src="js/tools.js"></script>
