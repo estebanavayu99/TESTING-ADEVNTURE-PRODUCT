@@ -2,8 +2,14 @@
 /* Escala global un poco más compacta para las páginas logueadas (dashboard,
    panoramas, favoritos, negocio-*, etc.): casi todo el CSS de estas páginas
    usa rem, así que bajar el font-size base encoge tipografía y espaciados
-   de forma proporcional sin tocar layout, orden ni breakpoints. */
+   de forma proporcional sin tocar layout, orden ni breakpoints. 90% es la
+   escala para mobile (ya ajustada aparte); en desktop (>720px, mismo
+   breakpoint que el resto del sitio) se baja más porque a 100% de zoom en
+   el navegador el usuario lo seguía viendo grande incluso con el 90%. */
 html { font-size: 90%; }
+@media (min-width: 721px) {
+  html { font-size: 78%; }
+}
 .dash { padding: 48px 0 96px; }
 .dash__greeting {
   margin-bottom: 36px;

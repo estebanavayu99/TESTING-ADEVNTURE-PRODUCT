@@ -47,14 +47,18 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   guardado del item favorito.
 - **Escala compacta de las páginas logueadas**: `css/dashboard.css` (cargado
   por dashboard, panoramas, favoritos, invita, negocio-*, pickpoints — no
-  por index/login/onboarding) trae `html { font-size: 90%; }` porque a
-  100% de zoom por defecto en el navegador el usuario lo sentía
-  demasiado grande. Como casi todo ese CSS usa `rem`, bajar el font-size
-  raíz encoge tipografía y espaciados de forma proporcional en cascada
-  sin tocar layout, orden ni breakpoints (los `max-width` de los media
-  queries son px físicos de viewport, no se ven afectados). Si hace falta
-  ajustar la densidad de esas páginas de nuevo, tocar ese único valor en
-  vez de ir cambiando tamaños sueltos por componente.
+  por index/login/onboarding) trae `html { font-size: 90%; }` de base, y
+  `78%` desde `@media (min-width: 721px)` — porque a 100% de zoom por
+  defecto en el navegador el usuario lo sentía demasiado grande
+  **específicamente en desktop/PC** (se probó 90% en desktop primero y
+  el usuario dijo que seguía viéndose grande, así que se bajó a 78% pero
+  solo por encima de 720px, el mismo breakpoint mobile del resto del
+  sitio, para no volver a achicar el mobile que ya se había ajustado
+  aparte). Como casi todo ese CSS usa `rem`, bajar el font-size raíz
+  encoge tipografía y espaciados de forma proporcional en cascada sin
+  tocar layout, orden ni breakpoints. Si hace falta ajustar la densidad
+  de desktop o mobile de nuevo, tocar el valor correspondiente de este
+  mismo bloque en vez de ir cambiando tamaños sueltos por componente.
 - **La IA se llama "Darwin"** en todo el texto visible del sitio (antes
   "Beto"). Los identificadores internos de código quedaron sin tocar a
   propósito — clases (`.beto-chat`, `.beto__profile`), IDs
