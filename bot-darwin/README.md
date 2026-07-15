@@ -1,11 +1,18 @@
-# Darwin — bot inteligente (en construcción, NO conectado al sitio)
+# Darwin — bot inteligente (en construcción, NO conectado al sitio real)
 
-Esta carpeta es un laboratorio aislado. Nada de lo que hay acá está
-enlazado desde el sitio ni se inyecta en producción — es a propósito,
-por instrucción del usuario ("no metemos nada hasta estar 100% listo").
-Cuando esté listo, "inyectar" significa: cargar estos mismos `<script>`
-desde una página real y reemplazar `js/beto-chat.js` por una versión que
-llame a `PickmapDarwin.motor.procesarMensaje(...)`.
+Esta carpeta es un laboratorio aislado: nada de lo que hay acá está
+enlazado desde el sitio ni desde el nav (mismo patrón que
+`notificaciones-preview.html`: `noindex, nofollow`, sin links entrantes).
+"Conectado al sitio" significa integrado al flujo real de usuario
+(reemplazar `js/beto-chat.js` por una versión que llame a
+`PickmapDarwin.motor.procesarMensaje(...)`) — eso sigue sin pasar.
+
+**Sí está desplegado en producción** (`pickmap.cl/bot-darwin/preview.html`,
+reachable por URL directa) — instrucción explícita del usuario para
+poder testear "de forma real" con acceso desde cualquier navegador, no
+solo con el archivo HTML descargable. Sigue sin enlace entrante ni
+indexado; el catálogo real de negocios (`catalogo.real-sample.js`) sigue
+sin comitear, así que lo que hay en vivo usa el catálogo mock de prueba.
 
 Basado en los 3 documentos que armó el usuario:
 - `pickmap_fuentes_a_conectar.pdf` — qué fuente conecta cada tool, por prioridad.

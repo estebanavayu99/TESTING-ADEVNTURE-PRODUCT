@@ -198,12 +198,29 @@ agente de turismo mucho más sofisticado que el `js/beto-chat.js` actual
 arquetipo/embudo/estado emocional). Se está construyendo en
 `/bot-darwin/`, **aislado y sin enlazar desde el sitio ni desde el nav**
 (mismo patrón que `notificaciones-preview.html`: `noindex, nofollow`, sin
-links entrantes) — instrucción explícita del usuario de no meter nada a
-producción hasta estar 100% listo. Ver `bot-darwin/README.md` para el
-detalle completo (qué está simulado/placeholder vs. real, cómo probarlo
-con `python3 -m http.server` + `bot-darwin/preview.html`, cómo se
-conecta la BD real cuando el usuario la pase, y el checklist de fases
-pendientes).
+links entrantes). Ver `bot-darwin/README.md` para el detalle completo
+(qué está simulado/placeholder vs. real, cómo probarlo con `python3 -m
+http.server` + `bot-darwin/preview.html`, cómo se conecta la BD real
+cuando el usuario la pase, y el checklist de fases pendientes).
+
+**Ya está en producción (reachable por URL directa, instrucción
+explícita del usuario para poder testear "de forma real")**: la rama de
+desarrollo del bot (`claude/intelligent-bot-dev-51wg6w`) se mergeó a
+esta rama de producción y se pusheó — `pickmap.cl/bot-darwin/preview.html`
+queda accesible en vivo, pero sigue sin enlace entrante ni en el nav
+(mismo `noindex, nofollow` de siempre). Para actualizar lo que está en
+vivo tras seguir iterando en la rama de desarrollo: repetir el mismo
+merge (`git fetch origin claude/funly-platform-website-huzmqt`,
+`git checkout -b tmp-merge origin/claude/funly-platform-website-huzmqt`,
+`git merge claude/intelligent-bot-dev-51wg6w`, verificar que el diff
+contra `origin/claude/funly-platform-website-huzmqt` solo toque
+`bot-darwin/`+`.gitignore`+`CLAUDE.md` antes de pushear, luego `git push
+origin tmp-merge:claude/funly-platform-website-huzmqt`, borrar la rama
+temporal). **Importante**: `bot-darwin/data/catalogo.real-sample.js`
+(muestra de negocios reales, ver más abajo) está en `.gitignore` a
+propósito y NUNCA se comitea — el bot en producción solo tiene el
+catálogo mock de prueba, no el de negocios reales, hasta que el usuario
+decida lo contrario.
 
 Decisiones tomadas para esta etapa (pueden revisarse más adelante):
 - Motor **sin LLM real**: reglas/heurísticas deterministas
