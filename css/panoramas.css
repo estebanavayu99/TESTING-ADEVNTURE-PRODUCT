@@ -182,17 +182,16 @@
 .pano-card__rating span { font-weight: 500; color: var(--slate); }
 .pano-card__price { margin: 0 0 8px; font-size: 0.85rem; color: var(--navy-2); }
 .pano-card__price b { color: var(--navy); font-family: var(--font-display); }
-.pano-card__why {
-  margin-top: auto;
-  background: rgba(30, 45, 49, 0.05);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 0.78rem;
-  color: var(--navy-2);
-  line-height: 1.5;
+.pano-card__why-hint {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--coral);
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
-.pano-card__why--general { background: rgba(246, 205, 76, 0.16); }
-.pano-card__why b { color: var(--navy); }
+.pano-card__why-hint span { font-size: 0.85rem; }
 .pano-empty { text-align: center; color: var(--navy-2); padding: 40px 0; font-weight: 600; grid-column: 1 / -1; }
 .pano-empty--row { padding: 20px 0; font-size: 0.9rem; white-space: nowrap; }
 
@@ -281,6 +280,30 @@ body.pano-modal-open { overflow: hidden; }
 .pano-modal__title { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.4rem; color: var(--navy); line-height: 1.25; }
 .pano-modal__rating { margin: 0 0 18px; font-size: 0.92rem; font-weight: 700; color: var(--navy-2); }
 .pano-modal__rating span { font-weight: 500; color: var(--slate); }
+
+.pano-modal__why {
+  background: linear-gradient(135deg, rgba(246, 205, 76, 0.14), rgba(245, 94, 97, 0.08));
+  border: 1px solid rgba(246, 205, 76, 0.35);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin: 0 0 18px;
+}
+.pano-modal__why-title {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--navy);
+}
+.pano-modal__why-title span { font-size: 1rem; }
+.pano-modal__why-lead { margin: 0 0 10px; font-size: 0.88rem; line-height: 1.6; color: var(--navy-2); }
+.pano-modal__why-list { margin: 0; padding-left: 18px; font-size: 0.82rem; line-height: 1.55; color: var(--navy-2); }
+.pano-modal__why-list li { margin-bottom: 4px; }
+.pano-modal__why-list li:last-child { margin-bottom: 0; }
 
 .pano-modal__facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
 .pano-modal__fact { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; }

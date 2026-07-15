@@ -22,6 +22,29 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - `js/negocio.js` es el módulo compartido de las 6 páginas `negocio-*.html`
   (Resumen, Reservas, Pagos, Reseñas, Referidos, Calendario) y expone
   `window.PickmapNegocio` con getters + helpers de modal.
+- **"Por qué Darwin te lo recomienda"**: cada item del catálogo
+  (`TASTE_POOL`/`COMPANY_POOL`/`DEFAULT_POOL` en `js/panoramas.js`) trae un
+  campo `reason` con una frase sofisticada y completa (ej. "Tu perfil
+  muestra una afinidad sostenida por experiencias al aire libre y de
+  aventura."), pensada para sonar a razonamiento real de un motor de IA, no
+  a frase casual. Cada tarjeta (`cardHTML`) muestra un hint pequeño
+  "🧠 Por qué te lo recomienda Darwin"; al abrir el modal de detalle
+  (`modalHTML`), la función `whyHTML(item)` arma un callout con ese
+  `reason` como "señal principal" más viñetas dinámicas generadas a partir
+  de datos reales del item cruzados con las preferencias declaradas por el
+  usuario en onboarding (`difficultyPrefs`/`budgetPrefs`/`distancePrefs`/
+  `dayPrefs`, las mismas variables que usa `matchScore()` para ordenar
+  "Recomendado para ti") — nunca texto inventado sin respaldo en datos. La
+  pestaña "General" del explorador fuerza `reason: null` (ver el array
+  `general`) y cae en un párrafo distinto sobre comportamiento colectivo en
+  vez de preferencias personales; el listener de click/teclado de las
+  tarjetas usa `cardItemFor(card)` (no `CATALOG.find` directo) para
+  resolver el item desde la lista correcta según la pestaña activa —
+  buscar siempre en `CATALOG` filtraría la razón personalizada incluso en
+  la pestaña "General". `js/favoritos.js` duplica `whyHTML` (patrón
+  establecido) pero sin las viñetas de match de preferencias, ya que esa
+  página no tiene acceso al perfil de onboarding, solo al snapshot
+  guardado del item favorito.
 - **La IA se llama "Darwin"** en todo el texto visible del sitio (antes
   "Beto"). Los identificadores internos de código quedaron sin tocar a
   propósito — clases (`.beto-chat`, `.beto__profile`), IDs

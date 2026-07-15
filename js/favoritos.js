@@ -166,9 +166,6 @@
   }
 
   function cardHTML(item) {
-    const whyBox = item.reason
-      ? `<p class="pano-card__why">✨ <b>Por qué Darwin lo eligió:</b> nos contaste que ${item.reason}.</p>`
-      : `<p class="pano-card__why pano-card__why--general">🤖 Darwin dice: uno de los panoramas más populares de Pickmap ahora mismo.</p>`;
     const difficulty = item.difficulty || 'suave';
     return `
       <article class="pano-card" data-title="${item.title}" tabindex="0" role="button" aria-haspopup="dialog">
@@ -185,7 +182,7 @@
           <p class="pano-card__title">${item.title}</p>
           <p class="pano-card__rating">⭐ ${item.rating} <span>(${item.reviews})</span></p>
           <p class="pano-card__price">Desde <b>$${item.price}</b> por persona</p>
-          ${whyBox}
+          <p class="pano-card__why-hint"><span>🧠</span> Por qué te lo recomienda Darwin</p>
         </div>
       </article>
     `;
@@ -267,6 +264,24 @@
     `;
   }
 
+  // Deep, "sofisticado" explanation of why Darwin surfaced this item — mirrors
+  // js/panoramas.js's whyHTML, minus the live preference-match bullets (favoritos
+  // has no access to the user's onboarding prefs, only the saved item snapshot).
+  function whyHTML(item) {
+    const lead = item.reason
+      ? `Darwin cruzó tu perfil de preferencias con el catálogo completo antes de ubicar este panorama en tu selección. La señal principal: ${item.reason}`
+      : 'Este panorama no proviene de tus preferencias explícitas, sino del comportamiento colectivo de viajeros con perfiles similares al tuyo: antes de incluirlo en tu selección general, Darwin evaluó su calificación, volumen de reseñas y nivel de demanda reciente frente al resto del catálogo, y quedó dentro del grupo con mejor desempeño.';
+    return `
+      <div class="pano-modal__why">
+        <p class="pano-modal__why-title"><span>🧠</span> Por qué Darwin te lo recomienda</p>
+        <p class="pano-modal__why-lead">${lead}</p>
+        <ul class="pano-modal__why-list">
+          <li>Respaldado por ${item.reviews} reseñas con una calificación de ${item.rating}★, sobre el promedio de su categoría.</li>
+        </ul>
+      </div>
+    `;
+  }
+
   function modalHTML(item) {
     const categoryLabel = CATEGORY_LABELS[item.category] || 'Popular';
     const dayLabel = DAY_LABELS[item.day] || 'Cualquier día';
@@ -283,6 +298,7 @@
       <div class="pano-modal__content">
         <h2 class="pano-modal__title" id="panoModalTitle">${item.title}</h2>
         <p class="pano-modal__rating">⭐ ${item.rating} <span>(${item.reviews} reseñas)</span></p>
+        ${whyHTML(item)}
         <div class="pano-modal__facts">
           <div class="pano-modal__fact"><span>📍</span><div><b>${item.meta}</b><small>Ubicación / duración</small></div></div>
           <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>

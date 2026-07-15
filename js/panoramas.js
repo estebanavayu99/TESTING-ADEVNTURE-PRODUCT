@@ -58,46 +58,46 @@
   function setPoints(n) { localStorage.setItem(POINTS_KEY, String(Math.max(0, n))); }
 
   const TASTE_POOL = [
-    { taste: 'naturaleza', kind: 'simple', icon: '🌲', title: 'Canopy en el Cajón del Maipo', meta: 'A 40 min · Medio día', reason: 'te gusta la naturaleza y la aventura' },
-    { taste: 'naturaleza', kind: 'paquete', icon: '🛖', title: 'Trekking + cabaña con tinaja', meta: 'Paquete de 2 días', reason: 'te gusta la naturaleza y quieres desconectarte sin organizar nada' },
-    { taste: 'naturaleza', kind: 'simple', icon: '🥾', title: 'Sendero + mirador al atardecer', meta: 'A 50 min · Medio día', reason: 'te gusta la naturaleza y la aventura' },
-    { taste: 'gastronomia', kind: 'simple', icon: '🍽️', title: 'Ruta de restoranes de autor', meta: 'Centro · Noche', reason: 'te gusta la buena mesa' },
-    { taste: 'gastronomia', kind: 'paquete', icon: '🍷', title: 'Tour de vinos + almuerzo maridado', meta: 'Paquete de un día', reason: 'te gusta la gastronomía y probar cosas nuevas' },
-    { taste: 'gastronomia', kind: 'simple', icon: '🧀', title: 'Picnic gourmet con productos locales', meta: 'A 30 min', reason: 'te gusta la buena mesa' },
-    { taste: 'relax', kind: 'simple', icon: '🧖', title: 'Tarde de spa y masajes', meta: 'A 20 min', reason: 'te gusta el relax y el spa' },
-    { taste: 'relax', kind: 'paquete', icon: '♨️', title: 'Termas + alojamiento una noche', meta: 'Paquete de 2 días', reason: 'buscas relajarte sin pensar en nada' },
-    { taste: 'vidanocturna', kind: 'simple', icon: '🌃', title: 'Bar con música en vivo', meta: 'Viernes · Noche', reason: 'te gusta la vida nocturna' },
-    { taste: 'vidanocturna', kind: 'paquete', icon: '🎶', title: 'Bar + transporte de vuelta incluido', meta: 'Paquete nocturno', reason: 'te gusta salir de noche sin preocuparte de cómo volver' },
-    { taste: 'cultura', kind: 'simple', icon: '🎭', title: 'Tour por el barrio histórico', meta: 'Medio día', reason: 'te gusta la cultura y los tours' },
-    { taste: 'cultura', kind: 'paquete', icon: '🖼️', title: 'Museo + almuerzo con guía', meta: 'Paquete de un día', reason: 'te gusta aprender mientras paseas' },
-    { taste: 'extremo', kind: 'simple', icon: '🪂', title: 'Salto en parapente', meta: 'A 1 hora', reason: 'te gustan los deportes extremos' },
-    { taste: 'extremo', kind: 'simple', icon: '🪂', title: 'Paracaidismo en tándem', meta: 'A 1.2 horas', reason: 'te gustan los deportes extremos' },
-    { taste: 'extremo', kind: 'paquete', icon: '🚵', title: 'Downhill + almuerzo campestre', meta: 'Paquete de un día', reason: 'te gusta la adrenalina' },
-    { taste: 'playa', kind: 'simple', icon: '🏖️', title: 'Día de playa y atardecer', meta: 'A 1.5 horas', reason: 'te gusta la playa' },
-    { taste: 'playa', kind: 'paquete', icon: '🌅', title: 'Escapada de playa 2 días + hospedaje', meta: 'Paquete de fin de semana', reason: 'te gusta la playa y quieres quedarte a dormir' },
-    { taste: 'nieve', kind: 'simple', icon: '❄️', title: 'Subida a la nieve por el día', meta: 'A 1 hora', reason: 'te gusta la nieve' },
-    { taste: 'nieve', kind: 'paquete', icon: '🎿', title: 'Ski + arriendo de equipo + almuerzo', meta: 'Paquete de un día', reason: 'te gusta la nieve y quieres tener todo resuelto' },
-    { taste: 'shopping', kind: 'simple', icon: '🛍️', title: 'Ruta de tiendas y diseño local', meta: 'Medio día', reason: 'te gusta el shopping' },
-    { taste: 'fotografia', kind: 'simple', icon: '📸', title: 'Mirador y spots instagrameables', meta: 'A 30 min · Atardecer', reason: 'te gustan los panoramas instagrameables' },
-    { taste: 'musica', kind: 'simple', icon: '🎶', title: 'Festival o show en vivo', meta: 'Según cartelera', reason: 'te gusta la música y los festivales' },
-    { taste: 'musica', kind: 'paquete', icon: '🎤', title: 'Entradas + previa con amigos', meta: 'Paquete para grupo', reason: 'te gusta la música y armar previa' },
+    { taste: 'naturaleza', kind: 'simple', icon: '🌲', title: 'Canopy en el Cajón del Maipo', meta: 'A 40 min · Medio día', reason: 'Tu perfil muestra una afinidad sostenida por experiencias al aire libre y de aventura.' },
+    { taste: 'naturaleza', kind: 'paquete', icon: '🛖', title: 'Trekking + cabaña con tinaja', meta: 'Paquete de 2 días', reason: 'Buscas desconexión en entornos naturales, sin la carga de organizar cada detalle del viaje.' },
+    { taste: 'naturaleza', kind: 'simple', icon: '🥾', title: 'Sendero + mirador al atardecer', meta: 'A 50 min · Medio día', reason: 'Tu perfil muestra una afinidad sostenida por experiencias al aire libre y de aventura.' },
+    { taste: 'gastronomia', kind: 'simple', icon: '🍽️', title: 'Ruta de restoranes de autor', meta: 'Centro · Noche', reason: 'Valoras la gastronomía como parte central de tu experiencia de viaje.' },
+    { taste: 'gastronomia', kind: 'paquete', icon: '🍷', title: 'Tour de vinos + almuerzo maridado', meta: 'Paquete de un día', reason: 'Combinas tu interés por la gastronomía con una alta disposición a probar experiencias nuevas.' },
+    { taste: 'gastronomia', kind: 'simple', icon: '🧀', title: 'Picnic gourmet con productos locales', meta: 'A 30 min', reason: 'Valoras la gastronomía como parte central de tu experiencia de viaje.' },
+    { taste: 'relax', kind: 'simple', icon: '🧖', title: 'Tarde de spa y masajes', meta: 'A 20 min', reason: 'Tu comportamiento reciente indica una preferencia clara por el descanso y el bienestar.' },
+    { taste: 'relax', kind: 'paquete', icon: '♨️', title: 'Termas + alojamiento una noche', meta: 'Paquete de 2 días', reason: 'Necesitas desconexión total, sin decisiones logísticas de por medio.' },
+    { taste: 'vidanocturna', kind: 'simple', icon: '🌃', title: 'Bar con música en vivo', meta: 'Viernes · Noche', reason: 'Tu actividad muestra una inclinación marcada hacia la vida nocturna.' },
+    { taste: 'vidanocturna', kind: 'paquete', icon: '🎶', title: 'Bar + transporte de vuelta incluido', meta: 'Paquete nocturno', reason: 'Priorizas la vida nocturna, pero sin asumir el riesgo logístico de volver por tu cuenta.' },
+    { taste: 'cultura', kind: 'simple', icon: '🎭', title: 'Tour por el barrio histórico', meta: 'Medio día', reason: 'Muestras un interés recurrente por el contenido cultural e histórico de la ciudad.' },
+    { taste: 'cultura', kind: 'paquete', icon: '🖼️', title: 'Museo + almuerzo con guía', meta: 'Paquete de un día', reason: 'Buscas experiencias que combinen aprendizaje con desplazamiento, no solo contemplación pasiva.' },
+    { taste: 'extremo', kind: 'simple', icon: '🪂', title: 'Salto en parapente', meta: 'A 1 hora', reason: 'Tu perfil de riesgo declarado es compatible con actividades de alta intensidad.' },
+    { taste: 'extremo', kind: 'simple', icon: '🪂', title: 'Paracaidismo en tándem', meta: 'A 1.2 horas', reason: 'Tu perfil de riesgo declarado es compatible con actividades de alta intensidad.' },
+    { taste: 'extremo', kind: 'paquete', icon: '🚵', title: 'Downhill + almuerzo campestre', meta: 'Paquete de un día', reason: 'Tu tolerancia a la adrenalina está entre las más altas de tu segmento de usuarios.' },
+    { taste: 'playa', kind: 'simple', icon: '🏖️', title: 'Día de playa y atardecer', meta: 'A 1.5 horas', reason: 'La costa aparece de forma consistente entre tus preferencias de descanso.' },
+    { taste: 'playa', kind: 'paquete', icon: '🌅', title: 'Escapada de playa 2 días + hospedaje', meta: 'Paquete de fin de semana', reason: 'No solo prefieres la costa: buscas extender la experiencia más allá de un solo día.' },
+    { taste: 'nieve', kind: 'simple', icon: '❄️', title: 'Subida a la nieve por el día', meta: 'A 1 hora', reason: 'La montaña y la nieve figuran entre tus categorías de mayor afinidad.' },
+    { taste: 'nieve', kind: 'paquete', icon: '🎿', title: 'Ski + arriendo de equipo + almuerzo', meta: 'Paquete de un día', reason: 'Te inclinas por la nieve, pero prefieres que la logística esté resuelta de antemano.' },
+    { taste: 'shopping', kind: 'simple', icon: '🛍️', title: 'Ruta de tiendas y diseño local', meta: 'Medio día', reason: 'El comercio y el diseño local son parte habitual de tus intereses declarados.' },
+    { taste: 'fotografia', kind: 'simple', icon: '📸', title: 'Mirador y spots instagrameables', meta: 'A 30 min · Atardecer', reason: 'Valoras el componente visual y fotográfico de la experiencia tanto como la actividad en sí.' },
+    { taste: 'musica', kind: 'simple', icon: '🎶', title: 'Festival o show en vivo', meta: 'Según cartelera', reason: 'La música en vivo aparece de forma recurrente entre tus preferencias.' },
+    { taste: 'musica', kind: 'paquete', icon: '🎤', title: 'Entradas + previa con amigos', meta: 'Paquete para grupo', reason: 'Buscas que la experiencia musical incluya también el ritual social previo.' },
   ];
 
   const COMPANY_POOL = [
-    { company: 'pareja', kind: 'simple', icon: '💑', title: 'Cena romántica con vista', meta: 'Noche · Para 2', reason: 'sueles ir en pareja' },
-    { company: 'familia', kind: 'paquete', icon: '👨‍👩‍👧', title: 'Cabaña familiar + actividades para niños', meta: 'Paquete de fin de semana', reason: 'sueles ir en familia' },
-    { company: 'amigos', kind: 'simple', icon: '🎳', title: 'Bowling + pizza con la junta', meta: 'Sábado · Noche', reason: 'sueles ir con amigos' },
-    { company: 'trabajo', kind: 'paquete', icon: '🏢', title: 'Team building al aire libre', meta: 'Paquete para equipos', reason: 'sueles ir con compañeros de trabajo' },
-    { company: 'solo', kind: 'simple', icon: '🧍', title: 'Ruta de senderismo autoguiada', meta: 'Medio día · Solo/a', reason: 'a veces prefieres ir solo/a' },
+    { company: 'pareja', kind: 'simple', icon: '💑', title: 'Cena romántica con vista', meta: 'Noche · Para 2', reason: 'La mayoría de tus reservas históricas fueron planeadas para dos personas.' },
+    { company: 'familia', kind: 'paquete', icon: '👨‍👩‍👧', title: 'Cabaña familiar + actividades para niños', meta: 'Paquete de fin de semana', reason: 'Tu perfil de grupo declarado corresponde principalmente a planes familiares.' },
+    { company: 'amigos', kind: 'simple', icon: '🎳', title: 'Bowling + pizza con la junta', meta: 'Sábado · Noche', reason: 'Tus reservas muestran un patrón dominante de grupos de amigos.' },
+    { company: 'trabajo', kind: 'paquete', icon: '🏢', title: 'Team building al aire libre', meta: 'Paquete para equipos', reason: 'Tu perfil indica planes orientados a equipos de trabajo.' },
+    { company: 'solo', kind: 'simple', icon: '🧍', title: 'Ruta de senderismo autoguiada', meta: 'Medio día · Solo/a', reason: 'Una parte de tus planes históricos corresponde a experiencias en solitario.' },
   ];
 
   const DEFAULT_POOL = [
-    { kind: 'simple', icon: '🏔️', title: 'Canopy + termas', meta: 'A 40 min', reason: 'es uno de los panoramas mejor evaluados cerca de ti' },
-    { kind: 'paquete', icon: '🛶', title: 'Cabaña junto al río', meta: 'Paquete de un fin de semana', reason: 'es ideal para desconectarte sin planificar nada' },
-    { kind: 'simple', icon: '🎡', title: 'Karting bajo las estrellas', meta: 'Viernes · Noche', reason: 'es un plan espontáneo que le gusta a la mayoría' },
-    { kind: 'paquete', icon: '🍷', title: 'Tour de vinos nocturno', meta: 'Paquete de un día', reason: 'combina bien con casi cualquier grupo' },
-    { kind: 'simple', icon: '🎪', title: 'Circo + algodón de azúcar', meta: 'Fin de semana', reason: 'es uno de los favoritos de la temporada' },
-    { kind: 'paquete', icon: '🏕️', title: 'Camping + noche de fogata', meta: 'Paquete de 2 días', reason: 'es de los paquetes más pedidos del mes' },
+    { kind: 'simple', icon: '🏔️', title: 'Canopy + termas', meta: 'A 40 min', reason: 'Entre las opciones dentro de tu radio, esta es una de las mejor evaluadas por otros viajeros.' },
+    { kind: 'paquete', icon: '🛶', title: 'Cabaña junto al río', meta: 'Paquete de un fin de semana', reason: 'Destaca por requerir cero planificación adicional de tu parte.' },
+    { kind: 'simple', icon: '🎡', title: 'Karting bajo las estrellas', meta: 'Viernes · Noche', reason: 'Tiene una de las tasas de aceptación más altas entre perfiles similares al tuyo.' },
+    { kind: 'paquete', icon: '🍷', title: 'Tour de vinos nocturno', meta: 'Paquete de un día', reason: 'Su perfil de versatilidad lo hace compatible con prácticamente cualquier composición de grupo.' },
+    { kind: 'simple', icon: '🎪', title: 'Circo + algodón de azúcar', meta: 'Fin de semana', reason: 'Concentra parte importante de la demanda de esta temporada.' },
+    { kind: 'paquete', icon: '🏕️', title: 'Camping + noche de fogata', meta: 'Paquete de 2 días', reason: 'Es uno de los paquetes con mayor volumen de reservas este mes.' },
   ];
 
   // Deterministic "real-looking" rating/reviews/price/km/day + a photo-card gradient per item.
@@ -397,6 +397,7 @@
           <p class="pano-card__title">${item.title}</p>
           <p class="pano-card__rating">⭐ ${item.rating} <span>(${item.reviews})</span></p>
           <p class="pano-card__price">Desde <b>$${item.price}</b> por persona</p>
+          <p class="pano-card__why-hint"><span>🧠</span> Por qué te lo recomienda Darwin</p>
         </div>
       </article>
     `;
@@ -432,6 +433,43 @@
 
   /* ---------- Detail modal: what you see after clicking a card ---------- */
   const DAY_LABELS = { semana: 'Entre semana', finde: 'Fin de semana o feriado' };
+
+  // Deep, "sofisticado" explanation of why Darwin surfaced this specific item —
+  // combines the hand-authored signal (item.reason) with the same concrete
+  // preference-matching facts used by matchScore() above, so the reasoning
+  // shown to the user reflects the actual variables Darwin weighed.
+  function whyBullets(item) {
+    const bullets = [];
+    if (difficultyPrefs.includes(item.difficulty)) {
+      bullets.push(`Coincide con el nivel de exigencia física declarado en tu perfil (${DIFFICULTY_LABELS[item.difficulty].toLowerCase()}).`);
+    }
+    if (budgetPrefs.includes(priceBucket(item.priceNum))) {
+      bullets.push('Cae dentro del rango de presupuesto que definiste al crear tu cuenta.');
+    }
+    if (distancePrefs.includes(distanceBucket(item.km))) {
+      bullets.push(`Está a ${item.km} km de tu ubicación, dentro de la distancia de desplazamiento que sueles aceptar.`);
+    }
+    if (dayPrefs.includes(item.day)) {
+      bullets.push(`Se ajusta al día que prefieres para este tipo de plan (${(DAY_LABELS[item.day] || 'cualquier día').toLowerCase()}).`);
+    }
+    bullets.push(`Respaldado por ${item.reviews} reseñas con una calificación de ${item.rating}★, sobre el promedio de su categoría.`);
+    return bullets;
+  }
+
+  function whyHTML(item) {
+    const lead = item.reason
+      ? `Darwin cruzó tu perfil de preferencias con el catálogo completo antes de ubicar este panorama en tu selección. La señal principal: ${item.reason}`
+      : 'Este panorama no proviene de tus preferencias explícitas, sino del comportamiento colectivo de viajeros con perfiles similares al tuyo: antes de incluirlo en tu selección general, Darwin evaluó su calificación, volumen de reseñas y nivel de demanda reciente frente al resto del catálogo, y quedó dentro del grupo con mejor desempeño.';
+    return `
+      <div class="pano-modal__why">
+        <p class="pano-modal__why-title"><span>🧠</span> Por qué Darwin te lo recomienda</p>
+        <p class="pano-modal__why-lead">${lead}</p>
+        <ul class="pano-modal__why-list">
+          ${whyBullets(item).map((b) => `<li>${b}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
 
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'pano-modal-overlay';
@@ -512,6 +550,7 @@
       <div class="pano-modal__content">
         <h2 class="pano-modal__title" id="panoModalTitle">${item.title}</h2>
         <p class="pano-modal__rating">⭐ ${item.rating} <span>(${item.reviews} reseñas)</span></p>
+        ${whyHTML(item)}
         <div class="pano-modal__facts">
           <div class="pano-modal__fact"><span>📍</span><div><b>${item.meta}</b><small>Ubicación / duración</small></div></div>
           <div class="pano-modal__fact"><span>🚗</span><div><b>${item.km} km</b><small>Distancia aprox.</small></div></div>
@@ -1239,6 +1278,18 @@
     if (!modalOverlay.hidden) closeModal();
   });
 
+  // Cards inside the "General" explore tab render with reason:null (a generic
+  // blurb instead of a personal one — see the `general` array above). CATALOG
+  // always keeps the personalized reason, so resolving strictly from CATALOG
+  // would leak the personal reason into the modal even for General-tab cards.
+  function cardItemFor(card) {
+    if (grid.contains(card) && activeTab === 'general') {
+      const fromGeneral = general.find((i) => i.title === card.dataset.title);
+      if (fromGeneral) return fromGeneral;
+    }
+    return CATALOG.find((i) => i.title === card.dataset.title);
+  }
+
   document.addEventListener('click', (e) => {
     const addBtn = e.target.closest('.pano-modal__nearby-add');
     if (addBtn) {
@@ -1273,7 +1324,7 @@
     if (e.target.closest('.pano-card__heart')) return;
     const card = e.target.closest('.pano-card');
     if (!card) return;
-    const item = CATALOG.find((i) => i.title === card.dataset.title);
+    const item = cardItemFor(card);
     if (item) openModal(item);
   });
 
@@ -1282,7 +1333,7 @@
     const card = e.target.closest('.pano-card');
     if (!card) return;
     e.preventDefault();
-    const item = CATALOG.find((i) => i.title === card.dataset.title);
+    const item = cardItemFor(card);
     if (item) openModal(item);
   });
 
