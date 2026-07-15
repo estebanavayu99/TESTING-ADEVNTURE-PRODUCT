@@ -18,6 +18,22 @@
 
   const firstName = user.name.trim().split(' ')[0];
 
+  // Selector oficial de comunas (js/comunas-chile.js) en vez de texto
+  // libre — un nombre mal escrito rompía el cálculo de distancia real
+  // que hace Darwin (bot-darwin/js/contexto.js).
+  const citySelect = document.getElementById('city');
+  (window.COMUNAS_CHILE || []).forEach(({ region, comunas }) => {
+    const group = document.createElement('optgroup');
+    group.label = region;
+    comunas.forEach((comuna) => {
+      const opt = document.createElement('option');
+      opt.value = comuna;
+      opt.textContent = comuna;
+      group.appendChild(opt);
+    });
+    citySelect.appendChild(group);
+  });
+
   if (user.onboarded) {
     document.getElementById('onboardingTitle').textContent = `Actualiza tus datos, ${firstName}`;
     document.querySelector('.onboarding-lead').textContent = 'Ajusta tu edad, con quién sueles viajar y tus gustos cuando quieras — Darwin usa esto para seguir afinando tus panoramas.';
