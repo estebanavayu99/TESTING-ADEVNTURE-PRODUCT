@@ -10,30 +10,43 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - **Única pieza de backend real del sitio**: `api/send-verification.js`, una
   función serverless de Vercel (zero-config, sin `package.json`; Vercel
   detecta cualquier `.js` dentro de `api/` como función automáticamente).
-  Recibe `{ email, code, firstName }` desde `js/auth.js` (código de
-  verificación de cuenta y de recuperar contraseña, viajero) y hace POST a
-  la URL guardada en la env var de Vercel `GHL_VERIFY_WEBHOOK_URL` — el
-  trigger **"Inbound Webhook"** de un workflow en GoHighLevel que arma y
-  manda el correo real (asunto/cuerpo/marca viven en ese workflow de GHL,
-  no acá). Este trigger es un **Premium Trigger de GHL con costo de $0.01
-  por ejecución** pasadas las primeras 100 gratis — se evaluó primero una
-  alternativa gratis (API de contactos + trigger "Contact Tag" → Tag
-  Added, ver commits `9c66212`/`a907c72`) y quedó funcionando, pero el
-  usuario decidió explícitamente (2026-07-16) volver a Inbound Webhook a
-  pesar del costo, así que se revirtió a este enfoque. El workflow en GHL
-  sigue existiendo con el trigger "Contact Tag" como alternativa ya
-  probada por si se quiere volver a la gratuita más adelante — solo hay
-  que cambiar el trigger del workflow de vuelta a "Contact Tag" y este
-  archivo a usar `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY`/
-  `GHL_VERIFY_TAG` en vez de `GHL_VERIFY_WEBHOOK_URL` (esas 4 env vars
-  quedaron guardadas en Vercel sin usar, por si acaso). Si el POST falla
-  (servicio caído, env var no configurada, etc.),
-  `js/auth.js` cae de vuelta a mostrar el código en pantalla como
-  fallback — **nunca por defecto**, solo cuando el envío real falla, para
-  que la verificación siga siendo real en el flujo normal. `js/auth-empresa.js`
-  todavía NO tiene este cambio (sigue mostrando el código en pantalla
-  siempre) — replicar el mismo patrón ahí si se pide lo mismo para el
-  login de empresa.
+  Recibe `{ email, firstName, code? , link? }` desde `js/auth.js` y hace
+  POST a la URL guardada en la env var de Vercel `GHL_VERIFY_WEBHOOK_URL`
+  — el trigger **"Inbound Webhook"** de un workflow en GoHighLevel que
+  arma y manda el correo real (asunto/cuerpo/marca viven en ese workflow
+  de GHL, no acá). Este trigger es un **Premium Trigger de GHL con costo
+  de $0.01 por ejecución** pasadas las primeras 100 gratis — se evaluó
+  primero una alternativa gratis (API de contactos + trigger "Contact
+  Tag" → Tag Added, ver commits `9c66212`/`a907c72`) y quedó funcionando,
+  pero el usuario decidió explícitamente (2026-07-16) volver a Inbound
+  Webhook a pesar del costo. El workflow en GHL sigue existiendo con el
+  trigger "Contact Tag" como alternativa ya probada por si se quiere
+  volver a la gratuita más adelante — solo hay que cambiar el trigger del
+  workflow de vuelta a "Contact Tag" y este archivo a usar
+  `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY`/`GHL_VERIFY_TAG`
+  en vez de `GHL_VERIFY_WEBHOOK_URL` (esas 4 env vars quedaron guardadas
+  en Vercel sin usar, por si acaso).
+  **Verificación de cuenta = magic link, no código**: al crear una
+  cuenta, `js/auth.js` genera un `verificationToken` random (no un
+  código de 6 dígitos) y manda por correo un link
+  `login.html?verify=<token>`. Al abrirlo, el código al inicio del mismo
+  `js/auth.js` (antes del chequeo de "ya hay sesión activa") busca el
+  token en `pickmap_users`, marca `verified: true`, loguea a la persona
+  directo (`setSession` + redirect a onboarding/dashboard) — nunca la
+  manda de vuelta a loguearse a mano. La pantalla de espera
+  (`#formVerify` en `login.html`, ya no es un `<form>`, es un `<div>`
+  sin input) solo dice "revisa tu correo", con botones "Reenviar correo"
+  y "Volver a iniciar sesión". Recuperar contraseña (`startForgotReset`)
+  sigue siendo con código de 6 dígitos ingresado a mano (no se tocó) —
+  ambos flujos comparten `sendVerificationEmail(email, firstName, extra)`,
+  donde `extra` es `{ link }` o `{ code }` según cuál sea. Si el envío
+  real falla, el fallback ya no muestra un código en pantalla para la
+  verificación de cuenta — muestra el link de confirmación como texto
+  clickeable (`#verifyLinkFallback`); recuperar contraseña sigue
+  mostrando el código como fallback, igual que antes.
+  `js/auth-empresa.js` todavía NO tiene ninguno de estos cambios (sigue
+  mostrando el código en pantalla siempre, sin envío real) — replicar el
+  mismo patrón ahí si se pide lo mismo para el login de empresa.
 - `<script>` compartidos entre páginas; funciones helper (fmtMoney, fmtDate,
   etc.) están duplicadas literalmente en cada archivo que las necesita — es
   el patrón establecido, no "arreglar" moviéndolas a un módulo compartido

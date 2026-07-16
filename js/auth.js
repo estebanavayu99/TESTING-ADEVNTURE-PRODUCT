@@ -59,6 +59,24 @@
     return localStorage.getItem(SESSION_KEY);
   }
 
+  // Magic-link confirmation: ?verify=<token> in the URL (from the email
+  // link) confirms the account and logs the person in directly, no need
+  // to come back and log in manually afterwards.
+  const verifyToken = new URLSearchParams(window.location.search).get('verify');
+  if (verifyToken) {
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.verificationToken === verifyToken);
+    if (idx !== -1) {
+      const redirectTo = users[idx].onboarded ? 'dashboard.html' : 'onboarding.html';
+      users[idx].verified = true;
+      delete users[idx].verificationToken;
+      saveUsers(users);
+      setSession(users[idx].email);
+      window.location.href = redirectTo;
+      return;
+    }
+  }
+
   // Already logged in: skip straight to onboarding or the dashboard.
   const activeEmail = getSession();
   if (activeEmail) {
@@ -108,17 +126,21 @@
   }
 
   function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+  function genToken() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(24)))
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
 
   // Real send: POSTs to our Vercel serverless function, which forwards to a
-  // GoHighLevel Inbound Webhook that actually emails the code. If this fails
-  // (service down, env var missing, etc.) the caller falls back to showing
-  // the code on-screen — but only as a failure fallback, never by default,
-  // so verification is real under normal operation.
-  function sendVerificationEmail(email, code, firstName) {
+  // GoHighLevel Inbound Webhook that actually emails the code/link. If this
+  // fails (service down, env var missing, etc.) the caller falls back to
+  // showing the code/link on-screen — but only as a failure fallback, never
+  // by default, so verification is real under normal operation.
+  function sendVerificationEmail(email, firstName, extra) {
     return fetch('/api/send-verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code, firstName: firstName || '' }),
+      body: JSON.stringify({ email, firstName: firstName || '', ...extra }),
     }).then((r) => {
       if (!r.ok) throw new Error('send failed');
     });
@@ -127,51 +149,36 @@
   let pendingEmail = null;
   let pendingRedirect = null;
 
+  // Account creation uses a magic link (not a code): clicking it in the
+  // email confirms the account and logs the person in directly (see the
+  // ?verify=<token> handling near the top of this file).
   function startVerification(email, redirectTo) {
     const users = getUsers();
     const idx = users.findIndex((u) => u.email === email);
     if (idx === -1) return;
-    const code = genCode();
-    users[idx].verificationCode = code;
+    const token = genToken();
+    users[idx].verificationToken = token;
     saveUsers(users);
     pendingEmail = email;
     pendingRedirect = redirectTo;
     document.getElementById('verifyEmailLabel').textContent = email;
-    document.getElementById('verifyCodeInput').value = '';
-    document.getElementById('verifyCodeFallback').hidden = true;
-    document.getElementById('verifyCodeDisplay').hidden = true;
+    document.getElementById('resendSuccess').hidden = true;
+    document.getElementById('verifyLinkFallback').hidden = true;
     showForm('verify');
 
     const firstName = (users[idx].name || '').trim().split(' ')[0];
-    sendVerificationEmail(email, code, firstName).catch(() => {
-      document.getElementById('verifyCodeFallback').hidden = false;
-      document.getElementById('verifyCodeDisplay').hidden = false;
-      document.getElementById('verifyCodeDisplay').textContent = code;
+    const link = `${window.location.origin}/login.html?verify=${token}`;
+    sendVerificationEmail(email, firstName, { link }).catch(() => {
+      const fallbackHref = document.getElementById('verifyLinkFallbackHref');
+      fallbackHref.href = link;
+      document.getElementById('verifyLinkFallback').hidden = false;
     });
   }
 
-  formVerify.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = document.getElementById('verifyCodeInput').value.trim();
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === pendingEmail);
-    if (idx === -1) {
-      showForm('login');
-      return;
-    }
-    if (users[idx].verificationCode !== code) {
-      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
-      return;
-    }
-    users[idx].verified = true;
-    delete users[idx].verificationCode;
-    saveUsers(users);
-    setSession(pendingEmail);
-    window.location.href = pendingRedirect;
-  });
-
   document.getElementById('resendCode').addEventListener('click', () => {
-    if (pendingEmail) startVerification(pendingEmail, pendingRedirect);
+    if (!pendingEmail) return;
+    startVerification(pendingEmail, pendingRedirect);
+    document.getElementById('resendSuccess').hidden = false;
   });
   document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
 
@@ -199,7 +206,7 @@
     showForm('forgot-reset');
 
     const firstName = (users[idx].name || '').trim().split(' ')[0];
-    sendVerificationEmail(email, code, firstName).catch(() => {
+    sendVerificationEmail(email, firstName, { code }).catch(() => {
       document.getElementById('forgotCodeFallback').hidden = false;
       document.getElementById('forgotCodeDisplay').hidden = false;
       document.getElementById('forgotCodeDisplay').textContent = code;
