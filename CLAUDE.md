@@ -26,6 +26,18 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY`/`GHL_VERIFY_TAG`
   en vez de `GHL_VERIFY_WEBHOOK_URL` (esas 4 env vars quedaron guardadas
   en Vercel sin usar, por si acaso).
+  **El merge tag del correo NO sale del payload del webhook**: el
+  "Fetch sample requests"/Mapping Reference del trigger Inbound Webhook
+  resultó poco confiable en la práctica (seguía sin encontrar samples
+  pese a confirmar por los logs de Vercel que GHL respondía 200 a cada
+  POST). Para no depender de esa UI, `api/send-verification.js` además
+  hace un `POST /contacts/upsert` (best-effort, no bloqueante) con
+  `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY` — los mismos 3
+  que quedaron de la alternativa "Contact Tag" — para dejar el
+  código/link en el custom field del contacto. El email en GHL debe usar
+  el merge tag `{{contact.verification_code}}` (el field key exacto),
+  que sí es confiable siempre, en vez de intentar mapear el payload
+  crudo del Inbound Webhook.
   **Verificación de cuenta = magic link, no código**: al crear una
   cuenta, `js/auth.js` genera un `verificationToken` random (no un
   código de 6 dígitos) y manda por correo un link

@@ -1,14 +1,16 @@
 // Vercel serverless function (zero-config, no package.json needed).
-// Forwards a verification code/link to the GoHighLevel "Inbound Webhook"
-// trigger configured for the Pickmap verification workflow, so GHL sends
-// the real email (subject/body/branding all live in that GHL workflow, not
-// here). Account creation sends `link` (magic-link confirmation, clicking
-// it logs the person in directly); forgot-password still sends `code`
-// (entered manually in the reset form). At least one of the two must be
-// present.
-// NOTE: Inbound Webhook is a GHL Premium Trigger — billed per execution
-// past the first 100 free ones. Decision confirmed by the user (2026-07-16)
-// after weighing the free Contact-Tag alternative.
+// Fires the GoHighLevel "Inbound Webhook" trigger (POST to
+// GHL_VERIFY_WEBHOOK_URL) so the real workflow/email actually sends — that
+// part is a GHL Premium Trigger, billed per execution past the first 100
+// free ones, decision confirmed by the user (2026-07-16) after weighing the
+// free Contact-Tag alternative.
+//
+// It also (best-effort, non-blocking) upserts the contact via GHL's
+// standard Contacts API and writes the code/link into a custom field
+// (GHL_VERIFY_FIELD_KEY). This is NOT for triggering anything — it's so the
+// email can reliably use the merge tag {{contact.verification_code}}
+// instead of depending on the Inbound Webhook's "Fetch sample requests" UI
+// to map the raw payload, which turned out to be unreliable in practice.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -25,6 +27,31 @@ module.exports = async (req, res) => {
   if (!email || (!code && !link)) {
     res.status(400).json({ error: 'Missing email or code/link' });
     return;
+  }
+
+  const apiToken = process.env.GHL_API_TOKEN;
+  const locationId = process.env.GHL_LOCATION_ID;
+  const fieldKey = process.env.GHL_VERIFY_FIELD_KEY;
+  if (apiToken && locationId && fieldKey) {
+    try {
+      await fetch('https://services.leadconnectorhq.com/contacts/upsert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          Version: '2021-07-28',
+        },
+        body: JSON.stringify({
+          locationId,
+          email,
+          firstName: firstName || '',
+          customFields: [{ key: fieldKey, field_value: link || code }],
+        }),
+      });
+    } catch (err) {
+      // Best-effort: if this fails, the workflow still fires below — the
+      // merge tag will just come out blank, same as before this change.
+    }
   }
 
   try {
