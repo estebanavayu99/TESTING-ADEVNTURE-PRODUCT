@@ -112,8 +112,9 @@ if ('serviceWorker' in navigator) {
     </form>
 
     <form class="auth-form" id="formVerify" hidden>
-      <p class="auth-verify-note">Enviamos un código a <strong id="verifyEmailLabel"></strong>. Como esta es una demo sin correo real, te lo mostramos aquí mismo:</p>
-      <p class="auth-verify-code" id="verifyCodeDisplay">••••••</p>
+      <p class="auth-verify-note">Enviamos un código a <strong id="verifyEmailLabel"></strong>. Revisa tu bandeja de entrada (y spam) e ingrésalo aquí.</p>
+      <p class="auth-verify-fallback" id="verifyCodeFallback" hidden>No pudimos enviarte el correo — usa este código igual:</p>
+      <p class="auth-verify-code" id="verifyCodeDisplay" hidden>••••••</p>
       <label class="auth-field">
         <span>Código de verificación</span>
         <input type="text" name="code" id="verifyCodeInput" placeholder="123456" required inputmode="numeric" maxlength="6" autocomplete="one-time-code">
@@ -124,7 +125,7 @@ if ('serviceWorker' in navigator) {
     </form>
 
     <form class="auth-form" id="formForgotRequest" hidden>
-      <p class="auth-verify-note">Ingresa tu correo y te mostramos un código para recuperar tu contraseña (en producción llegaría a tu correo).</p>
+      <p class="auth-verify-note">Ingresa tu correo y te enviamos un código para recuperar tu contraseña.</p>
       <label class="auth-field">
         <span>Correo</span>
         <input type="email" name="email" id="forgotEmail" placeholder="tu@correo.com" required autocomplete="email">
@@ -134,8 +135,9 @@ if ('serviceWorker' in navigator) {
     </form>
 
     <form class="auth-form" id="formForgotReset" hidden>
-      <p class="auth-verify-note">Código para <strong id="forgotEmailLabel"></strong>:</p>
-      <p class="auth-verify-code" id="forgotCodeDisplay">••••••</p>
+      <p class="auth-verify-note">Enviamos un código a <strong id="forgotEmailLabel"></strong>. Revisa tu correo e ingrésalo aquí.</p>
+      <p class="auth-verify-fallback" id="forgotCodeFallback" hidden>No pudimos enviarte el correo — usa este código igual:</p>
+      <p class="auth-verify-code" id="forgotCodeDisplay" hidden>••••••</p>
       <label class="auth-field">
         <span>Código</span>
         <input type="text" id="forgotCodeInput" placeholder="123456" required inputmode="numeric" maxlength="6" autocomplete="one-time-code">

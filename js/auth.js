@@ -109,6 +109,21 @@
 
   function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
 
+  // Real send: POSTs to our Vercel serverless function, which forwards to a
+  // GoHighLevel Inbound Webhook that actually emails the code. If this fails
+  // (service down, env var missing, etc.) the caller falls back to showing
+  // the code on-screen — but only as a failure fallback, never by default,
+  // so verification is real under normal operation.
+  function sendVerificationEmail(email, code, firstName) {
+    return fetch('/api/send-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, firstName: firstName || '' }),
+    }).then((r) => {
+      if (!r.ok) throw new Error('send failed');
+    });
+  }
+
   let pendingEmail = null;
   let pendingRedirect = null;
 
@@ -122,9 +137,17 @@
     pendingEmail = email;
     pendingRedirect = redirectTo;
     document.getElementById('verifyEmailLabel').textContent = email;
-    document.getElementById('verifyCodeDisplay').textContent = code;
     document.getElementById('verifyCodeInput').value = '';
+    document.getElementById('verifyCodeFallback').hidden = true;
+    document.getElementById('verifyCodeDisplay').hidden = true;
     showForm('verify');
+
+    const firstName = (users[idx].name || '').trim().split(' ')[0];
+    sendVerificationEmail(email, code, firstName).catch(() => {
+      document.getElementById('verifyCodeFallback').hidden = false;
+      document.getElementById('verifyCodeDisplay').hidden = false;
+      document.getElementById('verifyCodeDisplay').textContent = code;
+    });
   }
 
   formVerify.addEventListener('submit', (e) => {
@@ -169,10 +192,18 @@
     saveUsers(users);
     pendingForgotEmail = email;
     document.getElementById('forgotEmailLabel').textContent = email;
-    document.getElementById('forgotCodeDisplay').textContent = code;
     document.getElementById('forgotCodeInput').value = '';
     document.getElementById('forgotNewPassword').value = '';
+    document.getElementById('forgotCodeFallback').hidden = true;
+    document.getElementById('forgotCodeDisplay').hidden = true;
     showForm('forgot-reset');
+
+    const firstName = (users[idx].name || '').trim().split(' ')[0];
+    sendVerificationEmail(email, code, firstName).catch(() => {
+      document.getElementById('forgotCodeFallback').hidden = false;
+      document.getElementById('forgotCodeDisplay').hidden = false;
+      document.getElementById('forgotCodeDisplay').textContent = code;
+    });
   }
 
   document.getElementById('forgotLink').addEventListener('click', () => {

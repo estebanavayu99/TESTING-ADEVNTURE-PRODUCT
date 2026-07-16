@@ -7,6 +7,21 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 ## Stack y arquitectura
 
 - Sitio estático, sin build step. HTML/CSS/JS planos servidos tal cual.
+- **Única pieza de backend real del sitio**: `api/send-verification.js`, una
+  función serverless de Vercel (zero-config, sin `package.json`; Vercel
+  detecta cualquier `.js` dentro de `api/` como función automáticamente).
+  Recibe `{ email, code, firstName }` desde `js/auth.js` (código de
+  verificación de cuenta y de recuperar contraseña, viajero) y hace POST a
+  la URL guardada en la env var de Vercel `GHL_VERIFY_WEBHOOK_URL` — el
+  trigger "Inbound Webhook" de un workflow en GoHighLevel que arma y manda
+  el correo real (asunto/cuerpo/marca viven en ese workflow de GHL, no
+  acá). Si el POST falla (servicio caído, env var no configurada, etc.),
+  `js/auth.js` cae de vuelta a mostrar el código en pantalla como
+  fallback — **nunca por defecto**, solo cuando el envío real falla, para
+  que la verificación siga siendo real en el flujo normal. `js/auth-empresa.js`
+  todavía NO tiene este cambio (sigue mostrando el código en pantalla
+  siempre) — replicar el mismo patrón ahí si se pide lo mismo para el
+  login de empresa.
 - `<script>` compartidos entre páginas; funciones helper (fmtMoney, fmtDate,
   etc.) están duplicadas literalmente en cada archivo que las necesita — es
   el patrón establecido, no "arreglar" moviéndolas a un módulo compartido

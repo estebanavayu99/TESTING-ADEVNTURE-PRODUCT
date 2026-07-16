@@ -52,6 +52,14 @@
   border-radius: 14px;
   padding: 14px 10px 14px 20px;
 }
+.auth-verify-code[hidden] { display: none; }
+.auth-verify-fallback {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--deep-red);
+}
+.auth-verify-fallback[hidden] { display: none; }
 
 .auth-form { display: flex; flex-direction: column; gap: 18px; }
 .auth-form[hidden] { display: none; }
