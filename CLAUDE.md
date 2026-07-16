@@ -11,11 +11,24 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   función serverless de Vercel (zero-config, sin `package.json`; Vercel
   detecta cualquier `.js` dentro de `api/` como función automáticamente).
   Recibe `{ email, code, firstName }` desde `js/auth.js` (código de
-  verificación de cuenta y de recuperar contraseña, viajero) y hace POST a
-  la URL guardada en la env var de Vercel `GHL_VERIFY_WEBHOOK_URL` — el
-  trigger "Inbound Webhook" de un workflow en GoHighLevel que arma y manda
-  el correo real (asunto/cuerpo/marca viven en ese workflow de GHL, no
-  acá). Si el POST falla (servicio caído, env var no configurada, etc.),
+  verificación de cuenta y de recuperar contraseña, viajero) y llama a la
+  **API estándar de contactos de GoHighLevel** (`POST
+  /contacts/upsert`, gratis en cualquier plan) para guardar el código en
+  un campo personalizado y agregar un tag — **a propósito no usa el
+  trigger "Inbound Webhook"**, que es un Premium Trigger de GHL con costo
+  de $0.01 por ejecución pasadas las primeras 100 gratis. El workflow en
+  GHL que arma y manda el correo real se dispara con el trigger normal
+  (no premium) **"Contact Tag" → Tag Added**, y su Email step usa el
+  merge tag del campo personalizado para mostrar el código. Env vars en
+  Vercel: `GHL_API_TOKEN` (token de una Private Integration con scope de
+  contactos), `GHL_LOCATION_ID`, `GHL_VERIFY_FIELD_KEY` (key exacta del
+  campo personalizado, la genera GHL al crearlo) y `GHL_VERIFY_TAG` (el
+  tag que dispara el workflow). Importante en GHL: activar "Allow contact
+  to re-enter workflow" y agregar un paso que quite el tag al final del
+  workflow, para que un mismo contacto pueda volver a disparar el envío
+  la próxima vez que pida un código (reenviar código, o un segundo
+  registro/recuperación). Si el POST falla (servicio caído, env var no
+  configurada, etc.),
   `js/auth.js` cae de vuelta a mostrar el código en pantalla como
   fallback — **nunca por defecto**, solo cuando el envío real falla, para
   que la verificación siga siendo real en el flujo normal. `js/auth-empresa.js`
