@@ -10,34 +10,35 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - **Única pieza de backend real del sitio**: `api/send-verification.js`, una
   función serverless de Vercel (zero-config, sin `package.json`; Vercel
   detecta cualquier `.js` dentro de `api/` como función automáticamente).
-  Recibe `{ email, firstName, code? , link? }` desde `js/auth.js` y hace
-  POST a la URL guardada en la env var de Vercel `GHL_VERIFY_WEBHOOK_URL`
-  — el trigger **"Inbound Webhook"** de un workflow en GoHighLevel que
-  arma y manda el correo real (asunto/cuerpo/marca viven en ese workflow
-  de GHL, no acá). Este trigger es un **Premium Trigger de GHL con costo
-  de $0.01 por ejecución** pasadas las primeras 100 gratis — se evaluó
-  primero una alternativa gratis (API de contactos + trigger "Contact
-  Tag" → Tag Added, ver commits `9c66212`/`a907c72`) y quedó funcionando,
-  pero el usuario decidió explícitamente (2026-07-16) volver a Inbound
-  Webhook a pesar del costo. El workflow en GHL sigue existiendo con el
-  trigger "Contact Tag" como alternativa ya probada por si se quiere
-  volver a la gratuita más adelante — solo hay que cambiar el trigger del
-  workflow de vuelta a "Contact Tag" y este archivo a usar
-  `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY`/`GHL_VERIFY_TAG`
-  en vez de `GHL_VERIFY_WEBHOOK_URL` (esas 4 env vars quedaron guardadas
-  en Vercel sin usar, por si acaso).
-  **El merge tag del correo NO sale del payload del webhook**: el
-  "Fetch sample requests"/Mapping Reference del trigger Inbound Webhook
-  resultó poco confiable en la práctica (seguía sin encontrar samples
-  pese a confirmar por los logs de Vercel que GHL respondía 200 a cada
-  POST). Para no depender de esa UI, `api/send-verification.js` además
-  hace un `POST /contacts/upsert` (best-effort, no bloqueante) con
-  `GHL_API_TOKEN`/`GHL_LOCATION_ID`/`GHL_VERIFY_FIELD_KEY` — los mismos 3
-  que quedaron de la alternativa "Contact Tag" — para dejar el
-  código/link en el custom field del contacto. El email en GHL debe usar
-  el merge tag `{{contact.verification_code}}` (el field key exacto),
-  que sí es confiable siempre, en vez de intentar mapear el payload
-  crudo del Inbound Webhook.
+  Recibe `{ email, firstName, code? , link? }` desde `js/auth.js` y llama a
+  la **API estándar de contactos de GoHighLevel** (`POST
+  /contacts/upsert`, gratis en cualquier plan) para guardar el código/link
+  en un campo personalizado y agregar un tag. El workflow en GHL se
+  dispara con el trigger normal (no premium) **"Contact Tag" → Tag
+  Added**, y su Email step usa el merge tag del campo personalizado
+  (`{{contact.verification_code}}`) para mostrar el código/link.
+  Env vars en Vercel: `GHL_API_TOKEN` (token de una Private Integration
+  con scope de contactos), `GHL_LOCATION_ID`, `GHL_VERIFY_FIELD_KEY` (key
+  exacta del campo personalizado) y `GHL_VERIFY_TAG` (el tag que dispara
+  el workflow). Importante en GHL: activar "Allow contact to re-enter
+  workflow" y agregar un paso "Remove Tag" al final del workflow, para
+  que un mismo contacto pueda volver a disparar el envío la próxima vez
+  que pida un código/link (reenviar correo, o un segundo
+  registro/recuperación).
+  **Por qué NO usa el trigger "Inbound Webhook"**: se intentó primero
+  (es más directo), pero es un Premium Trigger de GHL con costo de $0.01
+  por ejecución pasadas las primeras 100 gratis, y en la cuenta del
+  usuario quedó **permanentemente bloqueado** — GHL nunca dejó guardar
+  el trigger porque exige un "Mapping Reference" (una muestra capturada
+  del payload) para poder guardarlo, y esa muestra nunca se capturó pese
+  a decenas de intentos reales confirmados con 200 OK en los logs de
+  Vercel. Después de ~10 intentos con distintas URLs de webhook se
+  descartó por completo y se volvió a "Contact Tag", que sí funciona sin
+  bloqueos. Si en el futuro se resuelve lo que sea que bloquea Inbound
+  Webhook en esa cuenta (posiblemente facturación/premium features sin
+  habilitar), el cambio de vuelta es simple: este archivo a hacer POST a
+  `GHL_VERIFY_WEBHOOK_URL` en vez de llamar a `/contacts/upsert` (esa env
+  var quedó guardada en Vercel sin usar, por si acaso).
   **Verificación de cuenta = magic link, no código**: al crear una
   cuenta, `js/auth.js` genera un `verificationToken` random (no un
   código de 6 dígitos) y manda por correo un link
