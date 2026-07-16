@@ -137,7 +137,12 @@
     const horariosElegidos = [];
     for (const act of actividades) {
       const disp = fecha ? verificarDisponibilidad(act.id, fecha, personas) : { disponible: true, horarios_disponibles: (act.horarios || []).map((h) => ({ hora: h, cupos: 99 })) };
-      if (!disp.disponible) { tieneCupo = false; break; }
+      // Bug real: si la actividad no trae horarios (negocio real sin horario
+      // cargado aún), horarios_disponibles queda vacío y disp.disponible=true
+      // por el default de arriba — sin este chequeo, el ".hora" de abajo
+      // revienta con TypeError y tira abajo todo el combo en vez de marcarlo
+      // simplemente como sin cupo (mismo criterio que ya usa armarPlanMultiDia).
+      if (!disp.disponible || !disp.horarios_disponibles.length) { tieneCupo = false; break; }
       horariosElegidos.push(disp.horarios_disponibles[0].hora);
     }
 

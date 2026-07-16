@@ -251,7 +251,7 @@ reenganche, explorar, clima dual, paquete explícito) siguen correctos.
 El usuario pidió una pasada libre para arreglar y mejorar todo lo posible
 del bot (sin tocar código del sitio real, eso es otra sesión). Probando
 sistemáticamente cada quick-reply y variación de mensaje del preview
-aparecieron 5 bugs reales, todos corregidos y verificados con Playwright:
+aparecieron 8 bugs reales, todos corregidos y verificados con Playwright:
 
 1. **Precio total mal etiquetado con 2+ personas**: `precio_total` (ya
    multiplicado por `personas`) se mostraba con la etiqueta "por persona" —
@@ -298,11 +298,36 @@ aparecieron 5 bugs reales, todos corregidos y verificados con Playwright:
    `fraseDivergencia()` en `plantillas.js` ya se auto-desactiva cuando el
    combo no trae las 2 categorías, así que no sale un texto roto tipo
    "empieza con X, cierra con Y" mostrando solo 1 actividad.
+7. **`armarCombo` reventaba si una actividad no tenía horarios**: sin
+   `fecha`, el default sintético de `verificarDisponibilidad` arma
+   `horarios_disponibles` a partir de `act.horarios` — si ese arreglo
+   viene vacío (negocio real sin horario cargado todavía, caso plausible
+   con datos reales de negocios), `disp.horarios_disponibles[0].hora`
+   tiraba un `TypeError` sin capturar y tumbaba toda la generación del
+   combo. `armarPlanMultiDia` ya se protegía de este mismo caso con un
+   ternario; `armarCombo` no. Ahora, sin horarios disponibles, la
+   actividad se marca simplemente como sin cupo (`tiene_cupo: false`,
+   mismo criterio que ya usa el filtro duro de `rankearCombos`) en vez de
+   crashear.
+8. **`combo_id.split('-')` podía reconstruir IDs corruptos**: `armarCombo`
+   arma `combo_id` uniendo los IDs de actividades con `'-'`
+   (`actividades.map(a => a.id).join('-')`), y 3 lugares de `motor.js`
+   (`sugerirRelacionados`, el manejo de "sácala", y de "¿dónde nos
+   juntamos?") reconstruían esos IDs con `.split('-')` a partir de lo
+   guardado en `perfil.carrito`. Hoy no se dispara porque los IDs actuales
+   (`a11`, `real_000042`) nunca traen guion, pero `businesses.id` en
+   Supabase es `text` libre — un negocio real con un ID que sí tenga
+   guion (UUID, o cualquier ID real con guion) habría reconstruido
+   fragmentos corruptos en silencio, rompiendo esas 3 funciones sin
+   ningún error visible. Se guarda ahora el arreglo real de IDs
+   (`perfil.carrito[].ids`) al armar el carrito, y los 3 lugares lo usan
+   directo (con fallback a `.split('-')` solo por compatibilidad con
+   sesiones ya guardadas en localStorage antes de este fix).
 
 Además se restructuró el flujo por defecto (ver sección de arriba: Darwin
 ahora recomienda 1 sola actividad primero, según expertise, y ofrece
 combinar en vez de imponer un combo de entrada). Regresión completa sin
-cambios tras los 5 fixes: 11/11 algoritmos + todos los escenarios previos.
+cambios tras los 8 fixes: 11/11 algoritmos + todos los escenarios previos.
 
 ## Orden de la información: precio al final, no al principio
 

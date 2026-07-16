@@ -488,7 +488,7 @@
   function sugerirRelacionados(D, perfil) {
     const ultimoCarrito = perfil.carrito[perfil.carrito.length - 1];
     if (!ultimoCarrito) return null;
-    const idsCombo = ultimoCarrito.combo_id.split('-');
+    const idsCombo = ultimoCarrito.ids || ultimoCarrito.combo_id.split('-');
     const base = D.tools.detalleActividad(idsCombo[0]);
     if (!base) return null;
 
@@ -554,7 +554,8 @@
     // texto, así que esto corre pase o no haya categorías en el mensaje.
     let categoriasDescarte = categorias;
     if (descarte && perfil.carrito.length) {
-      const idsDescartados = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const ultimoDelCarrito = perfil.carrito[perfil.carrito.length - 1];
+      const idsDescartados = ultimoDelCarrito.ids || ultimoDelCarrito.combo_id.split('-');
       perfil.descartados = [...new Set([...(perfil.descartados || []), ...idsDescartados])];
       if (!categoriasDescarte.length) {
         // Si el mensaje no nombra una categoría ("sácala" a secas), se
@@ -610,7 +611,8 @@
     } else if (perfil.carrito.length && !categorias.length && señales.includes('logistica')) {
       // Mismo bug con "¿Dónde nos juntamos?" — responde con el punto de
       // encuentro real de las actividades del combo actual.
-      const idsCombo = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const ultimoDelCarrito = perfil.carrito[perfil.carrito.length - 1];
+      const idsCombo = ultimoDelCarrito.ids || ultimoDelCarrito.combo_id.split('-');
       const actividadesCombo = idsCombo.map((id) => D.tools.detalleActividad(id)).filter(Boolean);
       texto = D.plantillas.respuestaLogistica(actividadesCombo);
     } else if (pideRelacionados(textoUsuario)) {
@@ -667,6 +669,9 @@
         debug.comboCompleto = resultado.comboElegido;
         perfil.carrito = [{
           combo_id: resultado.comboElegido.combo_id,
+          // ids reales (no reconstruidos con combo_id.split('-')): un id de
+          // negocio real con guion (ej. UUID) rompería ese split en silencio.
+          ids: resultado.comboElegido.actividades.map((a) => a.id),
           precio: resultado.comboElegido.precio_total,
           precio_por_persona: resultado.comboElegido.precio_por_persona,
           personas: resultado.comboElegido.personas,
