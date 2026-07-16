@@ -311,7 +311,20 @@
       // secuencia que pidió cada persona.
       const primera = candidatos.find((c) => c.categoria === categoriasObjetivo[0]);
       const segunda = candidatos.find((c) => c.categoria === categoriasObjetivo[1]);
-      if (primera && segunda) combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+      if (primera && segunda) {
+        combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+      } else if (primera || segunda) {
+        // Bug real: si el gusto de UNA de las dos personas no tiene ningún
+        // candidato real (sin actividades de esa categoría, o quedaron
+        // todas filtradas por restricciones/descartados), esto devolvía
+        // combosCompletos vacío y el motor terminaba respondiendo "no
+        // encontré nada" — pese a tener una opción real y buena para la
+        // otra persona. Mejor ofrecer esa (fraseDivergencia en plantillas.js
+        // ya se auto-desactiva cuando el combo no trae las 2 categorías,
+        // así que no sale un texto roto tipo "empieza con X, cierra con Y"
+        // mostrando solo 1 actividad).
+        combosCompletos.push(D.tools.armarCombo([(primera || segunda).id], opciones));
+      }
     } else if (explorar) {
       // Comparar de verdad = actividades distintas entre si, no "A" vs
       // "A+B" (una opcion no puede contener a la otra adentro, si no no
