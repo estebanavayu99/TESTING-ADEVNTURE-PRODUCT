@@ -7,56 +7,58 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 ## Stack y arquitectura
 
 - Sitio estático, sin build step. HTML/CSS/JS planos servidos tal cual.
-- **Única pieza de backend real del sitio**: `api/send-verification.js`, una
-  función serverless de Vercel (zero-config, sin `package.json`; Vercel
-  detecta cualquier `.js` dentro de `api/` como función automáticamente).
-  Recibe `{ email, firstName, code? , link? }` desde `js/auth.js` y llama a
-  la **API estándar de contactos de GoHighLevel** (`POST
-  /contacts/upsert`, gratis en cualquier plan) para guardar el código/link
-  en un campo personalizado y agregar un tag. El workflow en GHL se
-  dispara con el trigger normal (no premium) **"Contact Tag" → Tag
-  Added**, y su Email step usa el merge tag del campo personalizado
-  (`{{contact.verification_code}}`) para mostrar el código/link.
-  Env vars en Vercel: `GHL_API_TOKEN` (token de una Private Integration
-  con scope de contactos), `GHL_LOCATION_ID`, `GHL_VERIFY_FIELD_KEY` (key
-  exacta del campo personalizado) y `GHL_VERIFY_TAG` (el tag que dispara
-  el workflow). Importante en GHL: activar "Allow contact to re-enter
-  workflow" y agregar un paso "Remove Tag" al final del workflow, para
-  que un mismo contacto pueda volver a disparar el envío la próxima vez
-  que pida un código/link (reenviar correo, o un segundo
-  registro/recuperación).
-  **Por qué NO usa el trigger "Inbound Webhook"**: se intentó primero
-  (es más directo), pero es un Premium Trigger de GHL con costo de $0.01
-  por ejecución pasadas las primeras 100 gratis, y en la cuenta del
-  usuario quedó **permanentemente bloqueado** — GHL nunca dejó guardar
-  el trigger porque exige un "Mapping Reference" (una muestra capturada
-  del payload) para poder guardarlo, y esa muestra nunca se capturó pese
-  a decenas de intentos reales confirmados con 200 OK en los logs de
-  Vercel. Después de ~10 intentos con distintas URLs de webhook se
-  descartó por completo y se volvió a "Contact Tag", que sí funciona sin
-  bloqueos. Si en el futuro se resuelve lo que sea que bloquea Inbound
-  Webhook en esa cuenta (posiblemente facturación/premium features sin
-  habilitar), el cambio de vuelta es simple: este archivo a hacer POST a
-  `GHL_VERIFY_WEBHOOK_URL` en vez de llamar a `/contacts/upsert` (esa env
-  var quedó guardada en Vercel sin usar, por si acaso).
+- **Backend real del sitio, dos funciones serverless de Vercel**
+  (zero-config, sin `package.json`; Vercel detecta cualquier `.js` dentro
+  de `api/` como función automáticamente):
+  - `api/send-verification.js`: recibe `{ email, firstName, code?, link? }`
+    desde `js/auth.js` y manda el correo real **directo con Resend**
+    (`RESEND_API_KEY` en Vercel, dominio pickmap.cl ya verificado ahí —
+    `from: contacto@pickmap.cl`). El HTML del correo (con el botón,
+    branding Pick**Map**, etc.) vive **en este archivo**, no en ningún
+    workflow externo — se eligió Resend específicamente porque GHL
+    (Quick Compose) no dejaba estilizar el botón de verificación por más
+    HTML/CSS que se probara (ver historial de intentos fallidos:
+    `!important`, `<span>` anidado, `<font color>`, tabla con `<td>` de
+    fondo — todos perdían el color/subrayado del `<a>`); con Resend se
+    manda el HTML tal cual, sin ningún editor de por medio que lo
+    reescriba.
+  - `api/create-ghl-contact.js`: crea/actualiza el contacto en GHL
+    (`GHL_API_TOKEN`, `GHL_LOCATION_ID`, mismo patrón de API que la
+    alternativa "Contact Tag" de antes) — pero se llama **solo después de
+    que la verificación fue real** (desde `js/auth.js`, en el bloque que
+    procesa `?verify=<token>`), nunca en el momento del signup. Decisión
+    explícita del usuario (2026-07-16): no quiere que cada intento de
+    registro (incluidas pruebas) ensucie el CRM de GHL con contactos sin
+    verificar — GHL debe reflejar solo usuarios reales y confirmados.
+  - GHL ya no interviene para nada en el envío del correo de verificación
+    de cuenta. El workflow de GHL con trigger "Contact Tag" (de la
+    alternativa gratis a Inbound Webhook, ver commits `9c66212`/`a907c72`)
+    y el trigger "Inbound Webhook" (que quedó permanentemente bloqueado
+    en la cuenta del usuario por el "Mapping Reference" que nunca capturó
+    una muestra pese a ~10 intentos con 200 OK confirmados en los logs de
+    Vercel) quedan ambos sin usar — el segundo especialmente no vale la
+    pena reintentar. `GHL_VERIFY_WEBHOOK_URL`/`GHL_VERIFY_FIELD_KEY`/
+    `GHL_VERIFY_TAG` quedaron en Vercel sin uso, por si acaso.
   **Verificación de cuenta = magic link, no código**: al crear una
   cuenta, `js/auth.js` genera un `verificationToken` random (no un
   código de 6 dígitos) y manda por correo un link
   `login.html?verify=<token>`. Al abrirlo, el código al inicio del mismo
   `js/auth.js` (antes del chequeo de "ya hay sesión activa") busca el
   token en `pickmap_users`, marca `verified: true`, loguea a la persona
-  directo (`setSession` + redirect a onboarding/dashboard) — nunca la
+  directo (`setSession` + redirect a onboarding/dashboard), dispara
+  `createGhlContact(user)` (fire-and-forget, no bloqueante) — nunca la
   manda de vuelta a loguearse a mano. La pantalla de espera
   (`#formVerify` en `login.html`, ya no es un `<form>`, es un `<div>`
   sin input) solo dice "revisa tu correo", con botones "Reenviar correo"
   y "Volver a iniciar sesión". Recuperar contraseña (`startForgotReset`)
-  sigue siendo con código de 6 dígitos ingresado a mano (no se tocó) —
-  ambos flujos comparten `sendVerificationEmail(email, firstName, extra)`,
-  donde `extra` es `{ link }` o `{ code }` según cuál sea. Si el envío
-  real falla, el fallback ya no muestra un código en pantalla para la
-  verificación de cuenta — muestra el link de confirmación como texto
-  clickeable (`#verifyLinkFallback`); recuperar contraseña sigue
-  mostrando el código como fallback, igual que antes.
+  sigue siendo con código de 6 dígitos ingresado a mano (no se tocó, y no
+  crea contacto en GHL) — ambos flujos comparten
+  `sendVerificationEmail(email, firstName, extra)`, donde `extra` es
+  `{ link }` o `{ code }` según cuál sea. Si el envío real falla, el
+  fallback ya no muestra un código en pantalla para la verificación de
+  cuenta — muestra el link de confirmación como texto clickeable
+  (`#verifyLinkFallback`); recuperar contraseña sigue mostrando el
+  código como fallback, igual que antes.
   `js/auth-empresa.js` todavía NO tiene ninguno de estos cambios (sigue
   mostrando el código en pantalla siempre, sin envío real) — replicar el
   mismo patrón ahí si se pide lo mismo para el login de empresa.

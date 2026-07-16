@@ -59,6 +59,17 @@
     return localStorage.getItem(SESSION_KEY);
   }
 
+  // GHL only gets a contact for real, confirmed users — never on a bare
+  // signup attempt. Fire-and-forget, non-blocking: this is just a CRM sync
+  // side effect, it should never hold up the redirect.
+  function createGhlContact(user) {
+    fetch('/api/create-ghl-contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, name: user.name, phone: user.phone || '' }),
+    }).catch(() => {});
+  }
+
   // Magic-link confirmation: ?verify=<token> in the URL (from the email
   // link) confirms the account and logs the person in directly, no need
   // to come back and log in manually afterwards.
@@ -72,6 +83,7 @@
       delete users[idx].verificationToken;
       saveUsers(users);
       setSession(users[idx].email);
+      createGhlContact(users[idx]);
       window.location.href = redirectTo;
       return;
     }
