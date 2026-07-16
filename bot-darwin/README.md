@@ -288,6 +288,16 @@ aparecieron 5 bugs reales, todos corregidos y verificados con Playwright:
    rechaza. Se agregó un lookbehind negativo (`(?<!no )me gusta`) para el
    caso de negación más común, sin tocar frases reales como "me gusta
    esta" o "esa me gusta".
+6. **D3 (gustos divergentes) fallaba si una de las dos categorías no
+   tenía candidatos reales**: si el gusto de una persona quedaba sin
+   ningún candidato (sin actividades de esa categoría en el catálogo, o
+   todas filtradas por restricciones/descartados), `proponerCombos`
+   devolvía `combosCompletos` vacío y el motor respondía "no encontré
+   nada", pese a tener una opción real y buena para la otra persona.
+   Ahora cae de vuelta a ofrecer esa actividad disponible;
+   `fraseDivergencia()` en `plantillas.js` ya se auto-desactiva cuando el
+   combo no trae las 2 categorías, así que no sale un texto roto tipo
+   "empieza con X, cierra con Y" mostrando solo 1 actividad.
 
 Además se restructuró el flujo por defecto (ver sección de arriba: Darwin
 ahora recomienda 1 sola actividad primero, según expertise, y ofrece
