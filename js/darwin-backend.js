@@ -95,9 +95,21 @@
       conteoPorBucket.aventura = (conteoPorBucket.aventura || 0) + 1;
     }
 
-    perfil.intereses = Object.entries(conteoPorBucket).map(([categoria, n]) => ({
-      categoria, afinidad: Math.min(0.95, 0.4 + 0.15 * n),
-    }));
+    // Bug real: esto sobreescribía perfil.intereses ENTERO con solo lo
+    // derivado de onboarding — hoy es inofensivo (nada más escribe en
+    // darwin_preferences.intereses todavía), pero el día que se conecte
+    // cualquier otra señal real (chat/reserva/reseña — infraestructura ya
+    // documentada en preference_signals), cada recálculo del dashboard
+    // borraría en silencio lo aprendido por esas señales. Ahora se combina:
+    // onboarding aporta un piso por bucket declarado sin bajar una afinidad
+    // ya más alta, y sin borrar categorías aprendidas por fuera de onboarding.
+    const interesesPrevios = new Map((perfil.intereses || []).map((i) => [i.categoria, i.afinidad]));
+    for (const [categoria, n] of Object.entries(conteoPorBucket)) {
+      const desdeOnboarding = Math.min(0.95, 0.4 + 0.15 * n);
+      const previa = interesesPrevios.has(categoria) ? interesesPrevios.get(categoria) : -Infinity;
+      interesesPrevios.set(categoria, Math.max(desdeOnboarding, previa));
+    }
+    perfil.intereses = [...interesesPrevios.entries()].map(([categoria, afinidad]) => ({ categoria, afinidad }));
     perfil.arquetipos = D.motor._internas.calcularArquetipos(perfil);
 
     perfil.grupo.tipo = (profile.company || [])[0] || null;

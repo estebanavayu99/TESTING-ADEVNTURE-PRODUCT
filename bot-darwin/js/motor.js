@@ -196,6 +196,27 @@
     return null;
   }
 
+  // Bug real: nada en el chat extraía el tamaño del grupo del texto —
+  // perfil.grupo.adultos solo se poblaba desde el onboarding real
+  // (darwin-backend.js), así que en el chat un cliente que escribía "somos
+  // 4"/"para 2 personas" seguía tratado como 1 sola persona en todo el
+  // cálculo de precio (precio_total = precio_por_persona * personas).
+  const PATRON_GRUPO_PAREJA = /\ben pareja\b|con mi (pareja|polola|pololo|marido|esposa|novio|novia)/;
+  const PATRON_GRUPO_NINOS_SIN_NUMERO = /con (?:mis |los )?ni[nñ]os\b|en familia\b/;
+  function extraerGrupo(texto) {
+    const t = sinAcentos(texto);
+    let adultos = null;
+    if (PATRON_GRUPO_PAREJA.test(t)) adultos = 2;
+    const mPersonas = /(?:somos|seremos|vamos)\s+(\d{1,2})\b/.exec(t)
+      || /para\s+(\d{1,2})\s+personas\b/.exec(t)
+      || /(\d{1,2})\s+personas\b/.exec(t)
+      || /(\d{1,2})\s+adultos\b/.exec(t);
+    if (mPersonas) adultos = Number(mPersonas[1]);
+    const mNinos = /(\d{1,2})\s+(?:ni[nñ]os|hijos)\b/.exec(t);
+    const ninos = mNinos ? Number(mNinos[1]) : (PATRON_GRUPO_NINOS_SIN_NUMERO.test(t) ? 1 : null);
+    return { adultos, ninos };
+  }
+
   function perfilPorDefecto() {
     return {
       arquetipos: [], estado_emocional: null, destino: null, fechas: null,
@@ -321,7 +342,19 @@
       const primera = candidatos.find((c) => c.categoria === categoriasObjetivo[0]);
       const segunda = candidatos.find((c) => c.categoria === categoriasObjetivo[1]);
       if (primera && segunda) {
+        // Bug real: si la actividad mencionada primero es nocturna (ej.
+        // "fiesta" a las 21:00) y la segunda es diurna, ponerlas en ESE
+        // orden literal (mención en el texto) hacía que el combo terminara
+        // después de medianoche y el filtro de horario de cierre lo
+        // descartaba entero — "no encontré nada" para una combinación que
+        // sí es armable si simplemente se invierte el orden. Se prueban
+        // ambos órdenes como candidatos separados y se deja que el filtro
+        // de cupo/cierre y el ranking real elijan cuál(es) sobreviven —
+        // fraseDivergencia (plantillas.js) ya describe el orden REAL de las
+        // actividades del combo ganador, no el orden de mención, así que el
+        // texto nunca contradice el itinerario mostrado.
         combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+        combosCompletos.push(D.tools.armarCombo([segunda.id, primera.id], opciones));
       } else if (primera || segunda) {
         // Bug real: si el gusto de UNA de las dos personas no tiene ningún
         // candidato real (sin actividades de esa categoría, o quedaron
@@ -547,10 +580,13 @@
     const fecha = extraerFecha(textoUsuario);
     const divergencia = detectarDivergencia(textoUsuario, categorias);
     const restriccionesDetectadas = detectarRestricciones(textoUsuario);
+    const grupo = extraerGrupo(textoUsuario);
 
     for (const c of categorias) if (!perfil.intereses.find((i) => i.categoria === c)) perfil.intereses.push({ categoria: c, afinidad: 0 });
     if (presupuesto) perfil.presupuesto.banda = [Math.round(presupuesto * 0.8), Math.round(presupuesto * 1.2)];
     if (fecha) perfil.fechas = fecha;
+    if (grupo.adultos) perfil.grupo.adultos = grupo.adultos;
+    if (grupo.ninos) perfil.grupo.ninos = grupo.ninos;
     if (ocasion) perfil.ocasion_especial = ocasion;
     if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
     if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
@@ -733,6 +769,6 @@
     // pasar por la detección de texto de procesarMensaje — mismo motor,
     // sin necesitar un mensaje de chat escrito.
     proponerCombos, proponerPlanMultiDia,
-    _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo },
+    _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo, extraerGrupo },
   };
 })();
