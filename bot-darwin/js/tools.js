@@ -163,10 +163,19 @@
       llegaDespuesCierre = cursorMin > horaCierreMin;
     }
 
-    const conRiesgoClimatico = actividades.find((a) => a.exterior && !a.indoor_alt);
+    // Bug real: con 2+ actividades expuestas al clima en el mismo combo,
+    // esto solo buscaba reemplazo para la PRIMERA — el combo quedaba con
+    // plan_b truthy (como si estuviera 100% cubierto) aunque la segunda
+    // actividad expuesta se quedara sin alternativa real. climaEsIncompatible
+    // (algoritmos.js) confía en plan_b como "ya tiene cobertura" para no
+    // excluir el combo con clima severo, así que un plan_b parcial dejaba
+    // pasar un combo realmente no cubierto. Ahora solo se arma plan_b si
+    // se encuentra reemplazo para TODAS las actividades en riesgo (hoy el
+    // caso típico sigue siendo 1 sola, sin cambio de comportamiento ahí).
+    const actividadesEnRiesgo = actividades.filter((a) => a.exterior && !a.indoor_alt);
     let planB = null;
-    if (conRiesgoClimatico) {
-      const alt = buscarAlternativaIndoor(conRiesgoClimatico);
+    if (actividadesEnRiesgo.length === 1) {
+      const alt = buscarAlternativaIndoor(actividadesEnRiesgo[0]);
       if (alt) planB = { gatillo: 'lluvia', reemplazo: alt.nombre };
     }
 

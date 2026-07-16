@@ -230,7 +230,14 @@
     if (!banda) return 0.5;
     const objetivo = Array.isArray(banda) ? (banda[0] + banda[1]) / 2 : banda;
     if (!objetivo) return 0.5;
-    return clamp(1 - Math.abs(combo.precio_total - objetivo) / objetivo, 0, 1);
+    // Bug real: la banda de presupuesto es SIEMPRE por persona (tanto la que
+    // arma extraerPresupuesto en motor.js como BUDGET_A_BANDA en
+    // darwin-backend.js), pero esto comparaba contra precio_total —ya
+    // multiplicado por personas en armarCombo—, así que con 2+ personas un
+    // combo exactamente en presupuesto por cabeza se veía carísimo y perdía
+    // puntos sin motivo real.
+    const precioComparar = combo.precio_por_persona != null ? combo.precio_por_persona : combo.precio_total;
+    return clamp(1 - Math.abs(precioComparar - objetivo) / objetivo, 0, 1);
   }
 
   function fEnergia(combo, perfil) {
