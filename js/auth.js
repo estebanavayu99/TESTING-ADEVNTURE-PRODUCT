@@ -238,13 +238,16 @@
   formSignup.addEventListener('submit', (e) => {
     e.preventDefault();
     const data = new FormData(formSignup);
-    const name = data.get('name').trim();
+    const firstName = data.get('firstName').trim();
+    const lastName = data.get('lastName').trim();
+    const name = `${firstName} ${lastName}`.trim();
     const rut = formatRut(data.get('rut'));
     const email = data.get('email').trim().toLowerCase();
+    const phone = data.get('phone').trim();
     const password = data.get('password');
 
-    if (!name || !email || password.length < 4) {
-      showError('Revisa los datos: el nombre no puede estar vacío y la contraseña necesita al menos 4 caracteres.');
+    if (!firstName || !lastName || !email || password.length < 4) {
+      showError('Revisa los datos: el nombre y el apellido no pueden estar vacíos y la contraseña necesita al menos 4 caracteres.');
       return;
     }
     if (!isValidRut(rut)) {
@@ -258,7 +261,7 @@
       return;
     }
 
-    users.push({ name, rut, email, password, onboarded: false, verified: false });
+    users.push({ name, rut, email, phone, password, onboarded: false, verified: false });
     saveUsers(users);
     startVerification(email, 'onboarding.html');
   });

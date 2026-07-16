@@ -16,6 +16,18 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   - empresa: `pickmap_business_users`, `pickmap_business_session`,
     `pickmap_business_reservations_${email}`, `pickmap_business_reviews_${email}`,
     `pickmap_business_referrals_${email}`.
+- **Esquema de datos del usuario viajero** (`pickmap_users`, cada objeto):
+  `name` (nombre + apellido concatenados en un solo string — el resto del
+  código, ej. saludos en dashboard/onboarding/invita, hace
+  `.trim().split(' ')[0]` para sacar solo el primer nombre, así que
+  `name` SIEMPRE debe llevar al menos dos palabras), `rut`, `email`,
+  `phone` (opcional), `password`. El signup (`login.html` → `js/auth.js`)
+  y el form de "Mi cuenta" (`dashboard.html` → `js/dashboard.js`, con
+  inputs separados `settingsFirstName`/`settingsLastName`) usan campos
+  separados de Nombre/Apellido en la UI pero los combinan a `name` al
+  guardar — si agregas otro punto de entrada de datos del usuario, seguir
+  el mismo patrón (campos separados en el form, concatenados al guardar)
+  en vez de agregar un `firstName`/`lastName` real al objeto.
 - Datos demo del panel de empresa se generan con un LCG (`seedRandom(seed)`)
   sembrado por `20240711 + hashStr(bizEmail)` (u otros offsets), para que
   cada cuenta tenga datos distintos pero estables entre recargas.

@@ -85,7 +85,11 @@ if ('serviceWorker' in navigator) {
     <form class="auth-form" id="formSignup" hidden>
       <label class="auth-field">
         <span>Nombre</span>
-        <input type="text" name="name" placeholder="Cami" required autocomplete="name">
+        <input type="text" name="firstName" placeholder="Cami" required autocomplete="given-name">
+      </label>
+      <label class="auth-field">
+        <span>Apellido</span>
+        <input type="text" name="lastName" placeholder="Soto" required autocomplete="family-name">
       </label>
       <label class="auth-field">
         <span>RUT</span>
@@ -94,6 +98,10 @@ if ('serviceWorker' in navigator) {
       <label class="auth-field">
         <span>Correo</span>
         <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
+      </label>
+      <label class="auth-field">
+        <span>Teléfono</span>
+        <input type="tel" name="phone" placeholder="+56 9 1234 5678" autocomplete="tel">
       </label>
       <label class="auth-field">
         <span>Contraseña</span>
