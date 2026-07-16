@@ -232,7 +232,16 @@
   }
 
   function calcularArquetipos(perfil) {
-    const ordenado = [...perfil.intereses].sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
+    // Bug real: sin este filtro, una categoría con afinidad NEGATIVA (ej.
+    // el cliente descartó "fiesta" y calcularConfianza le asignó afinidad
+    // negativa por el evento 'descarte') podía terminar definiendo el
+    // arquetipo/tono de Darwin si era la única con datos — Darwin saludaba
+    // con el tono de algo que el cliente acaba de rechazar. Mismo criterio
+    // que ya usa calcularConfianza (algoritmos.js) para "fuerza": solo
+    // afinidades positivas cuentan como señal real de gusto.
+    const ordenado = [...perfil.intereses]
+      .filter((i) => (i.afinidad || 0) > 0)
+      .sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
     const arquetipos = [];
     for (const i of ordenado) {
       const arq = CATEGORIA_A_ARQUETIPO[i.categoria];
@@ -597,6 +606,22 @@
     if (perfil.etapa_embudo === 'post_venta') {
       texto = '¡Que lo disfrutes muchísimo! Cuando vuelvas, cuéntame cómo te fue y te tengo el próximo panorama listo 🎉';
     } else if (perfil.etapa_embudo === 'decision') {
+      // Bug real: perfil.historial_ids nunca se poblaba en ningún lado, pese
+      // a que fNovedad (algoritmos.js) lo usa para no repetir actividades ya
+      // hechas — la dimensión "novedad" del ranking quedaba siempre en 1.0
+      // para cualquier combo (inerte, no discriminaba nada). Al confirmar
+      // una reserva real es el momento honesto de registrar qué se reservó.
+      // También se limpia el carrito/oferta pendiente: ya se compró, no
+      // sigue "pendiente" para el próximo turno (si no, C7 podía reenganchar
+      // con algo ya reservado, o un "sí" fuera de contexto podía re-agregar
+      // la oferta de combo vieja).
+      if (perfil.carrito.length) {
+        const idsComprados = (perfil.carrito[perfil.carrito.length - 1].ids)
+          || perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+        perfil.historial_ids = [...new Set([...(perfil.historial_ids || []), ...idsComprados])];
+      }
+      perfil.carrito = [];
+      perfil.oferta_combo = null;
       texto = 'Perfecto, te lo dejo apartado. En breve te llega la confirmación con el punto de encuentro y todo el detalle.';
     } else if (perfil.carrito.length && esSaludoVacio(textoUsuario) && !categorias.length && !señales.length) {
       // C7: retoma el carrito pendiente en vez de tratarlo como cliente
@@ -632,6 +657,20 @@
       } else {
         texto = resultado.texto;
         debug.plan = resultado.plan;
+        // Bug real: el plan multi-día nunca escribía en perfil.carrito, así
+        // que quedaba desconectado de TODO lo que depende de él: "¿cuánto
+        // cuesta en total?", "¿dónde nos juntamos?", el reenganche C7, la
+        // confirmación de reserva y el registro en historial_ids — todo eso
+        // seguía de largo como si no hubiera nada pendiente. Se lo conecta
+        // al mismo mecanismo que ya usan los combos de 1 día.
+        perfil.carrito = [{
+          combo_id: resultado.plan.plan_id,
+          ids: resultado.plan.dias.map((d) => d.actividad.id),
+          precio: resultado.plan.precio_total,
+          precio_por_persona: resultado.plan.precio_por_persona,
+          personas: resultado.plan.personas,
+        }];
+        perfil.oferta_combo = null;
       }
     } else if (estadoEmocional === 'frustrado') {
       texto = D.plantillas.respuestaEmocional('frustrado');
