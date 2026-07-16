@@ -621,3 +621,87 @@ Fuentes consultadas: [Booking.com Extranet Guide](https://phptravels.com/booking
 - [ ] Probar `js/contexto.js` y `navigator.geolocation` (Open-Meteo/OSRM/ubicación real) con salida a internet real — no se pudo verificar en este sandbox ni en el preview alojado (CSP bloquea red externa); sí se puede probar abriendo el archivo local en un navegador normal.
 - [ ] Generalizar `armarPlanMultiDia`: hoy es una secuencia fija de demo (cabaña+termas+trekking, sur de Chile) para probar el concepto de punta a punta — falta que arme planes de N días para cualquier combinación de categorías/regiones una vez haya más catálogo real.
 - [ ] Agregar estacionamiento/cómo-llegar real por negocio al contrato de datos — hoy `fraseLlegada()` es una guía genérica por categoría (mismo criterio que ya usa el sitio real en `ARRIVAL_BY_CATEGORY`), no un dato preciso por local.
+
+## Auditoría completa "hazlo más experto" (previo a cargar datos reales)
+
+Instrucción explícita del usuario: auditar TODO el bot de punta a punta y
+arreglar todo lo mejorable, justo antes de empezar a cargar datos reales
+de negocios — "en breve empezamos con data real". Pasada completa por
+`algoritmos.js`, `motor.js`, `tools.js`, `plantillas.js`, `contexto.js`,
+`afluencia.js` y `js/darwin-backend.js` (Superficie 2). 9 bugs/gaps reales
+encontrados y corregidos, todos verificados con Playwright (11/11
+algoritmos + escenarios manuales de cada uno):
+
+1. **`armarCombo` reventaba con horarios vacíos** (ver bug #7 de la
+   sección anterior — sigue en esa lista).
+2. **`combo_id.split('-')` frágil ante IDs con guion** (bug #8 de la
+   sección anterior).
+3. **`fPresupuesto` comparaba precio TOTAL contra una banda que siempre es
+   POR PERSONA** (`algoritmos.js`): tanto `extraerPresupuesto` en
+   `motor.js` como `BUDGET_A_BANDA` en `darwin-backend.js` arman la banda
+   de presupuesto per-cápita, pero se comparaba contra `combo.precio_total`
+   (ya multiplicado por `personas`). Con 2+ personas, un combo exactamente
+   en presupuesto por cabeza perdía puntos como si fuera carísimo. Ahora
+   compara contra `precio_por_persona`.
+4. **`plan_b` de clima podía quedar parcialmente cubierto**
+   (`tools.js#armarCombo`): con 2+ actividades expuestas al clima en el
+   mismo combo, solo se buscaba reemplazo para la primera — el combo
+   quedaba con `plan_b` truthy (como si estuviera 100% cubierto) aunque la
+   segunda actividad expuesta no tuviera alternativa real, y
+   `climaEsIncompatible` (algoritmos.js) confía en `plan_b` para no
+   excluir el combo con clima severo. Ahora solo se arma `plan_b` si cubre
+   TODAS las actividades en riesgo.
+5. **`calcularArquetipos` no filtraba afinidad negativa** (`motor.js`):
+   una categoría recién descartada (afinidad negativa por el evento
+   `descarte`) podía terminar definiendo el arquetipo/tono de Darwin si
+   era la única con datos — Darwin podía saludar con el tono de algo que
+   el cliente acaba de rechazar. Ahora solo cuentan afinidades positivas,
+   mismo criterio que ya usa `calcularConfianza` para "fuerza".
+6. **`perfil.historial_ids` nunca se poblaba en ningún lado** (`motor.js`):
+   pese a que `fNovedad` (`algoritmos.js`) lo usa para no repetir
+   actividades ya hechas, nada le hacía `push` — la dimensión "novedad"
+   del ranking quedaba permanentemente inerte (siempre 1.0, sin
+   discriminar nada). Ahora se registra al confirmar una reserva real
+   (etapa `decision`), que de paso limpia `carrito`/`oferta_combo`
+   pendientes (antes tampoco se limpiaban tras una compra confirmada).
+7. **Plan multi-día desconectado del carrito** (`motor.js`): el plan de
+   varios días (cabaña+termas+trekking) nunca escribía en
+   `perfil.carrito`, dejándolo fuera de "¿cuánto cuesta en total?",
+   "¿dónde nos juntamos?", el reenganche C7 y la confirmación de reserva
+   — todo eso seguía de largo como si no hubiera nada pendiente. Ahora usa
+   el mismo mecanismo que los combos de 1 día.
+8. **El chat nunca detectaba el tamaño del grupo** (`motor.js`): "somos
+   4"/"para 2 personas"/"vamos en pareja" no hacían nada —
+   `perfil.grupo.adultos` solo se poblaba desde el onboarding real
+   (Superficie 2), así que en el chat (Superficie 1) TODO el trabajo
+   previo de precio_total vs precio_por_persona quedaba inútil: el precio
+   mostrado ignoraba lo que el cliente acababa de decir sobre cuántos
+   son. Se agregó `extraerGrupo()` (personas y niños).
+9. **D3 (gustos divergentes) armaba el combo solo en el orden de mención
+   del texto**, sin considerar horarios reales: si la actividad mencionada
+   primero era nocturna (ej. "fiesta" a las 21:00) y la segunda diurna, el
+   combo completo se pasaba del horario de cierre y se descartaba entero
+   — "no encontré nada" para una combinación que sí era armable invirtiendo
+   el orden. Ahora se prueban ambos órdenes como candidatos y gana el que
+   sobrevive/rankea mejor. De paso, `fraseDivergencia` (`plantillas.js`)
+   describía siempre el orden de MENCIÓN ("empieza con X, cierra con Y"),
+   no el orden REAL de las actividades del combo ganador — con el fix
+   anterior esto podía contradecir el itinerario mostrado (texto diciendo
+   "empieza con fiesta" mientras el combo mostrado empezaba con cultura).
+   Ahora describe el primero/último REAL del combo.
+10. **`darwin-backend.js` sobreescribía `perfil.intereses` completo en
+    cada recálculo del dashboard**: hoy es inofensivo (nada más escribe en
+    `darwin_preferences.intereses` todavía), pero el día que se conecte
+    cualquier otra señal real (`preference_signals`: chat/reserva/reseña,
+    ya documentado como infraestructura pendiente), cada recarga del
+    dashboard habría borrado en silencio lo aprendido por esas señales.
+    Ahora hace merge: onboarding aporta un piso por bucket declarado sin
+    bajar una afinidad ya más alta, sin borrar categorías aprendidas por
+    fuera de onboarding.
+
+No se tocó nada del contrato de datos (`catalogo.mock.js` /
+`catalogo.real-sample.js` / `businesses` en Supabase) — todos los fixes
+son de lógica interna, compatibles con cualquier fuente de catálogo.
+Queda listo para que, apenas se cargue el catálogo real confirmado
+(formulario de negocios), el motor razone sobre datos reales sin ajustes
+adicionales.
