@@ -28,7 +28,11 @@ body.mode-business {
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* El nav es sticky (76px de alto, ver .nav__inner) y no compensaba esa
+   altura al saltar a un ancla (#alianzas-como, #beto, #segmentos, etc.) —
+   el destino quedaba tapado/desfasado bajo el nav. scroll-padding-top
+   global corrige cualquier salto de ancla del sitio, no solo uno puntual. */
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
 body {
   margin: 0;
   font-family: var(--font-body);

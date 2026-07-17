@@ -103,6 +103,19 @@
 }
 .biz-res__date-day { display: block; font-size: 1.2rem; line-height: 1; }
 .biz-res__date-mon { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; color: var(--slate); }
+
+/* Aceptar/rechazar directo en la fila (sin abrir el modal) */
+.biz-res__inline-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+.biz-res__inline-acciones .btn { padding: 7px 14px; font-size: 0.78rem; white-space: nowrap; }
+.biz-res__motivo-row {
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-top: -4px;
+  cursor: default;
+}
+.biz-res__motivo-row[hidden] { display: none; }
+.biz-res__motivo-row label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--navy-2); margin-bottom: 6px; }
 .biz-res__info { flex: 1; min-width: 0; }
 .biz-res__client { margin: 0; font-weight: 800; color: var(--navy); font-size: 0.92rem; }
 .biz-res__meta { margin: 2px 0 0; font-size: 0.8rem; color: var(--navy-2); }
@@ -250,6 +263,7 @@
 @media (max-width: 640px) {
   .biz-res { flex-wrap: wrap; }
   .biz-res__status { order: 3; margin-left: 68px; }
+  .biz-res__inline-acciones { order: 3; margin-left: 68px; width: 100%; }
 }
 
 /* Reseñas */

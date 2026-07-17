@@ -387,7 +387,7 @@
 
   window.PickmapNegocio = {
     getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal,
-    getReviews, getReferrals, getReferralCode,
+    getReviews, getReferrals, getReferralCode, actualizarEstadoReserva,
   };
 
   /* ---------- Shared nav / logout ---------- */
