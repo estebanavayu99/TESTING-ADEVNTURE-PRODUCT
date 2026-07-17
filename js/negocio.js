@@ -200,7 +200,10 @@
         nombre: shuffled[i % shuffled.length],
         fecha: date,
         estado: isActiveReferral ? 'activo' : 'invitado',
-        recompensa: isActiveReferral ? 20000 + Math.floor(rand() * 4) * 5000 : 0,
+        // $50.000 fijo — mismo monto que ahora promete el título de la
+        // tarjeta ("Trae a otro negocio y gana $50.000"), antes era un
+        // rango variable que no calzaba con ese texto.
+        recompensa: isActiveReferral ? 50000 : 0,
       });
     }
     list.sort((a, b) => b.fecha - a.fecha);

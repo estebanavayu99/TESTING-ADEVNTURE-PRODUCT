@@ -33,6 +33,46 @@
     return dv === expectedDv;
   }
 
+  // Mismo cálculo que getReferralCode() en js/negocio.js (duplicado acá a
+  // propósito, patrón ya establecido del repo: helpers duplicados por
+  // archivo en vez de un módulo compartido) — necesario para poder
+  // reconocer, en el signup, a qué negocio le pertenece un código de
+  // invitación ingresado por otro negocio nuevo.
+  function hashStr(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  function computeReferralCode(user) {
+    const base = (user.bizName || 'PICKMAP').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PICKMAP';
+    const suffix = String(100 + (hashStr(user.email) % 900));
+    return `${base}${suffix}`;
+  }
+
+  // Instrucción explícita del usuario: al crearse una cuenta, si ingresó
+  // un código de invitación de otro negocio real ya registrado, ese
+  // negocio debe verlo reflejado en su lista de Referidos. Se llama solo
+  // tras la verificación REAL (mismo criterio que createGhlContact: nunca
+  // ensuciar datos de otro negocio con un signup que nunca se confirmó).
+  // Queda en estado 'invitado' con recompensa $0 — la recompensa de
+  // $50.000 se paga recién cuando el negocio referido confirme su primera
+  // reserva real, y hoy no existe ese vínculo real entre reservas y
+  // referidos (mismo motivo por el que el resto de notificaciones de
+  // reserva siguen sin engancharse a este panel, ver CLAUDE.md).
+  function creditarReferido(referralCodeIngresado, nuevoBizName) {
+    const codigo = (referralCodeIngresado || '').trim().toUpperCase();
+    if (!codigo) return;
+    const users = getUsers();
+    const referente = users.find((u) => computeReferralCode(u) === codigo);
+    if (!referente) return;
+    const key = `pickmap_business_referrals_${referente.email}`;
+    let raw;
+    try { raw = JSON.parse(localStorage.getItem(key)); } catch { raw = null; }
+    if (!Array.isArray(raw)) raw = [];
+    raw.unshift({ nombre: nuevoBizName, fecha: new Date().toISOString(), estado: 'invitado', recompensa: 0 });
+    localStorage.setItem(key, JSON.stringify(raw));
+  }
+
   ['signupRepRut', 'signupBizRut'].forEach((id) => {
     const input = document.getElementById(id);
     if (input) {
@@ -94,6 +134,7 @@
     if (idx !== -1) {
       users[idx].verified = true;
       delete users[idx].verificationToken;
+      creditarReferido(users[idx].referralCodeUsed, users[idx].bizName);
       saveUsers(users);
       setSession(users[idx].email);
       window.location.href = 'negocio.html';
@@ -297,6 +338,7 @@
     const availability = data.get('availability');
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
+    const referralCodeUsed = (data.get('referralCode') || '').trim().toUpperCase();
 
     if (!repName || !bizName || !legalName || !address || !availability || !email || password.length < 8) {
       showError('Revisa que todos los campos estén completos y que la contraseña tenga al menos 8 caracteres.');
@@ -317,7 +359,7 @@
       return;
     }
 
-    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false });
+    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false, referralCodeUsed });
     saveUsers(users);
     startVerification(email);
   });

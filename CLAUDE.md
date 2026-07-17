@@ -552,6 +552,36 @@ Instrucción explícita del usuario (2026-07-17):
   separado en algún reporte futuro, hay que agregar esos campos sueltos
   al objeto guardado, hoy solo vive el string combinado.
 
+## Panel de negocio: casilla de código de invitación + recompensa a $50.000
+
+Instrucción explícita del usuario (2026-07-17): el signup de empresa
+(`login-empresa.html`) no tenía forma de que un negocio nuevo ingresara el
+código de invitación de quien lo trajo — la página de Referidos ya
+generaba un código por negocio (`getReferralCode()` en `js/negocio.js`)
+pero nada del lado del invitado lo consumía, así que el loop nunca se
+podía completar de verdad. Se agregó un campo opcional "¿Tienes un código
+de invitación?" al formulario de signup + `js/auth-empresa.js` ahora:
+- Duplica `hashStr`/el cálculo de `getReferralCode()` (mismo patrón de
+  helpers duplicados por archivo) como `computeReferralCode(user)`, para
+  poder reconocer a qué negocio real pertenece un código ingresado por
+  otro.
+- Guarda `referralCodeUsed` en el usuario nuevo al hacer signup.
+- Recién en el bloque `?verify=<token>` (verificación REAL, mismo criterio
+  que `createGhlContact`: nunca ensuciar datos de otro negocio con un
+  signup que nunca se confirmó) llama `creditarReferido()`, que busca al
+  negocio dueño de ese código y le agrega una entrada real a
+  `pickmap_business_referrals_<email>` con `estado: 'invitado'` y
+  `recompensa: 0` — la recompensa de $50.000 se paga recién cuando el
+  referido confirme su primera reserva real, vínculo que hoy no existe
+  (mismo motivo documentado arriba de por qué el resto de notificaciones
+  de reserva siguen sin engancharse a este panel demo). Si el código no
+  matchea ningún negocio real, no pasa nada (signup nunca se bloquea por
+  un código inválido/vacío).
+- El monto subió de $25.000 a $50.000 en el título de
+  `negocio-referidos.html` y en la recompensa fija de
+  `generateReferrals()` (antes era un rango variable $20-35k que ni
+  siquiera calzaba con el texto de $25.000 que ya estaba ahí).
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo

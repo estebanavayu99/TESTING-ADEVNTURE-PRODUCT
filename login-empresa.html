@@ -139,6 +139,11 @@ if ('serviceWorker' in navigator) {
         <span>Contraseña</span>
         <input type="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
       </label>
+      <label class="auth-field">
+        <span>¿Tienes un código de invitación? (opcional)</span>
+        <input type="text" name="referralCode" id="signupReferralCode" placeholder="Ej: CABANASTEST123" autocomplete="off">
+        <span class="auth-hint">Si otro negocio te invitó a Pickmap, ingresa su código — le sumamos $50.000 cuando confirmes tu primera reserva.</span>
+      </label>
       <button type="submit" class="btn btn--primary auth-submit">Crear cuenta de empresa</button>
       <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
     </form>
