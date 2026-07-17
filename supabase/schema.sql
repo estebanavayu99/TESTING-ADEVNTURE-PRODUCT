@@ -243,7 +243,7 @@ as $$
               cos(radians(p2.lng) - radians(p1.lng)) +
             sin(radians(p1.lat)) * sin(radians(p2.lat))
           ))
-        ) as distancia_km,
+        )) as distancia_km,
       case when p2.es_alojamiento then 'alojamiento' else p2.categoria[1] end as tipo,
       p2.precio,
       p2.precio_unidad,
@@ -294,7 +294,7 @@ as $$
               cos(radians(p2.lng) - radians(lng_punto)) +
             sin(radians(lat_punto)) * sin(radians(p2.lat))
           ))
-        ) as distancia_km,
+        )) as distancia_km,
       case when p2.es_alojamiento then 'alojamiento' else p2.categoria[1] end as tipo,
       p2.precio,
       p2.precio_unidad,
