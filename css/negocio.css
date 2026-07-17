@@ -120,6 +120,7 @@
 .biz-res__status--pendiente { background: rgba(246, 205, 76, 0.3); color: #8a6a10; }
 .biz-res__status--completada { background: rgba(30, 45, 49, 0.08); color: var(--navy-2); }
 .biz-res__status--cancelada { background: rgba(175, 67, 69, 0.14); color: var(--deep-red); }
+.biz-res__status--rechazada { background: rgba(175, 67, 69, 0.14); color: var(--deep-red); }
 
 .biz-res-list__empty { margin: 8px 0; font-size: 0.88rem; color: var(--slate); text-align: center; padding: 20px 0; }
 
@@ -176,7 +177,29 @@
 .biz-modal__row span:last-child.biz-modal__estado--pendiente { background: rgba(246, 205, 76, 0.3); color: #8a6a10; }
 .biz-modal__row span:last-child.biz-modal__estado--completada { background: rgba(30, 45, 49, 0.08); color: var(--navy-2); }
 .biz-modal__row span:last-child.biz-modal__estado--cancelada { background: rgba(175, 67, 69, 0.14); color: var(--deep-red); }
+.biz-modal__row span:last-child.biz-modal__estado--rechazada { background: rgba(175, 67, 69, 0.14); color: var(--deep-red); }
 .biz-modal__divider { height: 1px; background: rgba(30, 45, 49, 0.1); margin: 20px 0; }
+
+/* Acciones de aceptar/rechazar reserva (solo estado 'pendiente') */
+.biz-modal__acciones { margin-top: 6px; padding-top: 16px; border-top: 1px solid rgba(30, 45, 49, 0.1); }
+.biz-modal__acciones-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.biz-modal__acciones-btns .btn { flex: 1; min-width: 130px; padding: 10px 14px; font-size: 0.85rem; text-align: center; }
+.biz-modal__motivo-form { margin-top: 14px; }
+.biz-modal__motivo-form[hidden] { display: none; }
+.biz-modal__motivo-form label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--navy-2); margin-bottom: 6px; }
+.biz-modal__motivo-input {
+  width: 100%;
+  border: 1px solid rgba(30, 45, 49, 0.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--navy);
+  resize: vertical;
+  margin-bottom: 10px;
+}
+.biz-modal__motivo-error { color: var(--deep-red); font-size: 0.8rem; font-weight: 700; margin: -4px 0 10px; }
+.biz-modal__motivo-error[hidden] { display: none; }
 
 /* Pagos page */
 .biz-period-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
@@ -348,6 +371,7 @@
 .biz-cal__dot--pendiente { background: var(--sun); }
 .biz-cal__dot--completada { background: var(--slate); }
 .biz-cal__dot--cancelada { background: var(--deep-red); }
+.biz-cal__dot--rechazada { background: var(--deep-red); }
 
 @media (max-width: 640px) {
   .biz-cal__cell { min-height: 56px; padding: 6px; }

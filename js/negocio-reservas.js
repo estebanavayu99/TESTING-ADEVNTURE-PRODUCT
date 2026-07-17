@@ -4,7 +4,10 @@
   const reservations = N.getReservations();
 
   const activas = reservations.filter(isActive);
-  const historial = reservations.filter((r) => r.estado === 'completada' || r.estado === 'cancelada').slice().sort((a, b) => b.fecha - a.fecha);
+  // 'rechazada' no es activa (ya no espera acción) pero sí debe quedar
+  // visible en algún lado — sin este estado en el filtro, una reserva
+  // rechazada desaparecía de ambas pestañas.
+  const historial = reservations.filter((r) => r.estado === 'completada' || r.estado === 'cancelada' || r.estado === 'rechazada').slice().sort((a, b) => b.fecha - a.fecha);
 
   const tabActivas = document.getElementById('tabActivas');
   const tabHistorial = document.getElementById('tabHistorial');
@@ -28,7 +31,7 @@
           <p class="biz-res__client">${r.cliente}</p>
           <p class="biz-res__meta">${r.actividad} · ${r.personas} personas</p>
         </div>
-        <span class="biz-res__amt">${r.estado === 'cancelada' ? '—' : fmtMoney(r.monto)}</span>
+        <span class="biz-res__amt">${(r.estado === 'cancelada' || r.estado === 'rechazada') ? '—' : fmtMoney(r.monto)}</span>
         <span class="biz-res__status biz-res__status--${r.estado}">${r.estado}</span>
       </li>
     `).join('');

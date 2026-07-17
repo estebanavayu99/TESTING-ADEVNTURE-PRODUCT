@@ -249,12 +249,65 @@
   const bizModalRows = document.getElementById('bizModalRows');
   const bizModalClose = document.getElementById('bizModalClose');
 
+  function escapeHTML(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Persiste aceptar/rechazar una reserva pendiente directo en el RES_KEY de
+  // localStorage (no en el arreglo ya cargado en memoria de cada página —
+  // negocio-reservas.js/negocio-pagos.js/etc cachean su propia copia al
+  // cargar). Tras guardar se recarga la página para que TODAS las vistas
+  // (lista, calendario, pagos) queden consistentes con el nuevo estado, en
+  // vez de sincronizar cada módulo a mano.
+  function actualizarEstadoReserva(id, nuevoEstado, motivo) {
+    const raw = JSON.parse(localStorage.getItem(RES_KEY) || '[]');
+    const actualizado = raw.map((r) => {
+      if (r.id !== id) return r;
+      const cambio = { ...r, estado: nuevoEstado };
+      // Mismo criterio que ya usa 'cancelada' en generateReservations: monto
+      // en 0 (montoOriginal se conserva para mostrarlo tachado/informativo),
+      // así cualquier suma futura de r.monto que no filtre por estado no
+      // cuenta por error una reserva que nunca se cobró.
+      if (nuevoEstado === 'rechazada') { cambio.monto = 0; cambio.motivoRechazo = motivo || ''; }
+      return cambio;
+    });
+    localStorage.setItem(RES_KEY, JSON.stringify(actualizado));
+  }
+
+  // Botones de acción solo para reservas 'pendiente' — aceptar la confirma
+  // directo; rechazar exige un motivo (el cliente lo verá) antes de
+  // persistir el cambio. En empresas cuidado: nunca se paga por adelantado,
+  // así que una reserva rechazada nunca generó pago que revertir.
+  function accionesHTML(r) {
+    if (r.estado !== 'pendiente') return '';
+    return `
+      <div class="biz-modal__acciones">
+        <div class="biz-modal__acciones-btns">
+          <button type="button" class="btn btn--primary biz-modal__btn-aceptar" data-id="${r.id}">Aceptar reserva</button>
+          <button type="button" class="btn btn--ghost biz-modal__btn-rechazar" data-id="${r.id}">Rechazar</button>
+        </div>
+        <div class="biz-modal__motivo-form" data-motivo-id="${r.id}" hidden>
+          <label for="biz-motivo-${r.id}">Motivo del rechazo (el cliente lo verá)</label>
+          <textarea id="biz-motivo-${r.id}" class="biz-modal__motivo-input" rows="3" placeholder="Ej: no tenemos cupo disponible para esa fecha"></textarea>
+          <p class="biz-modal__motivo-error" hidden>Cuéntanos el motivo antes de rechazar.</p>
+          <div class="biz-modal__acciones-btns">
+            <button type="button" class="btn btn--primary biz-modal__btn-confirmar-rechazo" data-id="${r.id}">Confirmar rechazo</button>
+            <button type="button" class="auth-link biz-modal__btn-cancelar-rechazo" data-id="${r.id}">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function reservationRowsHTML(r) {
-    const estadoLabel = { confirmada: 'Confirmada', pendiente: 'Pendiente', completada: 'Completada', cancelada: 'Cancelada' }[r.estado];
-    const isCancelled = r.estado === 'cancelada';
-    const paymentDateLabel = isCancelled
-      ? 'No aplica (cancelada)'
+    const estadoLabel = { confirmada: 'Confirmada', pendiente: 'Pendiente', completada: 'Completada', cancelada: 'Cancelada', rechazada: 'Rechazada' }[r.estado];
+    const sinPago = r.estado === 'cancelada' || r.estado === 'rechazada';
+    const paymentDateLabel = sinPago
+      ? `No aplica (${r.estado})`
       : `${fmtDate(getPaymentDate(r))}${isPaid(r) ? '' : ' (estimada)'}`;
+    const filaMotivo = r.estado === 'rechazada' && r.motivoRechazo
+      ? `<div class="biz-modal__row"><span>Motivo del rechazo</span><span>${escapeHTML(r.motivoRechazo)}</span></div>`
+      : '';
     return `
       <div class="biz-modal__row"><span>N° reserva</span><span>#${r.id}</span></div>
       <div class="biz-modal__row"><span>Cliente</span><span>${r.cliente}</span></div>
@@ -264,8 +317,43 @@
       <div class="biz-modal__row"><span>Fecha de pago</span><span>${paymentDateLabel}</span></div>
       <div class="biz-modal__row"><span>Personas</span><span>${r.personas}</span></div>
       <div class="biz-modal__row"><span>Estado</span><span class="biz-modal__estado biz-modal__estado--${r.estado}">${estadoLabel}</span></div>
-      <div class="biz-modal__row"><span>Monto</span><span>${fmtMoney(r.estado === 'cancelada' ? r.montoOriginal : r.monto)}${r.estado === 'cancelada' ? ' (no cobrado)' : ''}</span></div>
+      <div class="biz-modal__row"><span>Monto</span><span>${fmtMoney(sinPago ? r.montoOriginal : r.monto)}${sinPago ? ' (no cobrado)' : ''}</span></div>
+      ${filaMotivo}
+      ${accionesHTML(r)}
     `;
+  }
+
+  if (bizModalRows) {
+    bizModalRows.addEventListener('click', (e) => {
+      const btnAceptar = e.target.closest('.biz-modal__btn-aceptar');
+      if (btnAceptar) {
+        actualizarEstadoReserva(Number(btnAceptar.dataset.id), 'confirmada');
+        window.location.reload();
+        return;
+      }
+      const btnRechazar = e.target.closest('.biz-modal__btn-rechazar');
+      if (btnRechazar) {
+        const form = bizModalRows.querySelector(`[data-motivo-id="${btnRechazar.dataset.id}"]`);
+        if (form) { form.hidden = false; form.querySelector('textarea').focus(); }
+        return;
+      }
+      const btnCancelar = e.target.closest('.biz-modal__btn-cancelar-rechazo');
+      if (btnCancelar) {
+        const form = bizModalRows.querySelector(`[data-motivo-id="${btnCancelar.dataset.id}"]`);
+        if (form) form.hidden = true;
+        return;
+      }
+      const btnConfirmar = e.target.closest('.biz-modal__btn-confirmar-rechazo');
+      if (btnConfirmar) {
+        const id = Number(btnConfirmar.dataset.id);
+        const form = bizModalRows.querySelector(`[data-motivo-id="${id}"]`);
+        const input = form.querySelector('textarea');
+        const motivo = (input.value || '').trim();
+        if (!motivo) { form.querySelector('.biz-modal__motivo-error').hidden = false; return; }
+        actualizarEstadoReserva(id, 'rechazada', motivo);
+        window.location.reload();
+      }
+    });
   }
 
   function openReservationModal(r) {
