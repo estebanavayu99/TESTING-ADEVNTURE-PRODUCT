@@ -411,13 +411,37 @@
     bizModal.hidden = false;
   }
 
+  // Desglose de un mes del gráfico de ingresos ("Ingresos de los últimos 6
+  // meses" en Resumen) — instrucción explícita del usuario: poder apretar
+  // un mes y ver el detalle, no solo el total decorativo de la barra.
+  function openMonthModal(mesLabel, reservasDelMes) {
+    if (!bizModal) return;
+    const total = reservasDelMes.reduce((s, r) => s + r.monto, 0);
+    if (bizModalTitle) bizModalTitle.textContent = `Detalle de ${mesLabel}`;
+    const filas = reservasDelMes.length
+      ? [...reservasDelMes].sort((a, b) => a.fecha - b.fecha).map((r) => `
+        <div class="biz-modal__row">
+          <span>${fmtDateShort(r.fecha)} · ${escapeHTML(r.cliente)}</span>
+          <span>${fmtMoney(r.monto)}</span>
+        </div>
+      `).join('')
+      : '<p style="color:var(--slate);font-size:0.88rem;margin:0;">No hay reservas completadas y pagadas este mes.</p>';
+    bizModalRows.innerHTML = `
+      <div class="biz-modal__row"><span>Total generado</span><span>${fmtMoney(total)}</span></div>
+      <div class="biz-modal__row"><span>Reservas completadas</span><span>${reservasDelMes.length}</span></div>
+      <div class="biz-modal__divider"></div>
+      ${filas}
+    `;
+    bizModal.hidden = false;
+  }
+
   if (bizModalClose) {
     bizModalClose.addEventListener('click', () => { bizModal.hidden = true; });
     bizModal.addEventListener('click', (e) => { if (e.target === bizModal) bizModal.hidden = true; });
   }
 
   window.PickmapNegocio = {
-    getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal,
+    getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
     getReviews, getReferrals, getReferralCode, actualizarEstadoReserva,
   };
 

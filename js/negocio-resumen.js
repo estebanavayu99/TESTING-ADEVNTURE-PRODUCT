@@ -23,19 +23,25 @@
   document.getElementById('statProximoPago').textContent = fmtMoney(activasMonto * 0.4);
   document.getElementById('statProximoPagoFecha').textContent = fmtDateShort(nextMonday);
 
-  // Chart: last 6 months ingresos
+  // Chart: last 6 months ingresos. Bug real pedido por el usuario: el
+  // gráfico era solo decorativo — apretar una barra no hacía nada. Ahora
+  // cada columna guarda las reservas reales de ese mes (no solo el total)
+  // para poder abrir un desglose real al hacer click.
   const chart = document.getElementById('bizChart');
   const monthTotals = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(NOW.getFullYear(), NOW.getMonth() - i, 1);
-    const total = reservations
-      .filter((r) => isPaid(r) && r.fecha.getMonth() === d.getMonth() && r.fecha.getFullYear() === d.getFullYear())
-      .reduce((sum, r) => sum + r.monto, 0);
-    monthTotals.push({ label: d.toLocaleDateString('es-CL', { month: 'short' }), total, isCurrent: i === 0 });
+    const reservasDelMes = reservations.filter((r) => isPaid(r) && r.fecha.getMonth() === d.getMonth() && r.fecha.getFullYear() === d.getFullYear());
+    const total = reservasDelMes.reduce((sum, r) => sum + r.monto, 0);
+    monthTotals.push({
+      label: d.toLocaleDateString('es-CL', { month: 'short' }),
+      labelLargo: d.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }),
+      total, isCurrent: i === 0, reservas: reservasDelMes,
+    });
   }
   const max = Math.max(...monthTotals.map((m) => m.total), 1);
-  chart.innerHTML = monthTotals.map((m) => `
-    <div class="biz-chart__col ${m.isCurrent ? 'is-current' : ''}">
+  chart.innerHTML = monthTotals.map((m, i) => `
+    <div class="biz-chart__col ${m.isCurrent ? 'is-current' : ''}" data-mes-idx="${i}" tabindex="0" role="button" aria-label="Ver desglose de ${m.labelLargo}">
       <span class="biz-chart__amt">${m.total > 0 ? fmtMoney(m.total) : '—'}</span>
       <div class="biz-chart__bar" data-h="${Math.max((m.total / max) * 100, 3)}"></div>
       <span class="biz-chart__label">${m.label}</span>
@@ -45,6 +51,14 @@
     chart.querySelectorAll('.biz-chart__bar').forEach((bar) => {
       bar.style.height = bar.dataset.h + '%';
     });
+  });
+  chart.querySelectorAll('.biz-chart__col').forEach((col) => {
+    const abrir = () => {
+      const m = monthTotals[Number(col.dataset.mesIdx)];
+      N.openMonthModal(m.labelLargo, m.reservas);
+    };
+    col.addEventListener('click', abrir);
+    col.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
   });
 
   // Upcoming reservations preview
