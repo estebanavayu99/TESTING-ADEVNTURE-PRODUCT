@@ -10,18 +10,20 @@
   const mesTotal = thisMonth.reduce((sum, r) => sum + r.monto, 0);
 
   const activas = reservations.filter(isActive);
-  const activasMonto = activas.reduce((sum, r) => sum + r.monto, 0);
 
   document.getElementById('statHistorico').textContent = fmtMoney(historico);
   document.getElementById('statMes').textContent = fmtMoney(mesTotal);
   document.getElementById('statMesNote').textContent = `${thisMonth.length} reserva${thisMonth.length === 1 ? '' : 's'} completada${thisMonth.length === 1 ? '' : 's'}`;
   document.getElementById('statActivas').textContent = activas.length;
 
-  // Próximo pago: liquidación semanal, siempre el próximo lunes
-  const nextMonday = new Date(NOW);
-  nextMonday.setDate(NOW.getDate() + ((8 - NOW.getDay()) % 7 || 7));
-  document.getElementById('statProximoPago').textContent = fmtMoney(activasMonto * 0.4);
-  document.getElementById('statProximoPagoFecha').textContent = fmtDateShort(nextMonday);
+  // Bug real: esto era activasMonto*0.4 (40% de reservas AÚN NO
+  // completadas) — un número inventado que contradice "nunca se paga por
+  // adelantado". El próximo pago real es la liquidación de reservas YA
+  // completadas cuyo paidOn todavía no llega (ver proximoPagoPendiente en
+  // js/negocio.js, mismo agrupamiento que usa el historial de Pagos).
+  const proximoPago = N.proximoPagoPendiente();
+  document.getElementById('statProximoPago').textContent = fmtMoney(proximoPago ? proximoPago.total : 0);
+  document.getElementById('statProximoPagoFecha').textContent = proximoPago ? fmtDateShort(proximoPago.paidOn) : 'Sin pagos pendientes';
 
   // Chart: last 6 months ingresos. Bug real pedido por el usuario: el
   // gráfico era solo decorativo — apretar una barra no hacía nada. Ahora

@@ -1,16 +1,24 @@
 (() => {
   const N = window.PickmapNegocio;
-  const { fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW } = N;
+  const { fmtMoney, fmtDate, fmtDateShort, isPaid, NOW } = N;
   const reservations = N.getReservations();
   const business = N.getBusiness();
   const paid = reservations.filter(isPaid);
 
   /* ---------- Próximo pago ---------- */
-  const activasMonto = reservations.filter(isActive).reduce((sum, r) => sum + r.monto, 0);
-  const nextMonday = new Date(NOW);
-  nextMonday.setDate(NOW.getDate() + ((8 - NOW.getDay()) % 7 || 7));
-  document.getElementById('payNextAmt').textContent = fmtMoney(activasMonto * 0.4);
-  document.getElementById('payNextDate').textContent = `Se paga el ${fmtDate(nextMonday)}`;
+  // Bug real: esto era activasMonto*0.4 (40% de reservas AÚN NO
+  // completadas) — un número inventado que contradice "nunca se paga por
+  // adelantado". El próximo pago real es la liquidación de reservas YA
+  // completadas cuyo paidOn todavía no llega (ver proximoPagoPendiente en
+  // js/negocio.js, mismo agrupamiento que el historial de liquidaciones).
+  const proximoPago = N.proximoPagoPendiente();
+  if (proximoPago) {
+    document.getElementById('payNextAmt').textContent = fmtMoney(proximoPago.total);
+    document.getElementById('payNextDate').textContent = `${proximoPago.count} reserva${proximoPago.count === 1 ? '' : 's'} · se paga el ${fmtDate(proximoPago.paidOn)}`;
+  } else {
+    document.getElementById('payNextAmt').textContent = fmtMoney(0);
+    document.getElementById('payNextDate').textContent = 'Sin pagos pendientes por ahora';
+  }
   document.getElementById('payNextMethod').textContent = business.paymentMethod;
 
   /* ---------- Generado por período ---------- */

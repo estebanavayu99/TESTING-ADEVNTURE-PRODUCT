@@ -246,6 +246,33 @@
     return paidOn;
   }
 
+  // Bug real: tanto negocio-resumen.js como negocio-pagos.js mostraban
+  // "Próximo pago" como activasMonto*0.4 (40% del monto de reservas
+  // confirmadas/pendientes, AÚN NO completadas) — un número inventado sin
+  // respaldo real que además contradice el modelo de pago ya establecido
+  // en el sitio (0% riesgo, nunca se paga por adelantado; el pago real
+  // llega recién 9 días después de la semana en que se completó cada
+  // reserva, ver getPaymentDate). El "próximo pago" de verdad es la
+  // liquidación de reservas YA completadas cuyo paidOn todavía no llega —
+  // mismo agrupamiento por semana que ya usa el historial de
+  // liquidaciones, solo que acá se toma la más próxima aún NO pagada.
+  function proximoPagoPendiente() {
+    const pagadas = getReservations().filter(isPaid);
+    const grupos = new Map();
+    pagadas.forEach((r) => {
+      const ws = startOfWeek(r.fecha).getTime();
+      if (!grupos.has(ws)) grupos.set(ws, { total: 0, count: 0, start: new Date(ws) });
+      const g = grupos.get(ws);
+      g.total += r.monto;
+      g.count += 1;
+    });
+    const pendientes = [...grupos.values()]
+      .map((g) => ({ ...g, paidOn: getPaymentDate({ fecha: g.start }) }))
+      .filter((g) => g.paidOn > NOW)
+      .sort((a, b) => a.paidOn - b.paidOn);
+    return pendientes[0] || null;
+  }
+
   /* ---------- Shared reservation detail modal ---------- */
   const bizModal = document.getElementById('bizModal');
   const bizModalTitle = document.getElementById('bizModalTitle');
@@ -445,7 +472,7 @@
 
   window.PickmapNegocio = {
     getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
-    getReviews, getReferrals, getReferralCode, actualizarEstadoReserva,
+    getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente,
   };
 
   /* ---------- Shared nav / logout ---------- */
