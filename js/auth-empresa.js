@@ -280,11 +280,6 @@
       return;
     }
 
-    if (!match.verified) {
-      startVerification(email);
-      return;
-    }
-
     setSession(email);
     window.location.href = 'negocio.html';
   });

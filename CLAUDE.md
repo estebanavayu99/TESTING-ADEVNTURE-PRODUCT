@@ -211,6 +211,26 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   funcionando igual. Si se vuelve a tocar `beto-chat.js`, no quitar ese
   auto-hide sin verificar de nuevo con Playwright a 390px que ninguna
   sección quede tapada.
+- **Login bloqueado por cuenta "no verificada" (bug real, ya arreglado)**:
+  tanto `js/auth.js` (viajero) como `js/auth-empresa.js` (empresa) tenían,
+  dentro del handler de `formLogin`, un `if (!match.verified) {
+  startVerification(...); return; }` que redirigía a la pantalla de
+  verificación pendiente en vez de dejar entrar, cada vez que alguien
+  intentaba iniciar sesión con una cuenta cuyo `verified` seguía en
+  `false` — típicamente porque el correo de verificación real nunca llegó
+  (la entrega vía Resend fue poco confiable durante buena parte de esta
+  sesión) o porque la persona cerró la pestaña antes de hacer click en el
+  link/código. Confirmado en producción por el usuario con su propia
+  cuenta (`eavayu@hotmail.com`): no podía iniciar sesión, quedaba
+  atrapado en "Verifica tu correo" para siempre. Instrucción explícita:
+  la verificación de correo debe aplicar **solo al crear la cuenta**,
+  nunca como gate en el login. Fix: se eliminó esa rama de ambos
+  handlers de `formLogin` — ahora el login solo valida
+  email+contraseña y deja entrar sin mirar `match.verified`; el campo
+  `verified` sigue existiendo y se sigue marcando `true` en el flujo de
+  verificación (magic link para viajero, código para empresa), solo que
+  ya no bloquea logins posteriores. Si se vuelve a tocar cualquiera de
+  los dos `formLogin`, no reintroducir ese gate.
 
 ## Verificación visual
 

@@ -329,11 +329,6 @@
       return;
     }
 
-    if (!match.verified) {
-      startVerification(email, match.onboarded ? 'dashboard.html' : 'onboarding.html');
-      return;
-    }
-
     setSession(email);
     window.location.href = match.onboarded ? 'dashboard.html' : 'onboarding.html';
   });
