@@ -375,6 +375,73 @@ Decisiones tomadas para esta etapa (pueden revisarse más adelante):
 - Afluencia/eventos locales (`js/afluencia.js`): heurística/placeholder,
   a reemplazar por datos reales de reservas y feriados/festivales.
 
+## Supabase + backend real de Darwin (`supabase/` + `api/darwin/`, listo antes de integrar el bot)
+
+Instrucción explícita del usuario (2026-07-17): configurar TODAS las
+bases de Supabase con las propiedades de tabla + los endpoints que va a
+necesitar el futuro agente de IA, aclarando después "me refiero a todas
+las configuraciones de supabase. más adelante integraré el bot (es para
+que ya estén los endpoints y supabase listo)" — es decir, infraestructura
+preparada de antemano, no una integración funcionando ya. Ver
+`supabase/README.md` para el detalle completo (variables de entorno
+nuevas, qué está 100% listo vs. qué queda pendiente a propósito, cómo
+probarlo cuando haya datos reales). Resumen:
+
+- `supabase/schema.sql`: las 7 tablas de la spec del usuario (`panoramas`,
+  `usuarios_perfil`, `historial_viajes`, `historial_interacciones`,
+  `paquetes` + `paquete_dias`, `sentimiento_usuario`, `clima_cache`),
+  pgvector, RLS (cada usuario solo ve lo suyo; `panoramas`/`clima_cache`
+  de lectura pública, escritura solo por service role), y las 4 funciones
+  SQL (`buscar_candidatos`, `candidatos_cercanos`,
+  `candidatos_cercanos_a_punto`, `distancias_entre_candidatos`). Los
+  nombres de columna son EXACTOS a la spec porque el backend arma el JSON
+  de entrada para Darwin con estos mismos nombres y escribe de vuelta el
+  bloque `para_guardar` tal cual, sin transformarlo. Nota técnica: las
+  funciones de distancia usan un CTE + `where` en vez del `having ... `
+  (sin `group by`, referenciando el alias del `select`) que traía la spec
+  original — esa forma no es válida en PostgreSQL real (los alias de
+  `select` no son visibles en `having`), así que se reescribió para que
+  efectivamente corra, manteniendo el mismo resultado.
+- `api/darwin/_lib/`: helpers compartidos, todos con `fetch` plano (sin
+  `@supabase/supabase-js` ni SDK de Anthropic, mismo patrón zero-config
+  que `api/send-verification.js`) — `supabaseRest.js` (PostgREST + RPC),
+  `clima.js` (Open-Meteo, mismo proveedor que `bot-darwin/js/contexto.js`,
+  con `clima_cache` y las reglas de vigencia pedidas: 6h pronóstico / 30
+  días histórico estacional), `embeddings.js` (Voyage AI — Anthropic no
+  tiene API de embeddings propia, `voyage-3-large` con
+  `output_dimension: 1536` para calzar con `vector(1536)`), `claude.js`
+  (llamada real a la Claude API).
+- 4 endpoints + 1 endpoint auxiliar + 1 cron, todos Vercel zero-config:
+  `POST /api/darwin/recomendar` (modos `recomendacion_simple` /
+  `armado_paquete` / `analisis_sentimiento`), `POST /api/darwin/feedback`,
+  `GET /api/darwin/feed` (modo `feed_automatico`, se llama solo al abrir
+  la app), `POST /api/darwin/editar-dia` (modo `editar_dia`) +
+  `PATCH /api/paquetes/[id]/dias/[dia]` (confirma la elección sin volver
+  a llamar a Darwin) + `api/darwin/cron-preferencias.js` (job diario,
+  `vercel.json` → 06:00 UTC, actualiza
+  `usuarios_perfil.preferencias_inferidas`). Todos hacen `await`
+  secuencial de los INSERT/UPDATE de bitácora antes de responder — la
+  spec pedía "en paralelo, sin bloquear la respuesta al usuario", pero un
+  fire-and-forget no es confiable en una función serverless de Vercel
+  (el runtime puede matar el contenedor apenas se envía la respuesta).
+- **Pendiente a propósito, no fabricado** (ver `supabase/README.md` para
+  el detalle): (a) el texto real de `pickmap_system_prompt_v4.pdf` como
+  `DARWIN_SYSTEM_PROMPT` en `api/darwin/_lib/claude.js` — hoy es un
+  placeholder que documenta el contrato de salida esperado por modo,
+  porque el texto literal del prompt v4 nunca vivió en este repo (solo
+  sus reglas ya traducidas a código en `bot-darwin/js/motor.js`); (b) qué
+  objeto de GHL contiene realmente los ~20.000 panoramas
+  (`scripts/sync-ghl-panoramas.js` asume un Custom Object llamado
+  `panoramas`, sin poder confirmarlo contra la cuenta real); (c) los
+  montos CLP de `PRESUPUESTO_POR_CATEGORIA` en
+  `api/darwin/recomendar.js` son placeholder mientras
+  `usuarios_perfil.presupuesto` sea una categoría de texto y no un monto.
+- Esto es infraestructura aislada: no reemplaza ni toca
+  `js/darwin-backend.js` (conectado al dashboard real, sin LLM) ni
+  `/bot-darwin/` (motor determinístico de reglas) — es una tercera
+  superficie, la que se usaría el día que se conecte un LLM real de
+  verdad con datos reales en Supabase.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo
