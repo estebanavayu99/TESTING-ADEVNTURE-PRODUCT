@@ -318,6 +318,18 @@
     showForm('signup');
   }
 
+  // Bug real: el botón "Copiar código" de negocio-referidos.js copia un
+  // link con ?ref=<code>, pero nada lo leía acá — el campo de código de
+  // invitación del signup se quedaba vacío igual, así que compartir el
+  // link no servía de nada. Se precarga el campo y se abre directo el
+  // formulario de signup.
+  const refCode = new URLSearchParams(window.location.search).get('ref');
+  if (refCode) {
+    showForm('signup');
+    const refInput = document.getElementById('signupReferralCode');
+    if (refInput) refInput.value = refCode;
+  }
+
   function showError(message) {
     errorBox.textContent = message;
     errorBox.hidden = false;
