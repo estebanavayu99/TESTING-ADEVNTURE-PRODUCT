@@ -253,6 +253,35 @@
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // Instrucción explícita del usuario: avisarle a él (owner de Pickmap, no
+  // al negocio ni al cliente) por correo real cada vez que una empresa
+  // acepta o rechaza una reserva pendiente. El cliente de esta reserva es
+  // 100% de prueba (CLIENTES en este mismo archivo son solo nombres, sin
+  // email real) — sin un correo real al que llegarle, ese aviso queda sin
+  // mandar a propósito hasta que el panel se conecte a reservas reales.
+  const OWNER_NOTIFICATION_EMAIL = 'contacto@pickmap.cl';
+  function notificarOwnerAccionReserva(reservaOriginal, nuevoEstado, motivo) {
+    const biz = getBusiness();
+    fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'accion-empresa-reserva-owner',
+        email: OWNER_NOTIFICATION_EMAIL,
+        datos: {
+          negocio: biz.name,
+          accion: nuevoEstado === 'confirmada' ? 'aceptada' : 'rechazada',
+          cliente: reservaOriginal.cliente,
+          actividad: reservaOriginal.actividad,
+          fecha: fmtDate(new Date(reservaOriginal.fecha)),
+          personas: reservaOriginal.personas,
+          monto: fmtMoney(reservaOriginal.montoOriginal != null ? reservaOriginal.montoOriginal : reservaOriginal.monto),
+          motivo: motivo || '',
+        },
+      }),
+    }).catch(() => { /* fire-and-forget: nunca debe bloquear la acción del negocio */ });
+  }
+
   // Persiste aceptar/rechazar una reserva pendiente directo en el RES_KEY de
   // localStorage (no en el arreglo ya cargado en memoria de cada página —
   // negocio-reservas.js/negocio-pagos.js/etc cachean su propia copia al
@@ -261,6 +290,7 @@
   // vez de sincronizar cada módulo a mano.
   function actualizarEstadoReserva(id, nuevoEstado, motivo) {
     const raw = JSON.parse(localStorage.getItem(RES_KEY) || '[]');
+    const original = raw.find((r) => r.id === id);
     const actualizado = raw.map((r) => {
       if (r.id !== id) return r;
       const cambio = { ...r, estado: nuevoEstado };
@@ -272,6 +302,7 @@
       return cambio;
     });
     localStorage.setItem(RES_KEY, JSON.stringify(actualizado));
+    if (original) notificarOwnerAccionReserva(original, nuevoEstado, motivo);
   }
 
   // Botones de acción solo para reservas 'pendiente' — aceptar la confirma

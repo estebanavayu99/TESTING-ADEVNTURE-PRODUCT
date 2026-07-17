@@ -231,6 +231,30 @@ const PLANTILLAS = {
       'Ver en el panel', d.link || '#'),
   }),
 
+  // ---------- Interno (owner de Pickmap) ----------
+  // No estaba en el spec original de 13 plantillas (esas son solo
+  // cliente/empresa) — instrucción explícita del usuario: avisarle a él
+  // (contacto@pickmap.cl) cada vez que una empresa acepta o rechaza una
+  // reserva pendiente desde el panel de negocio.
+  'accion-empresa-reserva-owner': (d) => {
+    const rechazo = d.accion === 'rechazada';
+    const verbo = rechazo ? 'rechazó' : 'aceptó';
+    return {
+      subject: `${rechazo ? '❌' : '✅'} ${esc(d.negocio)} ${verbo} una reserva`,
+      html: shell(rechazo ? BRAND.red : BRAND.greenInk, 'PANEL DE NEGOCIO',
+        `${esc(d.negocio)} ${verbo} la reserva de ${esc(d.cliente)}.`,
+        `<h1>${esc(d.negocio)} ${verbo} una reserva</h1>
+       <table class="kv" width="100%">
+         <tr><td>Cliente</td><td>${esc(d.cliente)}</td></tr>
+         <tr><td>Actividad</td><td>${esc(d.actividad)}</td></tr>
+         <tr><td>Fecha</td><td>${esc(d.fecha)}</td></tr>
+         <tr><td>Personas</td><td>${esc(d.personas)}</td></tr>
+         <tr><td>Monto</td><td>${esc(d.monto)}</td></tr>
+       </table>
+       ${d.motivo ? `<hr class="divider"><p><b>Motivo del rechazo:</b> ${esc(d.motivo)}</p>` : ''}`),
+    };
+  },
+
   'resena-negativa': (d) => ({
     subject: '⚠️ Reseña negativa recibida',
     html: shell(BRAND.red, `ALERTA PRIORITARIA · ${esc(d.estrellas)}/5`,

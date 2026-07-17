@@ -364,6 +364,24 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   su propia data demo con un LCG, sin relación con lo que reserva el
   viajero) — enganchar el resto requeriría inventar esa conexión, así que
   se dejó para cuando se pida explícitamente cuál flujo simular.
+- **Segundo flujo enganchado: aceptar/rechazar reserva pendiente en el
+  panel de negocio** (`negocio-reservas.html`/`js/negocio.js`, instrucción
+  explícita del usuario). Cada reserva `pendiente` tiene botones
+  Aceptar/Rechazar — tanto en el modal compartido de detalle como directo
+  en cada fila de la lista de Reservas (mismo mecanismo,
+  `N.actualizarEstadoReserva(id, nuevoEstado, motivo)`); rechazar exige un
+  motivo (textarea) antes de confirmar. Nuevo estado `rechazada`
+  (`monto: 0`, igual criterio que `cancelada`; `motivoRechazo` guardado).
+  Cada acción manda un `POST /api/send-notification` real (fire-and-forget)
+  con la plantilla nueva `accion-empresa-reserva-owner` — **no está en el
+  spec original de 13 plantillas** (esas son solo cliente/empresa): es un
+  aviso interno solo para el owner de Pickmap
+  (`contacto@pickmap.cl`, hardcodeado, instrucción explícita del usuario).
+  El aviso AL CLIENTE de que su reserva fue aceptada/rechazada queda
+  deliberadamente sin enganchar — los clientes de este panel son 100% data
+  demo (`CLIENTES` en `js/negocio.js` son solo nombres, sin email real),
+  así que no hay a quién mandárselo hasta que el panel de negocio se
+  conecte a reservas reales de viajeros.
 
 ## Bot "Darwin" super inteligente (en construcción, aislado en /bot-darwin/)
 
