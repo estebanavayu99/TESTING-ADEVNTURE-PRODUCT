@@ -1268,9 +1268,35 @@
 
     const passengers = [name, ...passengerNames];
     const data = { schedule, people, name, email: emailVal, phone, total, passengers, redeemed, discount, newBalance };
+    sendReservaConfirmadaEmail(currentModalItem, data);
     reserveModalBody.innerHTML = reserveSuccessHTML(currentModalItem, data);
     reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
   });
+
+  // Manda de verdad (vía Resend, api/send-notification.js) el correo de
+  // "reserva confirmada" — la pantalla de éxito ya le decía al usuario
+  // "te enviamos todos los detalles a tu correo", pero hasta ahora eso no
+  // pasaba de verdad. Fire-and-forget: si falla, el usuario igual ve su
+  // reserva confirmada en pantalla (ver reserveSuccessHTML), es solo el
+  // correo el que no le llega.
+  function sendReservaConfirmadaEmail(item, data) {
+    const primeraActividad = data.schedule[0];
+    fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'reserva-confirmada',
+        email: data.email,
+        datos: {
+          actividad: data.schedule.map((s) => s.title).join(' + '),
+          lugar: item.meta || '',
+          fecha: primeraActividad ? `${primeraActividad.date} · ${primeraActividad.slot}` : '',
+          personas: data.people,
+          total: `$${data.total.toLocaleString('es-CL')}`,
+        },
+      }),
+    }).catch(() => {});
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;

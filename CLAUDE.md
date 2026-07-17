@@ -256,7 +256,7 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
 - Repo tiene una sola rama (no hay `main` separado), así que no cabe abrir
   PR salvo que el usuario pida explícitamente crear una rama base nueva.
 
-## Notificaciones (spec para lanzamiento real — aún NO implementado)
+## Notificaciones (spec para lanzamiento real — plantillas ya implementadas, ver abajo)
 
 El usuario compartió `PickMap_Diagrama_Notificaciones_v2.pdf` con el set de
 notificaciones que espera tener una vez la plataforma esté lanzada con
@@ -298,6 +298,39 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   usan una barra superior a rayas (coral/amarillo/verde) + un recuadro de
   "dato random" con humor; las demás (cancelaciones, seguridad, reseña
   negativa) se mantienen serias a propósito.
+- **Las 13 plantillas están portadas a `api/_lib/email-templates.js`**
+  (instrucción del usuario, 2026-07-17: "empieza a implementar todas las
+  plantillas que hemos trabajado a lo largo de los flujos"), como
+  funciones parametrizadas (`PLANTILLAS[id](datos) -> { subject, html }`)
+  en vez del copy hardcodeado de ejemplo que tiene
+  `notificaciones-preview.html` — `shell()`/`BRAND` son una copia fiel de
+  ahí, así que si se retoca el diseño en un lado hay que replicarlo en el
+  otro. `api/send-notification.js` es el endpoint genérico (zero-config,
+  mismo patrón que `api/send-verification.js`) que recibe
+  `{ tipo, email, datos }`, arma la plantilla y la manda de verdad vía
+  Resend — queda disponible para las 13, no reemplaza el envío ya
+  existente de verificación de cuenta/código de recuperación (esos siguen
+  en `api/send-verification.js`, sin tocar).
+- **Único flujo enganchado de punta a punta por ahora: "Reserva
+  confirmada"** (el ejemplo concreto que pidió el usuario). El submit de
+  `#reserveForm` en `js/panoramas.js` (función `sendReservaConfirmadaEmail`,
+  llamada justo antes de `reserveSuccessHTML`) manda un
+  `POST /api/send-notification` real con `tipo: 'reserva-confirmada'` —
+  fire-and-forget (`.catch(() => {})`), porque es código de browser, no
+  una función serverless: si el correo falla, el usuario igual ve su
+  reserva confirmada en pantalla, solo que el correo no le llega. Esto
+  corrige además que la pantalla de éxito ya decía "te enviamos todos los
+  detalles a tu correo" sin que eso fuera cierto hasta ahora. Las otras 12
+  plantillas (bienvenida, recuperar, cancelaciones, recordatorios,
+  reseñas, etc.) están listas como funciones en `PLANTILLAS` y
+  callables vía `api/send-notification.js`, pero todavía no están
+  enganchadas a ningún trigger real del sitio — no hay reserva
+  persistente del lado viajero (`js/panoramas.js` no guarda la reserva en
+  ningún `localStorage`, solo actualiza Pick Points) ni vínculo real entre
+  el catálogo del viajero y las cuentas de empresa (`js/negocio.js` genera
+  su propia data demo con un LCG, sin relación con lo que reserva el
+  viajero) — enganchar el resto requeriría inventar esa conexión, así que
+  se dejó para cuando se pida explícitamente cuál flujo simular.
 
 ## Bot "Darwin" super inteligente (en construcción, aislado en /bot-darwin/)
 
