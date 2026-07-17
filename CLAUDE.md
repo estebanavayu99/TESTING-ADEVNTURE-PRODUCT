@@ -164,6 +164,31 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   (manifest, meta de iOS, registro del service worker) que ya está en las
   demás páginas.
 
+## Contenido según modo (`.mode-client` / `.mode-business`)
+
+- La mayoría del texto que cambia entre "Soy viajero"/"Soy empresa" se
+  resuelve por elemento con `data-client`/`data-business` (`js/main.js`,
+  `setMode()`). Pero para bloques ENTEROS que deben existir en un solo
+  modo (no solo texto distinto), el patrón es CSS puro, no JS: dos
+  elementos separados en el HTML, cada uno oculto por defecto y mostrado
+  solo bajo `body.mode-business` o su opuesto — ver
+  `.hero__mock`/`.hero__biz-mock` (ya existía) y `#beto`/`#beto-empresa`
+  (agregado 2026-07-17, instrucción del usuario: la explicación técnica
+  de Darwin — "+18 variables", "24/7 monitoreo", etc. — es solo para
+  viajero; empresa ve una versión corta de venta sin tecnicismos, sin
+  desglose de variables/algoritmo). **Ojo con `.card--inv`**: es texto
+  blanco pensado para ir sobre el fondo oscuro de `.section--business`
+  — usarlo en una sección con fondo claro (como `#beto-empresa`) deja
+  las tarjetas casi invisibles; usar `.card` a secas fuera de esas
+  secciones oscuras.
+- El stat "100% reservas pagadas por adelantado" del hero (modo empresa)
+  era literalmente falso — contradice el modelo real (comisión solo por
+  reserva confirmada, liquidaciones posteriores vía `negocio-pagos.js`,
+  nunca pago adelantado). Se corrigió a "0% riesgo: pagas solo por
+  reserva confirmada". Si se agregan más stats con `data-business`,
+  verificar que el copy calce con cómo funciona el pago real antes de
+  publicarlo.
+
 ## Gotchas conocidos
 
 - **CSS `[hidden]` vs. cascada de autor**: cualquier componente nuevo que
