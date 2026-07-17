@@ -483,6 +483,32 @@ probarlo cuando haya datos reales). Resumen:
   superficie, la que se usaría el día que se conecte un LLM real de
   verdad con datos reales en Supabase.
 
+## Signup de empresa: región/comuna por select, contraseña mínima 8
+
+Instrucción explícita del usuario (2026-07-17):
+- **Contraseña mínima subida de 4 a 8 caracteres**, en los cuatro lugares
+  que la validan (signup y reset de contraseña, tanto viajero como
+  empresa: `login.html`/`login-empresa.html` para el `minlength`/
+  placeholder, `js/auth.js`/`js/auth-empresa.js` para el chequeo real y
+  el mensaje de error). Se aplicó a los dos flujos por consistencia,
+  aunque el pedido original solo mostraba la pantalla de empresa.
+- **Dirección de empresa ya no es un input de texto libre**: el usuario
+  pidió que "solo puedan seleccionar, no escribir" — se le presentaron
+  dos opciones (Región+Comuna por select vs. además autocompletar la
+  calle con Google Places, que tiene costo y requiere API key) y eligió
+  la primera. `js/chile-regiones.js` (nuevo, cargado antes de
+  `js/auth-empresa.js` en `login-empresa.html`) trae las 16 regiones y
+  346 comunas oficiales de Chile (`window.CHILE_REGIONES`); el signup
+  ahora tiene selects de Región y Comuna (Comuna se puebla en cascada al
+  elegir Región, deshabilitado hasta entonces) + un input de texto libre
+  solo para "Calle y número" (no existe una lista manejable de todas las
+  calles de Chile sin una API de direcciones). Al guardar, se arma
+  `address` igual que antes (`"${calle}, ${comuna}, ${region}"`) para no
+  romper el único lugar que lo lee (`js/negocio.js` línea ~40, solo lo
+  pasa a través como string) — si se necesita región/comuna por
+  separado en algún reporte futuro, hay que agregar esos campos sueltos
+  al objeto guardado, hoy solo vive el string combinado.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo

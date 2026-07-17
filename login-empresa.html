@@ -104,8 +104,20 @@ if ('serviceWorker' in navigator) {
         <input type="text" name="bizRut" id="signupBizRut" placeholder="76.123.456-7" required autocomplete="off" inputmode="text">
       </label>
       <label class="auth-field">
-        <span>Dirección</span>
-        <input type="text" name="address" placeholder="Calle, número, comuna" required autocomplete="street-address">
+        <span>Región</span>
+        <select name="region" id="signupRegion" required>
+          <option value="" disabled selected>Selecciona una región</option>
+        </select>
+      </label>
+      <label class="auth-field">
+        <span>Comuna</span>
+        <select name="comuna" id="signupComuna" required disabled>
+          <option value="" disabled selected>Primero selecciona una región</option>
+        </select>
+      </label>
+      <label class="auth-field">
+        <span>Calle y número</span>
+        <input type="text" name="street" id="signupStreet" placeholder="Av. Siempre Viva 742" required autocomplete="address-line1">
       </label>
       <label class="auth-field">
         <span>¿Cómo gestionas hoy tu disponibilidad?</span>
@@ -125,7 +137,7 @@ if ('serviceWorker' in navigator) {
       </label>
       <label class="auth-field">
         <span>Contraseña</span>
-        <input type="password" name="password" placeholder="Mínimo 4 caracteres" required minlength="4" autocomplete="new-password">
+        <input type="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
       </label>
       <button type="submit" class="btn btn--primary auth-submit">Crear cuenta de empresa</button>
       <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
@@ -159,7 +171,7 @@ if ('serviceWorker' in navigator) {
       </label>
       <label class="auth-field">
         <span>Nueva contraseña</span>
-        <input type="password" id="forgotNewPassword" placeholder="Mínimo 4 caracteres" required minlength="4" autocomplete="new-password">
+        <input type="password" id="forgotNewPassword" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
       </label>
       <button type="submit" class="btn btn--primary auth-submit">Cambiar contraseña</button>
       <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="forgotResend">Reenviar código</button></p>
@@ -171,6 +183,7 @@ if ('serviceWorker' in navigator) {
 </main>
 
 <script src="js/skyline.js"></script>
+<script src="js/chile-regiones.js"></script>
 <script src="js/auth-empresa.js"></script>
 </body>
 </html>

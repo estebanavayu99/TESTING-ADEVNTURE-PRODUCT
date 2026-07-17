@@ -143,8 +143,8 @@
       .map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Real send: POSTs to our Vercel serverless function, which forwards to a
-  // GoHighLevel Inbound Webhook that actually emails the code/link. If this
+  // Real send: POSTs to our Vercel serverless function, which sends the
+  // code/link email for real via Resend (api/send-verification.js). If this
   // fails (service down, env var missing, etc.) the caller falls back to
   // showing the code/link on-screen — but only as a failure fallback, never
   // by default, so verification is real under normal operation.
@@ -260,8 +260,8 @@
       showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
       return;
     }
-    if (newPassword.length < 4) {
-      showError('La nueva contraseña necesita al menos 4 caracteres.');
+    if (newPassword.length < 8) {
+      showError('La nueva contraseña necesita al menos 8 caracteres.');
       return;
     }
     users[idx].password = newPassword;
@@ -296,8 +296,8 @@
     const phone = data.get('phone').trim();
     const password = data.get('password');
 
-    if (!firstName || !lastName || !email || password.length < 4) {
-      showError('Revisa los datos: el nombre y el apellido no pueden estar vacíos y la contraseña necesita al menos 4 caracteres.');
+    if (!firstName || !lastName || !email || password.length < 8) {
+      showError('Revisa los datos: el nombre y el apellido no pueden estar vacíos y la contraseña necesita al menos 8 caracteres.');
       return;
     }
     if (!isValidRut(rut)) {

@@ -42,6 +42,32 @@
     }
   });
 
+  // Región/Comuna: selects reales (no texto libre) poblados desde
+  // js/chile-regiones.js. La comuna depende de la región elegida.
+  const regionSelect = document.getElementById('signupRegion');
+  const comunaSelect = document.getElementById('signupComuna');
+  if (regionSelect && comunaSelect && window.CHILE_REGIONES) {
+    window.CHILE_REGIONES.forEach((r) => {
+      const opt = document.createElement('option');
+      opt.value = r.region;
+      opt.textContent = r.region;
+      regionSelect.appendChild(opt);
+    });
+    regionSelect.addEventListener('change', () => {
+      const encontrada = window.CHILE_REGIONES.find((r) => r.region === regionSelect.value);
+      comunaSelect.innerHTML = '<option value="" disabled selected>Selecciona una comuna</option>';
+      comunaSelect.disabled = !encontrada;
+      if (encontrada) {
+        encontrada.comunas.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          comunaSelect.appendChild(opt);
+        });
+      }
+    });
+  }
+
   function getUsers() {
     try {
       return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
@@ -231,8 +257,8 @@
       showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
       return;
     }
-    if (newPassword.length < 4) {
-      showError('La nueva contraseña necesita al menos 4 caracteres.');
+    if (newPassword.length < 8) {
+      showError('La nueva contraseña necesita al menos 8 caracteres.');
       return;
     }
     users[idx].password = newPassword;
@@ -264,13 +290,16 @@
     const bizName = data.get('bizName').trim();
     const legalName = data.get('legalName').trim();
     const bizRut = formatRut(data.get('bizRut'));
-    const address = data.get('address').trim();
+    const region = data.get('region');
+    const comuna = data.get('comuna');
+    const street = data.get('street').trim();
+    const address = street && comuna && region ? `${street}, ${comuna}, ${region}` : '';
     const availability = data.get('availability');
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    if (!repName || !bizName || !legalName || !address || !availability || !email || password.length < 4) {
-      showError('Revisa que todos los campos estén completos y que la contraseña tenga al menos 4 caracteres.');
+    if (!repName || !bizName || !legalName || !address || !availability || !email || password.length < 8) {
+      showError('Revisa que todos los campos estén completos y que la contraseña tenga al menos 8 caracteres.');
       return;
     }
     if (!isValidRut(repRut)) {
