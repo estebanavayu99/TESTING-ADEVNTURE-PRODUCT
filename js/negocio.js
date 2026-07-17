@@ -175,6 +175,15 @@
     return raw.map((r) => ({ ...r, fecha: new Date(r.fecha) }));
   }
 
+  // El panel no tenía forma de responder una reseña — instrucción
+  // explícita del usuario. Persiste la respuesta directo en REVIEWS_KEY
+  // (mismo patrón que actualizarEstadoReserva para reservas).
+  function responderResena(id, respuesta) {
+    const raw = JSON.parse(localStorage.getItem(REVIEWS_KEY) || '[]');
+    const actualizado = raw.map((r) => (r.id === id ? { ...r, respuesta, respuestaFecha: new Date().toISOString() } : r));
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(actualizado));
+  }
+
   /* ---------- Referidos ---------- */
   function getReferralCode() {
     const base = (bizAccount.bizName || 'PICKMAP').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PICKMAP';
@@ -472,7 +481,7 @@
 
   window.PickmapNegocio = {
     getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
-    getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente,
+    getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente, responderResena,
   };
 
   /* ---------- Shared nav / logout ---------- */

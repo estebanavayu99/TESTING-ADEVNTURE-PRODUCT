@@ -323,6 +323,20 @@ html { font-size: 84%; }
 .biz-review__meta { margin: 3px 0 8px; font-size: 0.76rem; color: var(--slate); }
 .biz-review__comment { margin: 0; font-size: 0.88rem; color: var(--navy-2); line-height: 1.5; }
 
+/* Responder reseñas */
+.biz-review__btn-responder { display: inline-block; margin-top: 10px; font-size: 0.82rem; font-weight: 800; }
+.biz-review__respuesta-form { margin-top: 12px; }
+.biz-review__respuesta-form[hidden] { display: none; }
+.biz-review__respuesta {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-left: 3px solid var(--coral);
+}
+.biz-review__respuesta-label { margin: 0 0 4px; font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--coral); }
+.biz-review__respuesta-texto { margin: 0; font-size: 0.86rem; color: var(--navy-2); line-height: 1.5; }
+
 /* Referidos */
 .biz-referral-card {
   display: flex;
