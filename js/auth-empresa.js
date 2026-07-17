@@ -58,6 +58,23 @@
     localStorage.setItem(SESSION_KEY, email);
   }
 
+  // Magic-link confirmation: ?verify=<token> in the URL (from the email
+  // link) confirms la cuenta de empresa y loguea directo — mismo patrón
+  // que js/auth.js para el viajero.
+  const verifyToken = new URLSearchParams(window.location.search).get('verify');
+  if (verifyToken) {
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.verificationToken === verifyToken);
+    if (idx !== -1) {
+      users[idx].verified = true;
+      delete users[idx].verificationToken;
+      saveUsers(users);
+      setSession(users[idx].email);
+      window.location.href = 'negocio.html';
+      return;
+    }
+  }
+
   // Already logged in as business: skip straight to the panel.
   if (localStorage.getItem(SESSION_KEY)) {
     window.location.href = 'negocio.html';
@@ -105,45 +122,54 @@
   }
 
   function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+  function genToken() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(24)))
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Mismo helper que js/auth.js: manda el correo real vía Resend
+  // (api/send-verification.js), con fallback silencioso si falla.
+  function sendVerificationEmail(email, firstName, extra) {
+    return fetch('/api/send-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, firstName: firstName || '', ...extra }),
+    }).then((r) => {
+      if (!r.ok) throw new Error('send failed');
+    });
+  }
 
   let pendingEmail = null;
 
+  // Verificación de cuenta de empresa por magic link (no código) — mismo
+  // patrón que el viajero en js/auth.js: clicar el link en el correo
+  // confirma la cuenta y loguea directo (ver el ?verify=<token> arriba).
   function startVerification(email) {
     const users = getUsers();
     const idx = users.findIndex((u) => u.email === email);
     if (idx === -1) return;
-    const code = genCode();
-    users[idx].verificationCode = code;
+    const token = genToken();
+    users[idx].verificationToken = token;
     saveUsers(users);
     pendingEmail = email;
     document.getElementById('verifyEmailLabel').textContent = email;
-    document.getElementById('verifyCodeDisplay').textContent = code;
-    document.getElementById('verifyCodeInput').value = '';
+    document.getElementById('resendSuccess').hidden = true;
+    document.getElementById('verifyLinkFallback').hidden = true;
     showForm('verify');
+
+    const firstName = (users[idx].repName || '').trim().split(' ')[0];
+    const link = `${window.location.origin}/login-empresa.html?verify=${token}`;
+    sendVerificationEmail(email, firstName, { link }).catch(() => {
+      const fallbackHref = document.getElementById('verifyLinkFallbackHref');
+      fallbackHref.href = link;
+      document.getElementById('verifyLinkFallback').hidden = false;
+    });
   }
 
-  formVerify.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = document.getElementById('verifyCodeInput').value.trim();
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === pendingEmail);
-    if (idx === -1) {
-      showForm('login');
-      return;
-    }
-    if (users[idx].verificationCode !== code) {
-      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
-      return;
-    }
-    users[idx].verified = true;
-    delete users[idx].verificationCode;
-    saveUsers(users);
-    setSession(pendingEmail);
-    window.location.href = 'negocio.html';
-  });
-
   document.getElementById('resendCode').addEventListener('click', () => {
-    if (pendingEmail) startVerification(pendingEmail);
+    if (!pendingEmail) return;
+    startVerification(pendingEmail);
+    document.getElementById('resendSuccess').hidden = false;
   });
   document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
 

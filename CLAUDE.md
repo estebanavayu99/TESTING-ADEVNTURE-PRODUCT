@@ -59,9 +59,17 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   cuenta — muestra el link de confirmación como texto clickeable
   (`#verifyLinkFallback`); recuperar contraseña sigue mostrando el
   código como fallback, igual que antes.
-  `js/auth-empresa.js` todavía NO tiene ninguno de estos cambios (sigue
-  mostrando el código en pantalla siempre, sin envío real) — replicar el
-  mismo patrón ahí si se pide lo mismo para el login de empresa.
+  `js/auth-empresa.js` ya tiene el mismo patrón replicado (instrucción
+  del usuario, 2026-07-17): magic link real por correo en vez de código
+  en pantalla, mismo `genToken()`/`sendVerificationEmail()`, mismo
+  `?verify=<token>` manejado al inicio del archivo (redirige siempre a
+  `negocio.html`, no hay onboarding de empresa que bifurcar). El
+  `firstName` para el saludo del correo sale de la primera palabra de
+  `repName` (nombre del representante), no de `name` como en el viajero.
+  `#formVerify` en `login-empresa.html` pasó de `<form>` con input de
+  código a `<div>` sin input (mismo cambio que `login.html`). Recuperar
+  contraseña de empresa (`startForgotReset`) sigue sin tocar: código de
+  6 dígitos mostrado en pantalla, sin envío real.
 - `<script>` compartidos entre páginas; funciones helper (fmtMoney, fmtDate,
   etc.) están duplicadas literalmente en cada archivo que las necesita — es
   el patrón establecido, no "arreglar" moviéndolas a un módulo compartido

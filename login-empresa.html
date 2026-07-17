@@ -131,17 +131,14 @@ if ('serviceWorker' in navigator) {
       <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
     </form>
 
-    <form class="auth-form" id="formVerify" hidden>
-      <p class="auth-verify-note">Enviamos un código a <strong id="verifyEmailLabel"></strong>. Como esta es una demo sin correo real, te lo mostramos aquí mismo:</p>
-      <p class="auth-verify-code" id="verifyCodeDisplay">••••••</p>
-      <label class="auth-field">
-        <span>Código de verificación</span>
-        <input type="text" name="code" id="verifyCodeInput" placeholder="123456" required inputmode="numeric" maxlength="6" autocomplete="one-time-code">
-      </label>
-      <button type="submit" class="btn btn--primary auth-submit">Verificar y continuar</button>
-      <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="resendCode">Reenviar código</button></p>
+    <div class="auth-form" id="formVerify" hidden>
+      <p class="auth-success" id="resendSuccess" hidden>Correo reenviado.</p>
+      <p class="auth-verify-note">📬 Te enviamos un correo de confirmación a <strong id="verifyEmailLabel"></strong>.</p>
+      <p class="auth-verify-note">Abre el enlace desde tu bandeja de entrada para activar tu cuenta de empresa.</p>
+      <p class="auth-verify-fallback" id="verifyLinkFallback" hidden>No pudimos enviarte el correo — <a href="#" id="verifyLinkFallbackHref">haz click aquí para confirmar tu cuenta</a>.</p>
+      <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="resendCode">Reenviar correo</button></p>
       <p class="auth-switch"><button type="button" class="auth-link" id="verifyBack">← Volver</button></p>
-    </form>
+    </div>
 
     <form class="auth-form" id="formForgotRequest" hidden>
       <p class="auth-verify-note">Ingresa tu correo y te mostramos un código para recuperar tu contraseña (en producción llegaría a tu correo).</p>
