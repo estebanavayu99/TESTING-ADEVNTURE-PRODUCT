@@ -48,7 +48,7 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
     <div class="wrap">
       <div class="accent-bar"></div>
       <div class="header">
-        <div class="logo">Pick<b>Map</b><span></span></div>
+        <div class="logo">Pick<b>Map</b></div>
         ${badgeLabel ? `<div class="badge">${badgeLabel}</div>` : ''}
       </div>
       <div class="card">
@@ -59,7 +59,7 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
       <div class="footer">
         Pickmap SpA · Santiago, Chile<br>
         Recibiste este correo porque tienes una cuenta activa en Pickmap.
-        <a href="#">Gestionar notificaciones</a> · <a href="terminos.html">Términos y Condiciones</a>
+        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a>
       </div>
     </div>
   </body></html>`;
@@ -72,7 +72,7 @@ function esc(valor) {
 const PLANTILLAS = {
   // ---------- Vista cliente ----------
   bienvenida: (d) => ({
-    subject: `¡Bienvenido a Pickmap, ${esc(d.firstName || '')}! 🎉🧭`,
+    subject: `¡Bienvenido a Pickmap, ${d.firstName || ''}! 🎉🧭`,
     html: shell(BRAND.greenInk, 'CUENTA NUEVA',
       'Cuéntanos qué te gusta y Darwin arma tu primer panorama.',
       `<h1>¡Hola, ${esc(d.firstName || '')}! 👋🎉</h1>
@@ -83,7 +83,7 @@ const PLANTILLAS = {
   }),
 
   recuperar: (d) => ({
-    subject: 'Restablece tu contraseña de Pickmap',
+    subject: '🔒 Restablece tu contraseña de Pickmap',
     html: shell(BRAND.navy2, 'SEGURIDAD',
       'Recibimos una solicitud para restablecer tu contraseña.',
       `<h1>Restablece tu contraseña</h1>
@@ -112,7 +112,7 @@ const PLANTILLAS = {
   }),
 
   'reserva-cancelada-cliente': (d) => ({
-    subject: 'Tu reserva fue cancelada',
+    subject: '❌ Tu reserva fue cancelada',
     html: shell(BRAND.red, 'CANCELACIÓN',
       `Cancelaste tu reserva de ${esc(d.actividad)}.`,
       `<h1>Tu reserva fue cancelada</h1>
@@ -172,7 +172,7 @@ const PLANTILLAS = {
   }),
 
   'reserva-cancelada-empresa': (d) => ({
-    subject: 'Reserva cancelada',
+    subject: '❌ Reserva cancelada',
     html: shell(BRAND.red, 'CANCELACIÓN',
       `${esc(d.cliente)} canceló su reserva del ${esc(d.fecha)}.`,
       `<h1>Una reserva fue cancelada</h1>
@@ -186,7 +186,7 @@ const PLANTILLAS = {
   }),
 
   'reserva-modificada': (d) => ({
-    subject: 'Cambios en una reserva',
+    subject: '🔄 Cambios en una reserva',
     html: shell(BRAND.sun, 'MODIFICACIÓN',
       `${esc(d.cliente)} cambió su reserva de horario.`,
       `<h1>Una reserva fue modificada</h1>
@@ -200,7 +200,7 @@ const PLANTILLAS = {
   }),
 
   'recordatorio-empresa': (d) => ({
-    subject: `Mañana tienes ${esc((d.reservas || []).length)} reservas`,
+    subject: `📅 Mañana tienes ${(d.reservas || []).length} reservas`,
     html: shell(BRAND.sun, 'RECORDATORIO',
       `Tienes ${esc((d.reservas || []).length)} reservas agendadas para mañana.`,
       `<h1>Mañana tienes ${esc((d.reservas || []).length)} reservas 📅</h1>
@@ -212,7 +212,7 @@ const PLANTILLAS = {
   }),
 
   'cliente-completo-experiencia': (d) => ({
-    subject: '¿Se realizó la actividad?',
+    subject: '✅ ¿Se realizó la actividad?',
     html: shell(BRAND.coral, 'VALIDACIÓN OPCIONAL',
       `Confirma si ${esc(d.cliente)} asistió a su reserva.`,
       `<h1>¿Se realizó esta actividad?</h1>
@@ -240,7 +240,7 @@ const PLANTILLAS = {
     const rechazo = d.accion === 'rechazada';
     const verbo = rechazo ? 'rechazó' : 'aceptó';
     return {
-      subject: `${rechazo ? '❌' : '✅'} ${esc(d.negocio)} ${verbo} una reserva`,
+      subject: `${rechazo ? '❌' : '✅'} ${d.negocio} ${verbo} una reserva`,
       html: shell(rechazo ? BRAND.red : BRAND.greenInk, 'PANEL DE NEGOCIO',
         `${esc(d.negocio)} ${verbo} la reserva de ${esc(d.cliente)}.`,
         `<h1>${esc(d.negocio)} ${verbo} una reserva</h1>
@@ -271,7 +271,7 @@ const PLANTILLAS = {
   // un negocio, además del correo que ya recibe el negocio
   // (`cliente-dejo-resena`) — mismo patrón que `accion-empresa-reserva-owner`.
   'nueva-resena-owner': (d) => ({
-    subject: `⭐ Nueva reseña para ${esc(d.negocio)} (${esc(d.estrellas)}/5)`,
+    subject: `⭐ Nueva reseña para ${d.negocio} (${d.estrellas}/5)`,
     html: shell(Number(d.estrellas) <= 2 ? BRAND.red : BRAND.greenInk, 'PANEL DE NEGOCIO',
       `${esc(d.cliente)} calificó a ${esc(d.negocio)} con ${esc(d.estrellas)} estrellas.`,
       `<h1>Nueva reseña para ${esc(d.negocio)}</h1>
@@ -290,7 +290,7 @@ const PLANTILLAS = {
   // en negocio-pagos.html (getPaymentDate() en js/negocio.js) pero nunca
   // mandaba un correo cuando esa fecha efectivamente se cumplía.
   'pago-liquidacion-empresa': (d) => ({
-    subject: `💸 Te pagamos ${esc(d.monto)}`,
+    subject: `💸 Te pagamos ${d.monto}`,
     html: shell(BRAND.greenInk, 'LIQUIDACIÓN PAGADA',
       `Te transferimos ${esc(d.monto)} por ${esc(d.reservas)} reserva(s) de la semana del ${esc(d.periodo)}.`,
       `<h1>¡Tu pago ya está en camino! 💸</h1>

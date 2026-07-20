@@ -328,7 +328,7 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
     <div class="wrap">
       <div class="accent-bar"></div>
       <div class="header">
-        <div class="logo">Pick<b>Map</b><span></span></div>
+        <div class="logo">Pick<b>Map</b></div>
         ${badgeLabel ? `<div class="badge">${badgeLabel}</div>` : ''}
       </div>
       <div class="card">
@@ -339,7 +339,7 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
       <div class="footer">
         Pickmap SpA · Santiago, Chile<br>
         Recibiste este correo porque tienes una cuenta activa en Pickmap.
-        <a href="#">Gestionar notificaciones</a> · <a href="terminos.html">Términos y Condiciones</a>
+        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a>
       </div>
     </div>
   </body></html>`;
@@ -362,7 +362,7 @@ const NOTIFS = [
   {
     id: 'recuperar', group: 'cliente', dot: BRAND.navy2,
     title: 'Recuperar contraseña', desc: 'Enlace seguro',
-    subject: 'Restablece tu contraseña de Pickmap',
+    subject: '🔒 Restablece tu contraseña de Pickmap',
     body: shell(BRAND.navy2, 'SEGURIDAD',
       'Recibimos una solicitud para restablecer tu contraseña.',
       `<h1>Restablece tu contraseña</h1>
@@ -393,7 +393,7 @@ const NOTIFS = [
   {
     id: 'reserva-cancelada-cliente', group: 'cliente', dot: BRAND.red,
     title: 'Reserva cancelada', desc: 'Confirmación de cancelación',
-    subject: 'Tu reserva fue cancelada',
+    subject: '❌ Tu reserva fue cancelada',
     body: shell(BRAND.red, 'CANCELACIÓN',
       'Cancelaste tu reserva de Cena romántica con vista.',
       `<h1>Tu reserva fue cancelada</h1>
@@ -457,7 +457,7 @@ const NOTIFS = [
   {
     id: 'reserva-cancelada-empresa', group: 'empresa', dot: BRAND.red,
     title: 'Reserva cancelada', desc: 'Aviso de cancelación',
-    subject: 'Reserva cancelada',
+    subject: '❌ Reserva cancelada',
     body: shell(BRAND.red, 'CANCELACIÓN',
       'Tomás Reyes canceló su reserva del sáb 12 jul.',
       `<h1>Una reserva fue cancelada</h1>
@@ -472,7 +472,7 @@ const NOTIFS = [
   {
     id: 'reserva-modificada', group: 'empresa', dot: BRAND.sun,
     title: 'Reserva modificada', desc: 'Detalle de los cambios',
-    subject: 'Cambios en una reserva',
+    subject: '🔄 Cambios en una reserva',
     body: shell(BRAND.sun, 'MODIFICACIÓN',
       'Fernanda Alarcón cambió su reserva de horario.',
       `<h1>Una reserva fue modificada</h1>
@@ -487,7 +487,7 @@ const NOTIFS = [
   {
     id: 'recordatorio-empresa', group: 'empresa', dot: BRAND.sun,
     title: 'Recordatorio 24h', desc: 'Reservas de mañana',
-    subject: 'Mañana tienes 3 reservas',
+    subject: '📅 Mañana tienes 3 reservas',
     body: shell(BRAND.sun, 'RECORDATORIO',
       'Tienes 3 reservas agendadas para mañana.',
       `<h1>Mañana tienes 3 reservas 📅</h1>
@@ -502,7 +502,7 @@ const NOTIFS = [
   {
     id: 'cliente-completo-experiencia', group: 'empresa', dot: BRAND.coral,
     title: 'Experiencia completada', desc: 'Validar asistencia',
-    subject: '¿Se realizó la actividad?',
+    subject: '✅ ¿Se realizó la actividad?',
     body: shell(BRAND.coral, 'VALIDACIÓN OPCIONAL',
       'Confirma si Javiera Muñoz asistió a su reserva.',
       `<h1>¿Se realizó esta actividad?</h1>
