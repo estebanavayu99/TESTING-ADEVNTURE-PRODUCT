@@ -8,6 +8,7 @@
  *   - darwinPreferences: get, upsert
  *   - preferenceSignals: log (append-only, trazabilidad)
  *   - businesses: listAll
+ *   - businessProfiles: get, upsert (identidad real de cuentas de empresa)
  *
  * Requiere que js/supabase-config.js se haya cargado antes (define
  * window.PICKMAP_SUPABASE_URL / PICKMAP_SUPABASE_ANON_KEY). Si siguen
@@ -109,6 +110,17 @@
     return data || [];
   }
 
+  async function getBusinessProfile(userId) {
+    const { data, error } = await requireClient().from('business_profiles').select('*').eq('user_id', userId).maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async function upsertBusinessProfile(userId, fields) {
+    const { error } = await requireClient().from('business_profiles').upsert({ user_id: userId, ...fields });
+    if (error) throw error;
+  }
+
   window.PickmapSupabase = {
     configured,
     client,
@@ -117,5 +129,6 @@
     darwinPreferences: { get: getDarwinPreferences, upsert: upsertDarwinPreferences },
     preferenceSignals: { log: logPreferenceSignal },
     businesses: { listAll: listAllBusinesses },
+    businessProfiles: { get: getBusinessProfile, upsert: upsertBusinessProfile },
   };
 })();

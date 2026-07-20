@@ -488,17 +488,27 @@ create policy "profiles: el dueño crea su propio perfil"
 -- security policy"). Patrón estándar de Supabase: un trigger con
 -- `security definer` en auth.users crea la fila automáticamente, sin
 -- depender de que el cliente tenga sesión todavía.
+--
+-- `auth.users` es una tabla ÚNICA compartida por viajeros Y empresas (el
+-- signUp de empresa, ver más abajo, usa el mismo Supabase Auth) — por
+-- eso este trigger ahora chequea `account_type` en los metadatos del
+-- signUp antes de insertar en `profiles`, para no crearle una fila de
+-- perfil de VIAJERO vacía a una cuenta de EMPRESA que se registró. El
+-- `coalesce(...,'viajero')` es el default para signups que no manden el
+-- campo (compatibilidad con código ya desplegado que no lo envía).
 create or replace function public.crear_perfil_para_nuevo_usuario()
 returns trigger as $$
 begin
-  insert into public.profiles (user_id, first_name, last_name, rut)
-  values (
-    new.id,
-    new.raw_user_meta_data->>'first_name',
-    new.raw_user_meta_data->>'last_name',
-    new.raw_user_meta_data->>'rut'
-  )
-  on conflict (user_id) do nothing;
+  if coalesce(new.raw_user_meta_data->>'account_type', 'viajero') = 'viajero' then
+    insert into public.profiles (user_id, first_name, last_name, rut)
+    values (
+      new.id,
+      new.raw_user_meta_data->>'first_name',
+      new.raw_user_meta_data->>'last_name',
+      new.raw_user_meta_data->>'rut'
+    )
+    on conflict (user_id) do nothing;
+  end if;
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -620,6 +630,20 @@ create table if not exists public.businesses (
   updated_at timestamptz not null default now()
 );
 
+-- `create table if not exists` de arriba NO agrega columnas nuevas a una
+-- tabla que ya existe (y esta ya existe en producción, con los 25.875
+-- negocios reales cargados vía los 7 lotes SQL) — por eso las columnas
+-- agregadas después del primer diseño van con ALTER TABLE ... ADD COLUMN
+-- IF NOT EXISTS, para que pegar este archivo completo de nuevo en el SQL
+-- Editor siga siendo idempotente y no falle ni pierda datos.
+--
+-- Instrucción explícita del usuario (2026-07-20): va a ir juntando fotos
+-- reales de cada negocio progresivamente (no de una sola vez) —
+-- foto_principal es el hero para la tarjeta/modal, fotos es la galería
+-- completa. Ambos nullable/vacíos hasta que se carguen.
+alter table public.businesses add column if not exists foto_principal text;
+alter table public.businesses add column if not exists fotos text[] default '{}';
+
 alter table public.businesses enable row level security;
 
 drop policy if exists "businesses: lectura pública" on public.businesses;
@@ -633,7 +657,129 @@ create policy "businesses: lectura pública"
 -- nunca desde el navegador del cliente.
 
 -- ============================================================
--- 5. Trigger: updated_at automático
+-- 5. business_profiles — identidad real de las cuentas de negocio
+-- ============================================================
+-- Instrucción explícita del usuario (2026-07-20): el panel de negocio
+-- (login-empresa.html) seguía siendo 100% localStorage falso mientras el
+-- viajero ya tenía Supabase Auth real — "migra lo que tengas que hacer
+-- para arreglarlo". Mirror exacto de los campos que antes vivían sueltos
+-- en el array `pickmap_business_users` de localStorage, ahora con
+-- identidad y contraseña reales en `auth.users` (mismo proyecto/tabla
+-- que usan los viajeros — ver `account_type` en el trigger de más abajo
+-- para que un signup de empresa no le cree también una fila en
+-- `profiles` de viajero, y viceversa).
+--
+-- `region`/`comuna`/`street` quedan separados en vez de un solo string
+-- combinado — js/auth-empresa.js arma `"${street}, ${comuna}, ${region}"`
+-- al mandarlo al espejo legacy (`pickmap_business_users`), que es lo
+-- único que lee `js/negocio.js` hoy, así que ese puente no se rompe.
+create table if not exists public.business_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  rep_name text,
+  rep_rut text,
+  biz_name text,
+  legal_name text,
+  biz_rut text,
+  region text,
+  comuna text,
+  street text,
+  availability text,
+  referral_code_used text,
+  -- Evita acreditar el mismo código de invitación más de una vez: antes
+  -- (localStorage puro) esto solo corría una vez porque vivía en la rama
+  -- `?verify=<token>`, que se consumía sola; con Supabase la sesión se
+  -- sincroniza en cada login, así que sin esta bandera creditarReferido()
+  -- se repetiría cada vez que el negocio referido inicia sesión.
+  referral_credited boolean not null default false,
+  -- Se mantiene aparte de `auth.users.email_confirmed_at` (que RLS no deja
+  -- leer de otras cuentas) para que el panel admin pueda listar "negocios
+  -- sin verificar" de TODOS los negocios, no solo el propio — se sincroniza
+  -- con el trigger `sincronizar_verificacion_empresa` más abajo, que
+  -- escucha la confirmación real de correo en auth.users.
+  verified boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.business_profiles enable row level security;
+
+-- El dueño lee su propia fila; el admin (contacto@pickmap.cl) lee TODAS
+-- — necesario para el resumen agregado de negocio-admin.html. Ningún
+-- negocio normal puede leer la fila de otro (regla de aislamiento).
+drop policy if exists "business_profiles: dueño o admin lee" on public.business_profiles;
+create policy "business_profiles: dueño o admin lee"
+  on public.business_profiles for select
+  using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'contacto@pickmap.cl');
+
+drop policy if exists "business_profiles: el dueño actualiza su propia fila" on public.business_profiles;
+create policy "business_profiles: el dueño actualiza su propia fila"
+  on public.business_profiles for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "business_profiles: el dueño crea su propia fila" on public.business_profiles;
+create policy "business_profiles: el dueño crea su propia fila"
+  on public.business_profiles for insert
+  with check (auth.uid() = user_id);
+
+-- Mismo patrón que `crear_perfil_para_nuevo_usuario` (arriba): el insert
+-- directo desde el navegador en el instante del signUp() viola RLS
+-- porque todavía no hay sesión, así que un trigger security definer en
+-- auth.users lo hace por el cliente. Solo corre cuando el signup viene
+-- del formulario de EMPRESA (account_type = 'empresa' en los metadatos).
+create or replace function public.crear_perfil_empresa_para_nuevo_usuario()
+returns trigger as $$
+begin
+  if new.raw_user_meta_data->>'account_type' = 'empresa' then
+    insert into public.business_profiles (
+      user_id, rep_name, rep_rut, biz_name, legal_name, biz_rut,
+      region, comuna, street, availability, referral_code_used
+    )
+    values (
+      new.id,
+      new.raw_user_meta_data->>'rep_name',
+      new.raw_user_meta_data->>'rep_rut',
+      new.raw_user_meta_data->>'biz_name',
+      new.raw_user_meta_data->>'legal_name',
+      new.raw_user_meta_data->>'biz_rut',
+      new.raw_user_meta_data->>'region',
+      new.raw_user_meta_data->>'comuna',
+      new.raw_user_meta_data->>'street',
+      new.raw_user_meta_data->>'availability',
+      new.raw_user_meta_data->>'referral_code_used'
+    )
+    on conflict (user_id) do nothing;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists on_auth_business_user_created on auth.users;
+create trigger on_auth_business_user_created
+  after insert on auth.users
+  for each row execute function public.crear_perfil_empresa_para_nuevo_usuario();
+
+-- Confirmación real de correo: Supabase marca `email_confirmed_at` en
+-- `auth.users` en el momento en que la persona hace click en el link del
+-- correo — ese cambio se refleja acá para que el admin pueda ver qué
+-- negocios siguen sin confirmar sin necesitar leer `auth.users` ajena
+-- (bloqueada por RLS de Supabase para cualquier rol que no sea el dueño).
+create or replace function public.sincronizar_verificacion_empresa()
+returns trigger as $$
+begin
+  if new.email_confirmed_at is not null and old.email_confirmed_at is null then
+    update public.business_profiles set verified = true where user_id = new.id;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists on_auth_business_user_verified on auth.users;
+create trigger on_auth_business_user_verified
+  after update on auth.users
+  for each row execute function public.sincronizar_verificacion_empresa();
+
+-- ============================================================
+-- 6. Trigger: updated_at automático
 -- ============================================================
 create or replace function public.tocar_updated_at()
 returns trigger as $$

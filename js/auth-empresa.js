@@ -1,6 +1,7 @@
 (() => {
   const USERS_KEY = 'pickmap_business_users';
   const SESSION_KEY = 'pickmap_business_session';
+  const S = window.PickmapSupabase;
 
   // Cuenta admin de Pickmap (instrucción explícita del usuario, 2026-07-20):
   // este email en particular no entra al panel de negocio normal — va al
@@ -40,46 +41,6 @@
     return dv === expectedDv;
   }
 
-  // Mismo cálculo que getReferralCode() en js/negocio.js (duplicado acá a
-  // propósito, patrón ya establecido del repo: helpers duplicados por
-  // archivo en vez de un módulo compartido) — necesario para poder
-  // reconocer, en el signup, a qué negocio le pertenece un código de
-  // invitación ingresado por otro negocio nuevo.
-  function hashStr(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return h;
-  }
-  function computeReferralCode(user) {
-    const base = (user.bizName || 'PICKMAP').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PICKMAP';
-    const suffix = String(100 + (hashStr(user.email) % 900));
-    return `${base}${suffix}`;
-  }
-
-  // Instrucción explícita del usuario: al crearse una cuenta, si ingresó
-  // un código de invitación de otro negocio real ya registrado, ese
-  // negocio debe verlo reflejado en su lista de Referidos. Se llama solo
-  // tras la verificación REAL (mismo criterio que createGhlContact: nunca
-  // ensuciar datos de otro negocio con un signup que nunca se confirmó).
-  // Queda en estado 'invitado' con recompensa $0 — la recompensa de
-  // $50.000 se paga recién cuando el negocio referido confirme su primera
-  // reserva real, y hoy no existe ese vínculo real entre reservas y
-  // referidos (mismo motivo por el que el resto de notificaciones de
-  // reserva siguen sin engancharse a este panel, ver CLAUDE.md).
-  function creditarReferido(referralCodeIngresado, nuevoBizName) {
-    const codigo = (referralCodeIngresado || '').trim().toUpperCase();
-    if (!codigo) return;
-    const users = getUsers();
-    const referente = users.find((u) => computeReferralCode(u) === codigo);
-    if (!referente) return;
-    const key = `pickmap_business_referrals_${referente.email}`;
-    let raw;
-    try { raw = JSON.parse(localStorage.getItem(key)); } catch { raw = null; }
-    if (!Array.isArray(raw)) raw = [];
-    raw.unshift({ nombre: nuevoBizName, fecha: new Date().toISOString(), estado: 'invitado', recompensa: 0 });
-    localStorage.setItem(key, JSON.stringify(raw));
-  }
-
   ['signupRepRut', 'signupBizRut'].forEach((id) => {
     const input = document.getElementById(id);
     if (input) {
@@ -115,45 +76,98 @@
     });
   }
 
-  function getUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-    } catch {
-      return [];
+  // Puente con el mecanismo de sesión "legacy" (localStorage) del que
+  // todavía dependen negocio.html y las 6 páginas negocio-*.html/js para
+  // leer bizName/address/availability/etc. Esta fase migra la IDENTIDAD y
+  // la SEGURIDAD de empresa a Supabase Auth real (mismo patrón que ya se
+  // hizo para el viajero en js/auth.js), pero mantiene este espejo para no
+  // tener que reescribir esas 7 páginas en la misma pasada.
+  function getLegacyUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; } catch { return []; }
+  }
+  function saveLegacyUsers(users) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+  function setLegacySession(email) { localStorage.setItem(SESSION_KEY, email); }
+  function mirrorLegacyBusinessUser(fields) {
+    const users = getLegacyUsers();
+    const idx = users.findIndex((u) => u.email === fields.email);
+    if (idx === -1) users.push(fields);
+    else users[idx] = { ...users[idx], ...fields };
+    saveLegacyUsers(users);
+  }
+
+  // Mismo cálculo que getReferralCode() en js/negocio.js (duplicado acá a
+  // propósito, patrón ya establecido del repo: helpers duplicados por
+  // archivo en vez de un módulo compartido) — necesario para poder
+  // reconocer, en el signup, a qué negocio le pertenece un código de
+  // invitación ingresado por otro negocio nuevo. Sigue operando sobre el
+  // espejo legacy (pickmap_business_users): los referidos no se migraron
+  // a Supabase en esta pasada (alcance explícito: solo auth/identidad).
+  function hashStr(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  function computeReferralCode(user) {
+    const base = (user.bizName || 'PICKMAP').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PICKMAP';
+    const suffix = String(100 + (hashStr(user.email) % 900));
+    return `${base}${suffix}`;
+  }
+
+  // Instrucción explícita del usuario: al crearse una cuenta, si ingresó un
+  // código de invitación de otro negocio real ya registrado, ese negocio
+  // debe verlo reflejado en su lista de Referidos. Se llama solo la
+  // PRIMERA vez que la cuenta nueva confirma su correo real (guardado en
+  // `business_profiles.referral_credited` — con Supabase el perfil se
+  // sincroniza en cada login, así que sin esa bandera se acreditaría de
+  // nuevo cada vez). Queda en estado 'invitado' con recompensa $0 — la
+  // recompensa de $50.000 se paga recién cuando el negocio referido
+  // confirme su primera reserva real, vínculo que hoy no existe.
+  function creditarReferido(referralCodeIngresado, nuevoBizName) {
+    const codigo = (referralCodeIngresado || '').trim().toUpperCase();
+    if (!codigo) return;
+    const users = getLegacyUsers();
+    const referente = users.find((u) => computeReferralCode(u) === codigo);
+    if (!referente) return;
+    const key = `pickmap_business_referrals_${referente.email}`;
+    let raw;
+    try { raw = JSON.parse(localStorage.getItem(key)); } catch { raw = null; }
+    if (!Array.isArray(raw)) raw = [];
+    raw.unshift({ nombre: nuevoBizName, fecha: new Date().toISOString(), estado: 'invitado', recompensa: 0 });
+    localStorage.setItem(key, JSON.stringify(raw));
+  }
+
+  function addressFromProfile(profile) {
+    return profile && profile.street && profile.comuna && profile.region
+      ? `${profile.street}, ${profile.comuna}, ${profile.region}`
+      : '';
+  }
+
+  async function syncLegacyFromSupabase(userId, email) {
+    let profile = null;
+    try { profile = await S.businessProfiles.get(userId); } catch { /* fila del trigger aún no visible */ }
+    mirrorLegacyBusinessUser({
+      email,
+      supabase_user_id: userId,
+      repName: profile ? profile.rep_name : '',
+      repRut: profile ? profile.rep_rut : '',
+      bizName: profile ? profile.biz_name : '',
+      legalName: profile ? profile.legal_name : '',
+      bizRut: profile ? profile.biz_rut : '',
+      address: addressFromProfile(profile),
+      availability: profile ? profile.availability : '',
+      referralCodeUsed: profile ? profile.referral_code_used : '',
+      verified: !!(profile && profile.verified),
+      createdAt: profile ? profile.created_at : new Date().toISOString(),
+    });
+
+    // Acreditar el código de invitación recién ahora que el correo está
+    // realmente confirmado (mismo criterio que antes: nunca ensuciar el
+    // panel de Referidos de otro negocio con un signup sin confirmar).
+    if (profile && profile.verified && profile.referral_code_used && !profile.referral_credited) {
+      creditarReferido(profile.referral_code_used, profile.biz_name);
+      try { await S.businessProfiles.upsert(userId, { referral_credited: true }); } catch { /* se reintenta en el próximo login si falla */ }
     }
-  }
-
-  function saveUsers(users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
-
-  function setSession(email) {
-    localStorage.setItem(SESSION_KEY, email);
-  }
-
-  // Magic-link confirmation: ?verify=<token> in the URL (from the email
-  // link) confirms la cuenta de empresa y loguea directo — mismo patrón
-  // que js/auth.js para el viajero.
-  const verifyToken = new URLSearchParams(window.location.search).get('verify');
-  if (verifyToken) {
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.verificationToken === verifyToken);
-    if (idx !== -1) {
-      users[idx].verified = true;
-      delete users[idx].verificationToken;
-      creditarReferido(users[idx].referralCodeUsed, users[idx].bizName);
-      saveUsers(users);
-      setSession(users[idx].email);
-      window.location.href = panelDestino(users[idx].email);
-      return;
-    }
-  }
-
-  // Already logged in as business: skip straight to the panel.
-  const activeSessionEmail = localStorage.getItem(SESSION_KEY);
-  if (activeSessionEmail) {
-    window.location.href = panelDestino(activeSessionEmail);
-    return;
+    return profile;
   }
 
   const tabLogin = document.getElementById('tabLogin');
@@ -196,126 +210,45 @@
     successBox.hidden = true;
   }
 
-  function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
-  function genToken() {
-    return Array.from(crypto.getRandomValues(new Uint8Array(24)))
-      .map((b) => b.toString(16).padStart(2, '0')).join('');
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+    successBox.hidden = true;
   }
-
-  // Mismo helper que js/auth.js: manda el correo real vía Resend
-  // (api/send-verification.js), con fallback silencioso si falla.
-  function sendVerificationEmail(email, firstName, extra) {
-    return fetch('/api/send-verification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, firstName: firstName || '', ...extra }),
-    }).then((r) => {
-      if (!r.ok) throw new Error('send failed');
-    });
-  }
-
-  let pendingEmail = null;
-
-  // Verificación de cuenta de empresa por magic link (no código) — mismo
-  // patrón que el viajero en js/auth.js: clicar el link en el correo
-  // confirma la cuenta y loguea directo (ver el ?verify=<token> arriba).
-  function startVerification(email) {
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === email);
-    if (idx === -1) return;
-    const token = genToken();
-    users[idx].verificationToken = token;
-    saveUsers(users);
-    pendingEmail = email;
-    document.getElementById('verifyEmailLabel').textContent = email;
-    document.getElementById('resendSuccess').hidden = true;
-    document.getElementById('verifyLinkFallback').hidden = true;
-    showForm('verify');
-
-    const firstName = (users[idx].repName || '').trim().split(' ')[0];
-    const link = `${window.location.origin}/login-empresa.html?verify=${token}`;
-    sendVerificationEmail(email, firstName, { link }).catch(() => {
-      const fallbackHref = document.getElementById('verifyLinkFallbackHref');
-      fallbackHref.href = link;
-      document.getElementById('verifyLinkFallback').hidden = false;
-    });
-  }
-
-  document.getElementById('resendCode').addEventListener('click', () => {
-    if (!pendingEmail) return;
-    startVerification(pendingEmail);
-    document.getElementById('resendSuccess').hidden = false;
-  });
-  document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
-
-  /* ---------- Recuperar contraseña ---------- */
-  let pendingForgotEmail = null;
-
   function showSuccess(message) {
     successBox.textContent = message;
     successBox.hidden = false;
+    errorBox.hidden = true;
   }
 
-  function startForgotReset(email) {
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === email);
-    if (idx === -1) return;
-    const code = genCode();
-    users[idx].resetCode = code;
-    saveUsers(users);
-    pendingForgotEmail = email;
-    document.getElementById('forgotEmailLabel').textContent = email;
-    document.getElementById('forgotCodeDisplay').textContent = code;
-    document.getElementById('forgotCodeInput').value = '';
-    document.getElementById('forgotNewPassword').value = '';
-    showForm('forgot-reset');
+  if (!S || !S.configured) {
+    showError('Supabase todavía no está configurado (js/supabase-config.js) — no se puede iniciar sesión ni crear cuentas de empresa reales hasta completar la URL y anon key del proyecto.');
   }
 
-  document.getElementById('forgotLink').addEventListener('click', () => {
-    document.getElementById('forgotEmail').value = '';
-    showForm('forgot-request');
-  });
-  document.getElementById('forgotBackToLogin1').addEventListener('click', () => showForm('login'));
-  document.getElementById('forgotBackToLogin2').addEventListener('click', () => showForm('login'));
-  document.getElementById('forgotResend').addEventListener('click', () => {
-    if (pendingForgotEmail) startForgotReset(pendingForgotEmail);
-  });
+  let pendingSignupEmail = null;
 
-  formForgotRequest.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-    const users = getUsers();
-    if (!users.some((u) => u.email === email)) {
-      showError('No encontramos una cuenta de empresa con ese correo.');
-      return;
-    }
-    startForgotReset(email);
-  });
+  // Sesión de empresa ya activa (Supabase Auth real) → saltar directo al
+  // panel correspondiente (negocio.html o negocio-admin.html si es el admin).
+  (async () => {
+    if (!S || !S.configured) return;
+    try {
+      const session = await S.auth.getSession();
+      if (session && session.user) {
+        setLegacySession(session.user.email);
+        await syncLegacyFromSupabase(session.user.id, session.user.email);
+        window.location.href = panelDestino(session.user.email);
+      }
+    } catch { /* sin sesión activa, se queda en el login normal */ }
+  })();
 
-  formForgotReset.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = document.getElementById('forgotCodeInput').value.trim();
-    const newPassword = document.getElementById('forgotNewPassword').value;
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.email === pendingForgotEmail);
-    if (idx === -1) {
-      showForm('login');
-      return;
-    }
-    if (users[idx].resetCode !== code) {
-      showError('Ese código no es correcto. Revísalo e intenta de nuevo.');
-      return;
-    }
-    if (newPassword.length < 8) {
-      showError('La nueva contraseña necesita al menos 8 caracteres.');
-      return;
-    }
-    users[idx].password = newPassword;
-    delete users[idx].resetCode;
-    saveUsers(users);
-    showForm('login');
-    showSuccess('Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
-  });
+  // Recuperación de contraseña: Supabase redirige de vuelta a esta misma
+  // página con una sesión de tipo "recovery" en la URL, detectada con el
+  // evento PASSWORD_RECOVERY (no un código de 6 dígitos copiado a mano).
+  if (S && S.configured && S.client) {
+    S.client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') showForm('forgot-reset');
+    });
+  }
 
   tabLogin.addEventListener('click', () => showForm('login'));
   tabSignup.addEventListener('click', () => showForm('signup'));
@@ -338,12 +271,7 @@
     if (refInput) refInput.value = refCode;
   }
 
-  function showError(message) {
-    errorBox.textContent = message;
-    errorBox.hidden = false;
-  }
-
-  formSignup.addEventListener('submit', (e) => {
+  formSignup.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(formSignup);
     const repName = data.get('repName').trim();
@@ -354,13 +282,12 @@
     const region = data.get('region');
     const comuna = data.get('comuna');
     const street = data.get('street').trim();
-    const address = street && comuna && region ? `${street}, ${comuna}, ${region}` : '';
     const availability = data.get('availability');
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
     const referralCodeUsed = (data.get('referralCode') || '').trim().toUpperCase();
 
-    if (!repName || !bizName || !legalName || !address || !availability || !email || password.length < 8) {
+    if (!repName || !bizName || !legalName || !region || !comuna || !street || !availability || !email || password.length < 8) {
       showError('Revisa que todos los campos estén completos y que la contraseña tenga al menos 8 caracteres.');
       return;
     }
@@ -373,31 +300,94 @@
       return;
     }
 
-    const users = getUsers();
-    if (users.some((u) => u.email === email)) {
-      showError('Ya existe una cuenta de empresa con ese correo. Prueba iniciando sesión.');
-      return;
+    try {
+      // La fila de `business_profiles` la crea un trigger en la base de
+      // datos (ver supabase/schema.sql: on_auth_business_user_created) a
+      // partir de estos metadatos — no se escribe directo desde el
+      // navegador porque en este instante todavía no hay sesión
+      // autenticada y RLS lo bloquearía.
+      const result = await S.auth.signUp(email, password, {
+        account_type: 'empresa',
+        rep_name: repName, rep_rut: repRut, biz_name: bizName, legal_name: legalName, biz_rut: bizRut,
+        region, comuna, street, availability, referral_code_used: referralCodeUsed,
+      });
+      if (result.session) {
+        // Confirmación de correo desactivada en el proyecto Supabase: la
+        // sesión queda activa de inmediato — se sigue directo al panel sin
+        // pantalla intermedia (mismo criterio que el viajero).
+        setLegacySession(email);
+        await syncLegacyFromSupabase(result.user.id, email);
+        window.location.href = panelDestino(email);
+        return;
+      }
+      pendingSignupEmail = email;
+      document.getElementById('verifyEmailLabel').textContent = email;
+      showForm('verify');
+    } catch (err) {
+      showError(err.message || 'No pudimos crear tu cuenta de empresa. Intenta de nuevo.');
     }
-
-    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false, referralCodeUsed, createdAt: new Date().toISOString() });
-    saveUsers(users);
-    startVerification(email);
   });
 
-  formLogin.addEventListener('submit', (e) => {
+  document.getElementById('resendCode').addEventListener('click', async () => {
+    if (!pendingSignupEmail || !S.client) return;
+    try {
+      await S.client.auth.resend({ type: 'signup', email: pendingSignupEmail });
+      showSuccess('Correo reenviado.');
+    } catch (err) {
+      showError(err.message || 'No pudimos reenviar el correo.');
+    }
+  });
+  document.getElementById('verifyBack').addEventListener('click', () => showForm('login'));
+
+  formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(formLogin);
     const email = data.get('email').trim().toLowerCase();
     const password = data.get('password');
 
-    const users = getUsers();
-    const match = users.find((u) => u.email === email && u.password === password);
-    if (!match) {
-      showError('Correo o contraseña incorrectos.');
+    try {
+      const result = await S.auth.signIn(email, password);
+      setLegacySession(email);
+      await syncLegacyFromSupabase(result.user.id, email);
+      window.location.href = panelDestino(email);
+    } catch (err) {
+      const msg = /confirm/i.test(err.message || '') ? 'Confirma tu correo antes de iniciar sesión — revisa tu bandeja de entrada.' : 'Correo o contraseña incorrectos.';
+      showError(msg);
+    }
+  });
+
+  /* ---------- Recuperar contraseña (real, vía Supabase) ---------- */
+  document.getElementById('forgotLink').addEventListener('click', () => {
+    document.getElementById('forgotEmail').value = '';
+    showForm('forgot-request');
+  });
+  document.getElementById('forgotBackToLogin1').addEventListener('click', () => showForm('login'));
+
+  formForgotRequest.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    try {
+      await S.auth.resetPasswordForEmail(email, window.location.origin + window.location.pathname);
+      showForm('login');
+      showSuccess('Si esa cuenta existe, te enviamos un enlace para restablecer tu contraseña.');
+    } catch (err) {
+      showError(err.message || 'No pudimos enviar el enlace de recuperación.');
+    }
+  });
+
+  formForgotReset.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPassword = document.getElementById('forgotNewPassword').value;
+    if (newPassword.length < 8) {
+      showError('La nueva contraseña necesita al menos 8 caracteres.');
       return;
     }
-
-    setSession(email);
-    window.location.href = panelDestino(email);
+    try {
+      await S.auth.updatePassword(newPassword);
+      showForm('login');
+      showSuccess('Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
+    } catch (err) {
+      showError(err.message || 'No pudimos actualizar tu contraseña.');
+    }
   });
 })();

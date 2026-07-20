@@ -70,6 +70,11 @@ Público objetivo: viajeros ("Soy viajero") y negocios turísticos aliados
   código a `<div>` sin input (mismo cambio que `login.html`). Recuperar
   contraseña de empresa (`startForgotReset`) sigue sin tocar: código de
   6 dígitos mostrado en pantalla, sin envío real.
+  **Superado 2026-07-20**: todo este bloque de auth de empresa (localStorage
+  + magic link falso + código de recuperación en pantalla) fue
+  reemplazado por Supabase Auth real — ver "Migración de auth de empresa
+  a Supabase real" más abajo. Se deja este párrafo como registro
+  histórico de cómo funcionaba antes.
 - `<script>` compartidos entre páginas; funciones helper (fmtMoney, fmtDate,
   etc.) están duplicadas literalmente en cada archivo que las necesita — es
   el patrón establecido, no "arreglar" moviéndolas a un módulo compartido
@@ -729,7 +734,11 @@ sigue sin tocarse). Las dos superficies deben terminar leyendo/escribiendo
   `js/auth-empresa.js` (login de empresa sigue 100% localStorage) ni las
   claves `pickmap_business_*` — la prioridad declarada fue el lado
   viajero + Superficie 2. Tampoco se conectó ningún LLM real (sigue
-  siendo el motor de reglas determinista).
+  siendo el motor de reglas determinista). **Superado 2026-07-20**: la
+  auth de empresa SÍ se migró a Supabase real en la fase siguiente, ver
+  "Migración de auth de empresa a Supabase real" más abajo — el resto de
+  este bullet (LLM, claves `pickmap_business_reservations/reviews/
+  referrals_*`) sigue vigente.
 - **Vercel preview**: confirmado — el proyecto SÍ genera deploys de
   Preview automáticos para ramas no-productivas (comportamiento por
   defecto de la integración GitHub↔Vercel). Cada deployment individual
@@ -916,6 +925,120 @@ plataforma — necesita poder ver "un resumen completo de mi empresa"
   mobile el texto se apachurraba en una columna angosta en vez de
   apilarse — ahora tiene el mismo wrapper `<div>` + avatar (`PM`, coral)
   que las demás.
+
+## Migración de auth de empresa a Supabase real (2026-07-20)
+
+Instrucción explícita del usuario: "MIGRA LO QUE TENGAS QUE HACER PARA
+ARREGLARLO" — respuesta a mi recomendación de que el panel de negocio
+tuviera auth real (Supabase, como el viajero) en vez de dos sistemas de
+identidad paralelos (uno real, uno 100% `localStorage`). Mismo patrón
+exacto que la migración del viajero (`js/auth.js`, ver sección de arriba),
+aplicado ahora a `login-empresa.html`/`js/auth-empresa.js`.
+
+- **`supabase/schema.sql`**: tabla nueva `business_profiles` (mirror de
+  los campos que antes vivían sueltos en `pickmap_business_users`:
+  `rep_name`/`rep_rut`/`biz_name`/`legal_name`/`biz_rut`/`region`/`comuna`/
+  `street`/`availability`/`referral_code_used`/`verified`/
+  `referral_credited`), con RLS (dueño lee/actualiza su propia fila; el
+  admin `contacto@pickmap.cl` lee TODAS, vía `auth.jwt()->>'email'` — para
+  el resumen agregado de `negocio-admin.html`). Dos triggers nuevos sobre
+  `auth.users` (mismo `security definer` que ya usaba `profiles` del
+  viajero, para esquivar RLS en el instante del signup sin sesión):
+  `crear_perfil_empresa_para_nuevo_usuario` (inserta la fila solo si
+  `raw_user_meta_data->>'account_type' = 'empresa'`) y
+  `sincronizar_verificacion_empresa` (copia `email_confirmed_at` de
+  `auth.users` a `business_profiles.verified` en el momento real de la
+  confirmación — necesario porque RLS de Supabase no deja leer
+  `auth.users` de otra cuenta ni siquiera para el admin). El trigger
+  `crear_perfil_para_nuevo_usuario` del viajero se envolvió en el mismo
+  chequeo de `account_type` (`= 'viajero'`, con default si no viene) para
+  que un signup de empresa no le cree también una fila de `profiles` de
+  viajero. Se agregaron además `foto_principal text` / `fotos text[]` a
+  `businesses` vía `alter table ... add column if not exists` (no dentro
+  del `create table if not exists` original, que ya no corre nada sobre
+  la tabla real con sus 25.875 filas ya cargadas) — para cuando el
+  usuario empiece a subir fotos reales de negocios, ver más abajo.
+- **`js/supabase-client.js`**: agregado `businessProfiles: { get, upsert }`
+  (mismo patrón que `profiles`/`darwinPreferences`).
+- **`js/auth-empresa.js` reescrito completo** para usar
+  `S.auth.signUp/signIn/resetPasswordForEmail/updateUser` reales en vez de
+  passwords en `localStorage` — mismo patrón que `js/auth.js`. Lo que se
+  mantiene igual a propósito (alcance acotado a auth/identidad, igual que
+  la fase del viajero):
+  - **Puente legacy**: `mirrorLegacyBusinessUser`/`syncLegacyFromSupabase`
+    siguen escribiendo `pickmap_business_users`/`pickmap_business_session`
+    tal cual antes, para que `js/negocio.js` y las 6 páginas
+    `negocio-*.html` sigan funcionando sin tocarlas.
+  - **`ADMIN_EMAIL`/`panelDestino('contacto@pickmap.cl')`**: intacto, en
+    los 3 puntos de redirect (sesión ya activa, signup con confirmación
+    desactivada, login).
+  - **Referidos**: `computeReferralCode`/`creditarReferido` siguen
+    operando sobre el espejo legacy (`pickmap_business_users`), sin
+    migrar a Supabase (los referidos no estaban en el alcance de esta
+    fase). Cambio real necesario: antes se acreditaba una sola vez porque
+    corría dentro de la rama `?verify=<token>`, que se consumía sola; con
+    Supabase el perfil se sincroniza en cada login, así que sin una
+    bandera se acreditaría de nuevo cada vez — de ahí la nueva columna
+    `business_profiles.referral_credited`, escrita apenas se acredita.
+  - **RUT/región/comuna**: validación y selects en cascada sin cambios.
+  - **Recuperar contraseña de empresa** (`startForgotReset`): esta SÍ
+    cambió de verdad — antes era un código de 6 dígitos mostrado en
+    pantalla sin envío real (documentado en la sección de arriba como
+    "sin tocar"), ahora es el mismo flujo real que el viajero
+    (`resetPasswordForEmail` + evento `PASSWORD_RECOVERY` +
+    `updateUser`), porque ya no hay contraseña en texto plano en
+    `localStorage` sobre la cual mostrar/comparar un código. Se necesitaba
+    migrar junto con el resto o el reset quedaba roto.
+  - `login-empresa.html`: se agregaron los mismos 3 `<script>` de Supabase
+    que ya tenía `login.html` (CDN + `supabase-config.js` +
+    `supabase-client.js`, antes de `auth-empresa.js`), y los forms de
+    "olvidé mi contraseña" se simplificaron a los mismos 2 pasos reales
+    de `login.html` (pedir correo → escribir nueva contraseña), sin campo
+    de código.
+- **Verificado con Playwright** (sandbox sin salida a internet real, mismo
+  patrón de degradación que el viajero): el CDN de supabase-js falla en
+  cargar (`ERR_TUNNEL_CONNECTION_FAILED`), así que `S.configured` queda
+  `true` (la anon key real ya está en `js/supabase-config.js`) pero
+  `S.client` queda `null` — cualquier submit falla explícito con
+  "Supabase no está configurado todavía...", nunca un error críptico ni
+  una promesa colgada. Validación de RUT/campos obligatorios del signup
+  de empresa sigue funcionando igual (corre antes de tocar Supabase). El
+  form de "olvidé mi contraseña" ya no deja ningún rastro del input de
+  código de 6 dígitos en el DOM.
+- **Pendiente para el usuario, fuera de este repo**: pegar el
+  `business_profiles` nuevo del `schema.sql` en el SQL Editor de Supabase
+  (mismo proyecto que ya usa el viajero) antes de que el signup de
+  empresa funcione en producción — sin esa tabla/triggers, `signUp()`
+  funcionaría pero `business_profiles.get()` devolvería vacío para
+  siempre y el espejo legacy quedaría con los campos en blanco.
+
+### Metodología recomendada para cargar negocios reales + fotos (progresivo, no un solo batch)
+
+El usuario preguntó cuál es la forma más práctica de ir sumando
+info/fotos de negocios reales con el tiempo, para que el panel de control
+quede "lo más fácil posible". Con `foto_principal`/`fotos` ya en el
+schema, la recomendación concreta:
+
+- **Para altas/ediciones sueltas (el caso normal: 1-5 negocios a la vez)**:
+  usar directamente el **Table Editor de Supabase** (dashboard web, tabla
+  `businesses`) — no requiere este repo ni ningún script. Es una grilla
+  tipo spreadsheet: buscar la fila del negocio (o crear una nueva),
+  editar celdas de texto/precio directo. Cero fricción, cero riesgo de
+  romper otra fila.
+- **Para las fotos**: crear un bucket público en **Supabase Storage**
+  (ej. `negocios-fotos`), subir la foto ahí (arrastrar y soltar desde el
+  dashboard), copiar la URL pública que Supabase genera, y pegarla en
+  `foto_principal` (o agregarla al array `fotos`) de esa fila en el Table
+  Editor — mismo flujo manual, sin código. Evita depender de hosting
+  externo o de que el usuario maneje URLs de terceros.
+- **Reservar el camino de CSV/script** (`scripts/generar_sql_businesses_
+  desde_csv.py`, el que ya se usó para los 7 lotes de 25.875 negocios)
+  **solo para altas masivas reales** (ej. si en el futuro llega un CSV
+  nuevo de cientos de negocios de una vez) — no para el goteo normal de
+  "voy juntando info de a poco", donde el overhead de generar SQL y
+  correrlo por lotes es más lento que simplemente editar la celda a mano.
+- En resumen: Table Editor + Storage para el día a día, script/CSV
+  reservado para el próximo batch grande si llega.
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 

@@ -199,7 +199,7 @@
       // metadatos — no se escribe directo desde el navegador porque en
       // este instante (con confirmación de correo activada) todavía no
       // hay sesión autenticada y RLS lo bloquearía.
-      const result = await S.auth.signUp(email, password, { first_name: firstName, last_name: lastName, rut });
+      const result = await S.auth.signUp(email, password, { account_type: 'viajero', first_name: firstName, last_name: lastName, rut });
       const name = `${firstName} ${lastName}`.trim();
       if (result.session) {
         // Confirmación de correo desactivada en el proyecto Supabase: la
