@@ -720,6 +720,79 @@ sigue sin tocarse). Las dos superficies deben terminar leyendo/escribiendo
   blanco aunque los lotes SQL no se hayan corrido todavía en el proyecto
   Supabase real.
 
+## REGLA PERMANENTE: aislamiento de privacidad entre negocios aliados
+
+Instrucción explícita y crítica del usuario (2026-07-20): **un negocio
+JAMÁS puede ver que un mismo cliente reservó también con OTRO negocio** —
+si Juan reserva 3 actividades y una de ellas es con "Cabañas Carlos",
+Cabañas Carlos solo puede ver SU reserva con Juan, nunca las otras dos.
+Motivo explícito: evitar que un negocio "se robe" combinaciones/insights
+sobre qué más ofrecen otros aliados a un mismo cliente.
+
+- **Hoy esto ya se cumple estructuralmente, sin necesidad de tocar nada**:
+  cada negocio en `js/negocio.js` calcula sus reservas/reseñas/referidos
+  con un LCG sembrado SOLO por su propio `bizEmail`
+  (`seedRandom(20240711 + hashStr(bizEmail))`, etc.) y los persiste en
+  claves de `localStorage` exclusivas
+  (`pickmap_business_reservations_<email>`, `..._reviews_<email>`,
+  `..._referrals_<email>`). No existe ninguna tabla ni objeto compartido
+  de "reservas de un cliente" que cruce negocios — cada negocio solo
+  puede leer su propia clave. Confirmado al auditar el código: ninguna
+  página `negocio-*.html` enumera ni lee la clave de otro negocio.
+- **Regla para cuando se construya un backend real compartido de
+  reservas entre negocios** (hoy no existe — el único backend real de
+  Supabase es el de auth/perfil/Darwin del viajero, ver sección de abajo;
+  las reservas de negocio siguen siendo 100% demo/`localStorage`): la
+  tabla de reservas real deberá tener RLS estricto por `business_id`
+  (cada negocio solo `select`/`update` sus propias filas), y CUALQUIER
+  endpoint o vista que muestre "reservas de un cliente" a un negocio debe
+  filtrar por ese `business_id` — nunca hacer un `join`/`select` que
+  devuelva las reservas del mismo cliente en otros negocios. Esto aplica
+  también a futuras notificaciones, exports o reportes: ninguno debe
+  mencionarle a un negocio qué más reservó su cliente en otro lado.
+- La ÚNICA cuenta que sí ve todo (agregado, no cruzado) es el admin de
+  Pickmap (`contacto@pickmap.cl`, ver abajo) — y aun así solo ve TOTALES
+  por negocio (generado histórico, reservas activas, rating promedio),
+  nunca el detalle de reserva-por-reserva de cada negocio ajeno.
+
+## Panel de administrador Pickmap (`contacto@pickmap.cl`)
+
+Instrucción explícita del usuario (2026-07-20): el email
+`contacto@pickmap.cl` (mismo que ya se usaba como
+`OWNER_NOTIFICATION_EMAIL` en `js/negocio.js` para notificaciones internas
+de aceptar/rechazar reserva) ahora es también la cuenta admin de la
+plataforma — necesita poder ver "un resumen completo de mi empresa"
+(Pickmap, no un negocio individual).
+
+- `negocio-admin.html` + `js/negocio-admin.js` (nuevos): página aparte,
+  NO reutiliza `js/negocio.js` (que está cerrado sobre el negocio de la
+  sesión actual) — duplica el mismo patrón de helpers
+  (`hashStr`/`seedRandom`/`CLIENTES`/`ACTIVIDADES`/`HORAS`/
+  `generateReservations`), parametrizado por email en vez de cerrado
+  sobre uno solo, para poder calcular el dataset demo de CUALQUIER
+  negocio registrado en `pickmap_business_users` sin que ese negocio
+  tenga que haber iniciado sesión antes. Persiste en las mismas claves
+  (`pickmap_business_reservations_<email>`, `..._reviews_<email>`) así
+  que si el negocio ya generó sus datos, el admin ve exactamente lo
+  mismo que vería ese negocio.
+- Login especial: `js/auth-empresa.js` tiene `ADMIN_EMAIL` +
+  `panelDestino(email)` — si el email de la sesión es
+  `contacto@pickmap.cl`, los tres puntos de redirect post-login/verify
+  mandan a `negocio-admin.html` en vez de `negocio.html`. Además,
+  `js/negocio.js` (las 6 páginas de negocio normales) redirige a
+  `negocio-admin.html` si detecta que la sesión activa es la del admin —
+  así no puede terminar viendo un panel de negocio vacío a su propio
+  nombre por URL directa. Simétricamente, `negocio-admin.html` redirige
+  a `negocio.html` si alguien que NO es el admin llega ahí por URL
+  directa con sesión de negocio normal activa.
+- Contenido: 4 stats agregados (negocios aliados, generado histórico de
+  TODOS, reservas activas de TODAS, rating promedio de la plataforma) +
+  una tabla ordenada por generado histórico descendente, con
+  nombre/representante/email/verificado por fila — **nunca el detalle de
+  reserva-por-reserva de cada negocio** (ver regla de aislamiento arriba).
+  Filas con `.biz-res--static` (mismo look que `.biz-res` pero sin cursor
+  de "clickeable", porque no abren modal).
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo

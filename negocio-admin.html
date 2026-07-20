@@ -14,8 +14,9 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
 }
 </script>
-<title>Panel de aliado — Pickmap</title>
-<meta name="description" content="Tu panel de aliado Pickmap: cuánto has generado, tus próximas reservas y tus pagos.">
+<title>Panel de administrador — Pickmap</title>
+<meta name="description" content="Resumen agregado de todos los negocios aliados de Pickmap.">
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -51,14 +52,6 @@ if ('serviceWorker' in navigator) {
       <img src="assets/logo.png" alt="" class="logo__mark">
       Pick<span class="logo__map">Map</span>
     </a>
-    <nav class="nav__links">
-      <a href="negocio.html" class="is-current">Resumen</a>
-      <a href="negocio-reservas.html">Reservas</a>
-      <a href="negocio-pagos.html">Pagos</a>
-      <a href="negocio-resenas.html">Reseñas</a>
-      <a href="negocio-referidos.html">Referidos</a>
-      <a href="negocio-calendario.html">Calendario</a>
-    </nav>
     <div class="nav__actions">
       <button type="button" class="nav__login" id="bizLogoutBtn">Cerrar sesión</button>
     </div>
@@ -68,60 +61,40 @@ if ('serviceWorker' in navigator) {
 <main class="biz">
   <div class="container">
     <div class="biz__greeting">
-      <p class="eyebrow">Panel de aliado</p>
-      <h1 id="bizGreeting">Hola 👋</h1>
-      <p class="biz__sub">Esto es lo que ha pasado con tu experiencia últimamente.</p>
+      <p class="eyebrow">Panel de administrador</p>
+      <h1>Hola, Pickmap 👋</h1>
+      <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada tarjeta de la tabla es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
     </div>
 
     <div class="biz__stats">
       <div class="biz-stat biz-stat--accent">
-        <p class="biz-stat__label">Generado histórico</p>
-        <p class="biz-stat__value" id="statHistorico">—</p>
+        <p class="biz-stat__label">Negocios aliados</p>
+        <p class="biz-stat__value" id="adminStatNegocios">—</p>
       </div>
       <div class="biz-stat">
-        <p class="biz-stat__label">Generado este mes</p>
-        <p class="biz-stat__value" id="statMes">—</p>
-        <p class="biz-stat__note" id="statMesNote">&nbsp;</p>
+        <p class="biz-stat__label">Generado histórico (todos)</p>
+        <p class="biz-stat__value" id="adminStatHistorico">—</p>
       </div>
       <div class="biz-stat">
-        <p class="biz-stat__label">Próximo pago</p>
-        <p class="biz-stat__value" id="statProximoPago">—</p>
-        <p class="biz-stat__note" id="statProximoPagoFecha">&nbsp;</p>
+        <p class="biz-stat__label">Reservas activas (todas)</p>
+        <p class="biz-stat__value" id="adminStatActivas">—</p>
       </div>
       <div class="biz-stat">
-        <p class="biz-stat__label">Reservas activas</p>
-        <p class="biz-stat__value" id="statActivas">—</p>
-        <p class="biz-stat__note"><a href="negocio-reservas.html">Ver todas →</a></p>
+        <p class="biz-stat__label">Rating promedio plataforma</p>
+        <p class="biz-stat__value" id="adminStatRating">—</p>
+        <p class="biz-stat__note" id="adminStatRatingNote">&nbsp;</p>
       </div>
     </div>
 
     <section class="dcard">
-      <h2 class="dcard__title">Ingresos de los últimos 6 meses</h2>
-      <div class="biz-chart" id="bizChart"></div>
-    </section>
-
-    <section class="dcard">
-      <div class="dash__payments-head">
-        <h2 class="dcard__title">Próximas reservas</h2>
-        <a href="negocio-reservas.html" class="biz__tab">Ver todas</a>
-      </div>
-      <ul class="biz-res-list" id="bizUpcomingList"></ul>
+      <h2 class="dcard__title">Negocios aliados</h2>
+      <p class="biz-res-list__empty" id="adminEmpty" hidden>Todavía no hay negocios registrados.</p>
+      <ul class="biz-res-list" id="adminBizList"></ul>
     </section>
   </div>
 </main>
 
-<div class="biz-modal" id="bizModal" hidden>
-  <div class="biz-modal__panel">
-    <div class="biz-modal__head">
-      <h3 id="bizModalTitle">Detalle de la reserva</h3>
-      <button type="button" class="biz-modal__close" id="bizModalClose">✕</button>
-    </div>
-    <div class="biz-modal__rows" id="bizModalRows"></div>
-  </div>
-</div>
-
 <script src="js/skyline.js"></script>
-<script src="js/negocio.js"></script>
-<script src="js/negocio-resumen.js"></script>
+<script src="js/negocio-admin.js"></script>
 </body>
 </html>

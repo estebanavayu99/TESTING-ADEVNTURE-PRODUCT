@@ -15,6 +15,16 @@
     window.location.href = 'login-empresa.html';
     return;
   }
+
+  // La cuenta admin de Pickmap (contacto@pickmap.cl) no usa el panel de un
+  // negocio individual — si llega acá por URL directa, la mandamos a su
+  // propio resumen agregado (negocio-admin.html). Evita que el admin vea un
+  // panel de negocio "vacío"/sin sentido a su propio nombre.
+  if (bizEmail === 'contacto@pickmap.cl') {
+    window.location.href = 'negocio-admin.html';
+    return;
+  }
+
   const bizUsers = JSON.parse(localStorage.getItem(BIZ_USERS_KEY) || '[]');
   const bizAccount = bizUsers.find((u) => u.email === bizEmail);
   if (!bizAccount) {

@@ -2,6 +2,13 @@
   const USERS_KEY = 'pickmap_business_users';
   const SESSION_KEY = 'pickmap_business_session';
 
+  // Cuenta admin de Pickmap (instrucción explícita del usuario, 2026-07-20):
+  // este email en particular no entra al panel de negocio normal — va al
+  // resumen agregado de TODOS los negocios (negocio-admin.html/js). Mismo
+  // email que ya se usaba como OWNER_NOTIFICATION_EMAIL en js/negocio.js.
+  const ADMIN_EMAIL = 'contacto@pickmap.cl';
+  function panelDestino(email) { return email === ADMIN_EMAIL ? 'negocio-admin.html' : 'negocio.html'; }
+
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
     const clean = cleanRut(v);
@@ -137,14 +144,15 @@
       creditarReferido(users[idx].referralCodeUsed, users[idx].bizName);
       saveUsers(users);
       setSession(users[idx].email);
-      window.location.href = 'negocio.html';
+      window.location.href = panelDestino(users[idx].email);
       return;
     }
   }
 
   // Already logged in as business: skip straight to the panel.
-  if (localStorage.getItem(SESSION_KEY)) {
-    window.location.href = 'negocio.html';
+  const activeSessionEmail = localStorage.getItem(SESSION_KEY);
+  if (activeSessionEmail) {
+    window.location.href = panelDestino(activeSessionEmail);
     return;
   }
 
@@ -390,6 +398,6 @@
     }
 
     setSession(email);
-    window.location.href = 'negocio.html';
+    window.location.href = panelDestino(email);
   });
 })();

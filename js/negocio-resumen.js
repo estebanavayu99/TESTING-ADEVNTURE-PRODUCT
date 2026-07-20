@@ -41,26 +41,61 @@
       total, isCurrent: i === 0, reservas: reservasDelMes,
     });
   }
+  // Línea SVG en vez de barras — instrucción del usuario: el bar chart se
+  // veía innecesariamente largo/pesado. viewBox fijo con puntos distribuidos
+  // en X; cada punto sigue siendo clickeable (mismo openMonthModal de antes).
+  const W = 600;
+  const H = 130;
+  const padX = 28;
+  const padTop = 22;
+  const padBottom = 24;
+  const plotW = W - padX * 2;
+  const plotH = H - padTop - padBottom;
   const max = Math.max(...monthTotals.map((m) => m.total), 1);
-  chart.innerHTML = monthTotals.map((m, i) => `
-    <div class="biz-chart__col ${m.isCurrent ? 'is-current' : ''}" data-mes-idx="${i}" tabindex="0" role="button" aria-label="Ver desglose de ${m.labelLargo}">
-      <span class="biz-chart__amt">${m.total > 0 ? fmtMoney(m.total) : '—'}</span>
-      <div class="biz-chart__bar" data-h="${Math.max((m.total / max) * 100, 3)}"></div>
-      <span class="biz-chart__label">${m.label}</span>
-    </div>
-  `).join('');
-  requestAnimationFrame(() => {
-    chart.querySelectorAll('.biz-chart__bar').forEach((bar) => {
-      bar.style.height = bar.dataset.h + '%';
-    });
+  const n = monthTotals.length;
+  const points = monthTotals.map((m, i) => {
+    const x = n === 1 ? padX : padX + (i / (n - 1)) * plotW;
+    const y = padTop + plotH - (m.total / max) * plotH;
+    return { ...m, x, y };
   });
-  chart.querySelectorAll('.biz-chart__col').forEach((col) => {
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${points[points.length - 1].x.toFixed(1)},${(padTop + plotH).toFixed(1)} L${points[0].x.toFixed(1)},${(padTop + plotH).toFixed(1)} Z`;
+
+  chart.innerHTML = `
+    <svg class="biz-chart__svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Ingresos de los últimos 6 meses">
+      <defs>
+        <linearGradient id="bizChartFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color: var(--coral); stop-opacity: 0.22"></stop>
+          <stop offset="100%" style="stop-color: var(--coral); stop-opacity: 0"></stop>
+        </linearGradient>
+      </defs>
+      <path class="biz-chart__area" d="${areaPath}"></path>
+      <path class="biz-chart__line" d="${linePath}"></path>
+      ${points.map((p) => `
+        <text class="biz-chart__amt" x="${p.x.toFixed(1)}" y="${(p.y - 10).toFixed(1)}">${p.total > 0 ? fmtMoney(p.total) : '—'}</text>
+        <text class="biz-chart__label" x="${p.x.toFixed(1)}" y="${H - 4}">${p.label}</text>
+        <circle class="biz-chart__pt${p.isCurrent ? ' is-current' : ''}" id="bizChartPt${points.indexOf(p)}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4"></circle>
+      `).join('')}
+      ${points.map((p, i) => `
+        <circle class="biz-chart__hit" data-mes-idx="${i}" tabindex="0" role="button" aria-label="Ver desglose de ${p.labelLargo}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="16"></circle>
+      `).join('')}
+    </svg>
+  `;
+  chart.querySelectorAll('.biz-chart__hit').forEach((hit) => {
+    const idx = Number(hit.dataset.mesIdx);
+    const pt = document.getElementById(`bizChartPt${idx}`);
+    const grow = () => pt && pt.setAttribute('r', '6');
+    const shrink = () => pt && pt.setAttribute('r', '4');
+    hit.addEventListener('mouseenter', grow);
+    hit.addEventListener('mouseleave', shrink);
+    hit.addEventListener('focus', grow);
+    hit.addEventListener('blur', shrink);
     const abrir = () => {
-      const m = monthTotals[Number(col.dataset.mesIdx)];
+      const m = monthTotals[idx];
       N.openMonthModal(m.labelLargo, m.reservas);
     };
-    col.addEventListener('click', abrir);
-    col.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+    hit.addEventListener('click', abrir);
+    hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
   });
 
   // Upcoming reservations preview
