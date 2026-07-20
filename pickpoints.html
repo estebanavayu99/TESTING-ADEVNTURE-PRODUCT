@@ -226,6 +226,12 @@ if ('serviceWorker' in navigator) {
       </section>
     </div>
 
+    <section class="dcard" id="reviewsPendingCard" hidden>
+      <h2 class="dcard__title">Reservas por reseñar</h2>
+      <p class="dash__rewards-sub">Cuéntale a otros viajeros (y al negocio) cómo te fue — ganas +15 Pick Points por cada reseña.</p>
+      <ul class="dash__review-pending-list" id="reviewsPendingList"></ul>
+    </section>
+
     <a href="panoramas.html#explorar" class="dash__cta">
       <span class="dash__cta-icon">🗺️</span>
       <span class="dash__cta-text">
@@ -239,5 +245,6 @@ if ('serviceWorker' in navigator) {
 
 <script src="js/skyline.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/pickpoints.js"></script>
 </body>
 </html>

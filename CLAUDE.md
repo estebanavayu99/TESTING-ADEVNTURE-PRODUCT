@@ -344,7 +344,7 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   Resend — queda disponible para las 13, no reemplaza el envío ya
   existente de verificación de cuenta/código de recuperación (esos siguen
   en `api/send-verification.js`, sin tocar).
-- **Único flujo enganchado de punta a punta por ahora: "Reserva
+- **Primer flujo enganchado de punta a punta: "Reserva
   confirmada"** (el ejemplo concreto que pidió el usuario). El submit de
   `#reserveForm` en `js/panoramas.js` (función `sendReservaConfirmadaEmail`,
   llamada justo antes de `reserveSuccessHTML`) manda un
@@ -353,17 +353,10 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   una función serverless: si el correo falla, el usuario igual ve su
   reserva confirmada en pantalla, solo que el correo no le llega. Esto
   corrige además que la pantalla de éxito ya decía "te enviamos todos los
-  detalles a tu correo" sin que eso fuera cierto hasta ahora. Las otras 12
-  plantillas (bienvenida, recuperar, cancelaciones, recordatorios,
-  reseñas, etc.) están listas como funciones en `PLANTILLAS` y
-  callables vía `api/send-notification.js`, pero todavía no están
-  enganchadas a ningún trigger real del sitio — no hay reserva
-  persistente del lado viajero (`js/panoramas.js` no guarda la reserva en
-  ningún `localStorage`, solo actualiza Pick Points) ni vínculo real entre
-  el catálogo del viajero y las cuentas de empresa (`js/negocio.js` genera
-  su propia data demo con un LCG, sin relación con lo que reserva el
-  viajero) — enganchar el resto requeriría inventar esa conexión, así que
-  se dejó para cuando se pida explícitamente cuál flujo simular.
+  detalles a tu correo" sin que eso fuera cierto hasta ahora.
+  **Actualización 2026-07-20: el vínculo real viajero↔negocio que
+  bloqueaba el resto de plantillas ya se construyó** — ver la sección
+  "Vínculo real viajero↔negocio" más abajo.
 - **Segundo flujo enganchado: aceptar/rechazar reserva pendiente en el
   panel de negocio** (`negocio-reservas.html`/`js/negocio.js`, instrucción
   explícita del usuario). Cada reserva `pendiente` tiene botones
@@ -382,6 +375,76 @@ referencia a seguir cuando se construya el backend/envío real de emails.
   demo (`CLIENTES` en `js/negocio.js` son solo nombres, sin email real),
   así que no hay a quién mandárselo hasta que el panel de negocio se
   conecte a reservas reales de viajeros.
+
+## Vínculo real viajero↔negocio + reseñas reales + pago (2026-07-20)
+
+Instrucción explícita del usuario: dejar de simular — construir el
+vínculo real entre lo que reserva un viajero y la cuenta de negocio
+correspondiente, un formulario real para dejar reseñas, y un correo de
+"pago" (liquidación semanal). Decisiones tomadas (confirmadas por el
+usuario vía preguntas explícitas): construir el vínculo real (no
+simulado), construir el formulario real de reseñas, y que "pago" = la
+liquidación semanal a la empresa que ya se veía en `negocio-pagos.html`.
+
+- **Catálogo → negocio real** (`js/panoramas.js`): cada item del
+  catálogo ahora lleva `businessEmail`/`businessName`, asignado de forma
+  determinística (`hash(título) % negocios_registrados.length`) a un
+  negocio REAL que ya exista en `pickmap_business_users` en ese
+  navegador. Si no hay ningún negocio registrado todavía, queda `null` —
+  no se inventa un negocio falso solo para que el flujo "se vea
+  completo" (mismo criterio que el resto del sitio).
+- **Reserva real persistida** (`persistRealBusinessReservations` en
+  `js/panoramas.js`, llamada al confirmar `#reserveForm`): por cada item
+  incluido en la reserva (el panorama principal + addons, que pueden
+  pertenecer a negocios DISTINTOS), se guarda:
+  1. Una entrada en `pickmap_traveler_reservations_<emailViajero>` (nuevo,
+     historial real del viajero — usado después para el formulario de
+     reseñas).
+  2. Si el item tiene `businessEmail`, una fila real en
+     `pickmap_business_reservations_<businessEmail>` — la MISMA key y
+     esquema (`{id,cliente,actividad,personas,fecha,hora,monto,
+     montoOriginal,estado}`) que ya lee `js/negocio.js`, marcada con
+     `real: true` para distinguirla de la data demo. Si esa key nunca
+     existió (el negocio nunca inició sesión), se siembra primero con el
+     generador demo duplicado (`generateDemoReservationsForBiz`, mismo
+     patrón que en `js/negocio-admin.js`) ANTES de agregar la real — si
+     no, `getReservations()` en `js/negocio.js` nunca correría su propio
+     generador después (solo siembra si la key no existe) y el negocio
+     perdería todo su historial demo la primera vez que inicia sesión.
+  3. Dispara `POST /api/send-notification` con `nueva-reserva-empresa`
+     al negocio correspondiente.
+  - **Regla de aislamiento respetada por construcción**: cada item se
+    anota únicamente en la key de SU PROPIO negocio — si la reserva
+    incluye un panorama de un negocio y un addon de otro, cada uno ve
+    solo su propia línea, nunca la del otro (mismo mecanismo de
+    localStorage-por-negocio ya documentado arriba).
+- **Formulario real de reseñas** (`pickpoints.html` + `js/pickpoints.js`,
+  nuevo): sección "Reservas por reseñar" lee
+  `pickmap_traveler_reservations_<email>`, muestra las que faltan reseñar
+  con un selector de estrellas + textarea. Al enviar:
+  1. Marca `reviewed: true` en el historial del viajero.
+  2. Si la reserva tiene negocio real vinculado, agrega la reseña a
+     `pickmap_business_reviews_<businessEmail>` (mismo esquema que
+     `js/negocio.js`), y dispara `cliente-dejo-resena` al negocio
+     siempre, `resena-negativa` al negocio si la calificación es 1-2
+     estrellas, y **`nueva-resena-owner`** (plantilla nueva, no estaba en
+     el spec original de 13 — instrucción explícita del usuario de
+     enterarse él también de cada reseña) a `contacto@pickmap.cl`.
+  3. Suma +15 Pick Points (mismo valor ya prometido en la lista de
+     "Formas de ganar Pick Points" de esa página).
+- **Correo de pago** (`js/negocio-pagos.js`, plantilla nueva
+  `pago-liquidacion-empresa` — no estaba en el spec original, que no
+  incluía nada de pagos): el reloj de este demo es fijo (`NOW` =
+  2026-07-11), así que no hay un cron real que "recién pague" algo — para
+  no disparar un correo por cada semana de historial la primera vez que
+  el negocio visita Pagos, se guarda la última liquidación ya vista
+  (`pickmap_business_last_liq_notified_<email>`); la primera visita solo
+  establece esa base sin notificar, y solo se dispara el correo cuando
+  aparece una liquidación más nueva que la última vista (ej. después de
+  una reserva real que se completó y cayó en una semana nueva).
+- `window.PickmapNegocio` ahora también expone `getBusinessEmail()` (antes
+  `bizEmail` era privado al closure de `js/negocio.js`) para que
+  `js/negocio-pagos.js` pueda leerlo sin duplicar la lectura de sesión.
 
 ## Bot "Darwin" super inteligente (en construcción, aislado en /bot-darwin/)
 

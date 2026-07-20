@@ -169,6 +169,30 @@ html { font-size: 90%; }
 .dash__history-pts.is-positive { color: #3f7a2c; }
 .dash__history-pts.is-negative { color: var(--deep-red); }
 
+/* Reservas por reseñar (formulario real, pickpoints.html + js/pickpoints.js) */
+.dash__review-pending-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dash__review-pending {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border-radius: 10px; padding: 9px 12px;
+}
+.dash__review-btn { flex-shrink: 0; padding: 7px 14px; font-size: 0.82rem; }
+.dash__review-form[hidden] { display: none; }
+.dash__review-form {
+  background: var(--bg); border-radius: 10px; padding: 12px 14px; margin-top: -2px;
+}
+.dash__star-input { display: flex; gap: 4px; margin-bottom: 8px; }
+.dash__star { background: none; border: none; font-size: 1.4rem; color: var(--mist); cursor: pointer; padding: 0; line-height: 1; }
+.dash__star.is-selected { color: var(--sun); }
+.dash__review-textarea {
+  width: 100%; border: 1px solid rgba(30, 45, 49, 0.18); border-radius: 10px;
+  padding: 8px 10px; font-family: inherit; font-size: 0.85rem; color: var(--navy); resize: vertical;
+}
+.dash__review-error { color: var(--deep-red); font-size: 0.78rem; font-weight: 700; margin: 6px 0 0; }
+.dash__review-error[hidden] { display: none; }
+.dash__review-form-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.dash__linkbtn { background: none; border: none; padding: 0; font-weight: 700; color: var(--coral); cursor: pointer; font-size: 0.85rem; font-family: inherit; }
+.dash__linkbtn:hover { text-decoration: underline; }
+
 /* Badges */
 .dash__badges { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .dash__badges li {

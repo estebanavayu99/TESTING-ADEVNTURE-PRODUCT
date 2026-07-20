@@ -91,4 +91,40 @@
         </li>
     `).join('');
   }
+
+  // Correo real de "te pagamos" (instrucción explícita del usuario, evento =
+  // liquidación semanal). El reloj de este demo es fijo (NOW = 2026-07-11),
+  // así que no hay un cron real que "acabe de pagar" algo — para no
+  // mandar un correo por cada semana de historial la primera vez que el
+  // negocio visita esta página, solo se dispara cuando aparece una
+  // liquidación MÁS NUEVA que la última que ya vimos (guardado en esta
+  // misma key); la primera visita solo establece esa base, sin notificar.
+  if (sorted.length) {
+    const email = window.PickmapNegocio.getBusinessEmail ? window.PickmapNegocio.getBusinessEmail() : null;
+    if (email) {
+      const seenKey = `pickmap_business_last_liq_notified_${email}`;
+      const lastSeen = Number(localStorage.getItem(seenKey) || 0);
+      const latest = sorted[0];
+      if (latest.start.getTime() > lastSeen) {
+        if (lastSeen !== 0) {
+          fetch('/api/send-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tipo: 'pago-liquidacion-empresa',
+              email,
+              datos: {
+                periodo: `${fmtDateShort(latest.start)} al ${fmtDateShort(latest.end)}`,
+                reservas: latest.count,
+                monto: fmtMoney(latest.total),
+                metodo: business.paymentMethod,
+                link: `${window.location.origin}/negocio-pagos.html`,
+              },
+            }),
+          }).catch(() => {});
+        }
+        localStorage.setItem(seenKey, String(latest.start.getTime()));
+      }
+    }
+  }
 })();

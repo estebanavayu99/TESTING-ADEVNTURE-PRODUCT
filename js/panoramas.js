@@ -133,6 +133,23 @@
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
     return h;
   }
+
+  // Vínculo real viajero↔negocio (instrucción explícita del usuario,
+  // 2026-07-20): antes el catálogo de panoramas.js era 100% ficticio, sin
+  // ninguna relación con las cuentas de negocio reales (pickmap_business_users).
+  // Cada item del catálogo ahora se asocia de forma determinística (por
+  // hash del título) a un negocio REAL ya registrado en este navegador —
+  // así una reserva real puede quedar anotada en el panel de ESE negocio
+  // específico. Si no hay ningún negocio registrado todavía, businessEmail
+  // queda null y la reserva simplemente no se vincula a nadie (no se
+  // fabrica un negocio falso solo para que el flujo "se vea completo").
+  function getRegisteredBusinesses() {
+    try {
+      return (JSON.parse(localStorage.getItem('pickmap_business_users')) || [])
+        .filter((b) => b.email !== 'contacto@pickmap.cl');
+    } catch { return []; }
+  }
+  const REGISTERED_BUSINESSES = getRegisteredBusinesses();
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
     const clean = cleanRut(v);
@@ -278,6 +295,7 @@
     const reviews = 60 + (h % 900);
     const priceNum = (8 + (h % 30)) * 1000;
     const category = item.taste || item.company || 'general';
+    const business = REGISTERED_BUSINESSES.length ? REGISTERED_BUSINESSES[h % REGISTERED_BUSINESSES.length] : null;
     return {
       ...item,
       rating,
@@ -291,6 +309,8 @@
       category,
       grad: GRADIENTS[i % GRADIENTS.length],
       photo: `https://images.unsplash.com/${PHOTO_POOL[h % PHOTO_POOL.length]}?w=400&h=300&fit=crop&q=60&auto=format`,
+      businessEmail: business ? business.email : null,
+      businessName: business ? business.bizName : null,
     };
   }
   function distanceBucket(km) {
@@ -1269,9 +1289,126 @@
     const passengers = [name, ...passengerNames];
     const data = { schedule, people, name, email: emailVal, phone, total, passengers, redeemed, discount, newBalance };
     sendReservaConfirmadaEmail(currentModalItem, data);
+    persistRealBusinessReservations(includedItems, schedule, data);
     reserveModalBody.innerHTML = reserveSuccessHTML(currentModalItem, data);
     reserveModalOverlay.querySelector('.reserve-modal').scrollTop = 0;
   });
+
+  /* ---------- Vínculo real con el panel de negocio ---------- */
+  // Mismo generador demo que ya vive en js/negocio.js / js/negocio-admin.js
+  // (patrón de helpers duplicados por archivo) — se usa SOLO para sembrar
+  // la key de un negocio que nunca inició sesión antes, así una reserva
+  // real no le "borra" el historial demo que vería al entrar por primera
+  // vez (si la key quedara con un único elemento real, generateReservations
+  // nunca se ejecutaría después porque getReservations() en negocio.js solo
+  // siembra cuando la key no existe).
+  const NEG_CLIENTES = ['Javiera Muñoz', 'Tomás Reyes', 'Camila Soto', 'Benjamín Vidal', 'Constanza Pizarro', 'Matías Concha', 'Fernanda Alarcón', 'Ignacio Bravo', 'Antonia Rojas', 'Diego Fuentes', 'Valentina Araya', 'Sebastián Torres'];
+  const NEG_ACTIVIDADES = ['Cabaña + tinaja caliente (2 noches)', 'Cabaña familiar junto al río', 'Cabaña + desayuno campestre', 'Cabaña romántica + cena', 'Cabaña grupo (6 personas)'];
+  const NEG_HORAS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
+  function seedRandomForBiz(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  }
+  function generateDemoReservationsForBiz(email) {
+    const rand = seedRandomForBiz(20240711 + hashStr(email));
+    const now = new Date('2026-07-11T12:00:00');
+    const list = [];
+    let id = 1001;
+    for (let m = 5; m >= 0; m--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - m, 1);
+      const daysInMonth = m === 0 ? now.getDate() : new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+      const count = m === 0 ? 3 + Math.floor(rand() * 3) : 5 + Math.floor(rand() * 4);
+      for (let i = 0; i < count; i++) {
+        const day = 1 + Math.floor(rand() * daysInMonth);
+        const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+        const monto = 45000 + Math.floor(rand() * 9) * 8000;
+        const estado = rand() < 0.12 ? 'cancelada' : 'completada';
+        list.push({ id: id++, cliente: NEG_CLIENTES[Math.floor(rand() * NEG_CLIENTES.length)], actividad: NEG_ACTIVIDADES[Math.floor(rand() * NEG_ACTIVIDADES.length)], personas: 2 + Math.floor(rand() * 5), fecha: date, hora: NEG_HORAS[Math.floor(rand() * NEG_HORAS.length)], monto: estado === 'cancelada' ? 0 : monto, montoOriginal: monto, estado });
+      }
+    }
+    for (let i = 0; i < 9; i++) {
+      const daysAhead = 1 + Math.floor(rand() * 34);
+      const date = new Date(now);
+      date.setDate(date.getDate() + daysAhead);
+      const monto = 45000 + Math.floor(rand() * 9) * 8000;
+      list.push({ id: id++, cliente: NEG_CLIENTES[Math.floor(rand() * NEG_CLIENTES.length)], actividad: NEG_ACTIVIDADES[Math.floor(rand() * NEG_ACTIVIDADES.length)], personas: 2 + Math.floor(rand() * 5), fecha: date, hora: NEG_HORAS[Math.floor(rand() * NEG_HORAS.length)], monto, montoOriginal: monto, estado: rand() < 0.3 ? 'pendiente' : 'confirmada' });
+    }
+    const busyDay = new Date(now.getFullYear(), now.getMonth(), 12);
+    list.push(
+      { id: id++, cliente: 'Javiera Muñoz', actividad: 'Cabaña + tinaja caliente (2 noches)', personas: 4, fecha: new Date(busyDay), hora: '10:00', monto: 85000, montoOriginal: 85000, estado: 'confirmada' },
+      { id: id++, cliente: 'Tomás Reyes', actividad: 'Cabaña romántica + cena', personas: 2, fecha: new Date(busyDay), hora: '13:30', monto: 53000, montoOriginal: 53000, estado: 'pendiente' },
+      { id: id++, cliente: 'Fernanda Alarcón', actividad: 'Cabaña grupo (6 personas)', personas: 6, fecha: new Date(busyDay), hora: '18:00', monto: 101000, montoOriginal: 101000, estado: 'confirmada' },
+    );
+    return list;
+  }
+
+  // Regla de aislamiento (instrucción explícita del usuario): cada item de
+  // la reserva se anota SOLO en la key del negocio al que ese item está
+  // vinculado — si la reserva incluye un panorama de un negocio y un addon
+  // de otro, cada negocio ve únicamente su propia línea, nunca la del otro.
+  function persistRealBusinessReservations(includedItems, schedule, data) {
+    const travelerKey = `pickmap_traveler_reservations_${user.email}`;
+    let travelerHistory = [];
+    try { travelerHistory = JSON.parse(localStorage.getItem(travelerKey)) || []; } catch { /* vacío */ }
+
+    includedItems.forEach((it, idx) => {
+      const sched = schedule[idx];
+      const fechaISO = sched ? new Date(`${sched.date}T00:00:00`).toISOString() : new Date().toISOString();
+      const monto = it.priceNum * data.people;
+
+      travelerHistory.push({
+        id: `${Date.now()}-${idx}`,
+        title: it.title,
+        icon: it.icon,
+        businessEmail: it.businessEmail || null,
+        businessName: it.businessName || null,
+        fecha: fechaISO,
+        slot: sched ? sched.slot : '09:00',
+        personas: data.people,
+        monto,
+        reviewed: false,
+      });
+
+      if (!it.businessEmail) return; // sin negocio real vinculado — no hay a quién avisarle
+      const bizKey = `pickmap_business_reservations_${it.businessEmail}`;
+      let bizReservations = JSON.parse(localStorage.getItem(bizKey) || 'null');
+      if (!bizReservations) bizReservations = generateDemoReservationsForBiz(it.businessEmail);
+      const nextId = bizReservations.length ? Math.max(...bizReservations.map((r) => r.id)) + 1 : 90001;
+      bizReservations.push({
+        id: nextId,
+        cliente: data.name,
+        actividad: it.title,
+        personas: data.people,
+        fecha: fechaISO,
+        hora: sched ? sched.slot : '09:00',
+        monto,
+        montoOriginal: monto,
+        estado: 'confirmada',
+        real: true,
+      });
+      localStorage.setItem(bizKey, JSON.stringify(bizReservations));
+
+      fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: 'nueva-reserva-empresa',
+          email: it.businessEmail,
+          datos: {
+            cliente: data.name,
+            actividad: it.title,
+            fecha: sched ? `${sched.date} · ${sched.slot}` : '',
+            personas: data.people,
+            monto: `$${monto.toLocaleString('es-CL')}`,
+            link: `${window.location.origin}/negocio-calendario.html`,
+          },
+        }),
+      }).catch(() => {});
+    });
+
+    localStorage.setItem(travelerKey, JSON.stringify(travelerHistory));
+  }
 
   // Manda de verdad (vía Resend, api/send-notification.js) el correo de
   // "reserva confirmada" — la pantalla de éxito ya le decía al usuario

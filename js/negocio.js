@@ -490,7 +490,7 @@
   }
 
   window.PickmapNegocio = {
-    getBusiness, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
+    getBusiness, getBusinessEmail: () => bizEmail, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
     getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente, responderResena,
   };
 

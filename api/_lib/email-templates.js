@@ -265,6 +265,44 @@ const PLANTILLAS = {
        <p><b>Te recomendamos responder dentro de las próximas 24 horas.</b> Una respuesta a tiempo puede cambiar cómo la ven otros viajeros.</p>`,
       'Responder ahora', d.link || '#'),
   }),
+
+  // Instrucción explícita del usuario (2026-07-20): avisarle a él
+  // (contacto@pickmap.cl) cada vez que un viajero deja una reseña real a
+  // un negocio, además del correo que ya recibe el negocio
+  // (`cliente-dejo-resena`) — mismo patrón que `accion-empresa-reserva-owner`.
+  'nueva-resena-owner': (d) => ({
+    subject: `⭐ Nueva reseña para ${esc(d.negocio)} (${esc(d.estrellas)}/5)`,
+    html: shell(Number(d.estrellas) <= 2 ? BRAND.red : BRAND.greenInk, 'PANEL DE NEGOCIO',
+      `${esc(d.cliente)} calificó a ${esc(d.negocio)} con ${esc(d.estrellas)} estrellas.`,
+      `<h1>Nueva reseña para ${esc(d.negocio)}</h1>
+       <table class="kv" width="100%">
+         <tr><td>Negocio</td><td>${esc(d.negocio)}</td></tr>
+         <tr><td>Cliente</td><td>${esc(d.cliente)}</td></tr>
+         <tr><td>Actividad</td><td>${esc(d.actividad)}</td></tr>
+         <tr><td>Calificación</td><td>${'⭐'.repeat(Number(d.estrellas) || 5)} (${esc(d.estrellas)}/5)</td></tr>
+       </table>
+       <p style="font-style:italic;">"${esc(d.comentario)}"</p>`),
+  }),
+
+  // Instrucción explícita del usuario (2026-07-20): correo de "pago" — no
+  // estaba en el spec original de 13 plantillas (esas no incluían nada de
+  // pagos). Se refiere a la liquidación semanal real que ya se calculaba
+  // en negocio-pagos.html (getPaymentDate() en js/negocio.js) pero nunca
+  // mandaba un correo cuando esa fecha efectivamente se cumplía.
+  'pago-liquidacion-empresa': (d) => ({
+    subject: `💸 Te pagamos ${esc(d.monto)}`,
+    html: shell(BRAND.greenInk, 'LIQUIDACIÓN PAGADA',
+      `Te transferimos ${esc(d.monto)} por ${esc(d.reservas)} reserva(s) de la semana del ${esc(d.periodo)}.`,
+      `<h1>¡Tu pago ya está en camino! 💸</h1>
+       <table class="kv" width="100%">
+         <tr><td>Período</td><td>${esc(d.periodo)}</td></tr>
+         <tr><td>Reservas incluidas</td><td>${esc(d.reservas)}</td></tr>
+         <tr><td>Monto transferido</td><td>${esc(d.monto)}</td></tr>
+         <tr><td>Método</td><td>${esc(d.metodo || 'Transferencia')}</td></tr>
+       </table>
+       <p style="color:${BRAND.slate};font-size:0.85rem;">Puedes ver el detalle completo de esta y todas tus liquidaciones anteriores en tu panel.</p>`,
+      'Ver historial de pagos', d.link || '#'),
+  }),
 };
 
 module.exports = { PLANTILLAS, shell, BRAND };
