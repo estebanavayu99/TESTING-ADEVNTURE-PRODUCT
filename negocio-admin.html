@@ -23,8 +23,9 @@ if ('serviceWorker' in navigator) {
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/dashboard.css">
 <link rel="stylesheet" href="css/negocio.css">
+<link rel="stylesheet" href="css/negocio-admin.css">
 </head>
-<body class="dash-body">
+<body class="dash-body admin-page">
 
 <div class="skyline" aria-hidden="true">
   <div class="sky"></div>
@@ -61,9 +62,12 @@ if ('serviceWorker' in navigator) {
 <main class="biz">
   <div class="container">
     <div class="biz__greeting">
-      <p class="eyebrow">Panel de administrador</p>
-      <h1>Hola, Pickmap 👋</h1>
-      <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada fila es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
+      <span class="biz-avatar" id="adminAvatar">PM</span>
+      <div>
+        <p class="eyebrow">Panel de administrador</p>
+        <h1>Hola, Pickmap 👋</h1>
+        <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada fila es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
+      </div>
     </div>
 
     <div class="biz__stats admin-stats">

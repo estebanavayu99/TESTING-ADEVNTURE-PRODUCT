@@ -891,6 +891,31 @@ plataforma — necesita poder ver "un resumen completo de mi empresa"
     "desde <fecha>" en la fila de cada negocio — cuentas ya creadas antes
     de este cambio simplemente no muestran esa parte (no se fabrica una
     fecha falsa).
+- **Dark mode (2026-07-20, instrucción explícita del usuario: "solo el
+  panel admin hagámoslo en dark mode, elegante, profesional y muy
+  útil")** — SOLO `negocio-admin.html`, ninguna de las 6 páginas de
+  negocio normales. `css/negocio-admin.css` (nuevo, cargado únicamente
+  ahí, después de `css/negocio.css`) redefine las variables de color
+  compartidas (`--bg`, `--white`, `--navy`, `--navy-2`, `--slate`,
+  `--mist`) a tonos oscuros — como casi todo `css/negocio.css` ya está
+  construido sobre esas variables (no colores sueltos), la cascada de
+  tarjetas/badges/gráfico se oscurece casi gratis. Capas de profundidad:
+  página (`--bg`, más oscura) < tarjeta (`--white`, más clara/elevada) <
+  fila en hover. Excepciones que SÍ hubo que sobreescribir a mano porque
+  no usaban variable: `.biz__greeting`/`.biz-stat` (negocio.css) y
+  `.dcard` (dashboard.css) traían blanco translúcido HARDCODEADO
+  (`rgba(255,255,255,0.58/0.62)`, pensado para flotar sobre el skyline
+  ilustrado con degradado) — y los badges de estado con color de texto
+  fijo en hex (`#3f7a2c`, `#8a6a10`) que quedaban ilegibles sobre fondo
+  oscuro. El `.skyline` (montañas/sol/nubes) se oculta por completo en
+  esta página (`body.admin-page .skyline{display:none}`) — no tiene
+  sentido combinarlo con un dark mode "control room". De paso se
+  encontró y arregló un bug real: el saludo de esta página nunca se
+  actualizó cuando se le agregó el avatar con iniciales a las otras 6
+  páginas (`.biz__greeting` pasó a `display:inline-flex`), así que en
+  mobile el texto se apachurraba en una columna angosta en vez de
+  apilarse — ahora tiene el mismo wrapper `<div>` + avatar (`PM`, coral)
+  que las demás.
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 

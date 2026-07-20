@@ -1,0 +1,71 @@
+/* ========== Panel super-admin (contacto@pickmap.cl) — dark mode ==========
+ * Instrucción explícita del usuario (2026-07-20): "solo el panel admin
+ * hagámoslo en dark mode, elegante, profesional y muy útil" — SOLO
+ * negocio-admin.html, ninguna de las 6 páginas negocio-*.html normales
+ * (este archivo se carga únicamente ahí, después de css/negocio.css).
+ *
+ * Capas de profundidad (estándar dark-mode: más claro = más elevado):
+ *   página (--bg, más oscuro) < tarjeta (--white) < fila en hover (--white)
+ * Las filas de listas (.biz-res, .admin-top, etc.) usan var(--bg) — quedan
+ * "hundidas" al mismo tono que la página, con el borde/sombra de la
+ * tarjeta que las contiene dando el límite visual. Funciona gratis para
+ * casi todo negocio.css porque ya está armado sobre variables — excepto
+ * `.biz__greeting`/`.biz-stat`, que traían un blanco traslúcido HARDCODEADO
+ * (pensado para flotar sobre el skyline con degradado, que acá se oculta),
+ * asi que esos dos sí se sobreescriben explícitos más abajo.
+ */
+:root {
+  --bg: #0D1114;
+  --white: #181F24;
+  --navy: #EDEFEE;
+  --navy-2: #C7CDCE;
+  --slate: #8A9598;
+  --mist: #333A40;
+}
+
+body.admin-page { background: var(--bg); }
+.admin-page .skyline,
+.admin-page .weather-overlay,
+.admin-page .rain-canvas { display: none; }
+
+/* Nav: mismo patrón glass-blur del resto del sitio (nunca transparente del
+   todo, ver gotcha en CLAUDE.md), en tono oscuro. */
+.admin-page .nav {
+  background: rgba(13, 17, 20, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.admin-page .logo { color: var(--navy); }
+.admin-page #adminAvatar { background: var(--coral); }
+
+/* .biz__greeting y .biz-stat traían blanco traslúcido hardcodeado (pensado
+   para flotar sobre el fondo ilustrado que acá se ocultó) — pasan a un
+   panel sólido oscuro con borde sutil, mismo radius/padding de siempre. */
+.admin-page .biz__greeting,
+.admin-page .biz-stat {
+  background: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.4);
+}
+.admin-page .biz-stat--accent {
+  background: linear-gradient(135deg, rgba(246, 205, 76, 0.14), rgba(245, 94, 97, 0.1));
+}
+.admin-page .dcard {
+  background: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.35);
+}
+
+/* Badges de estado: los que tienen color de texto fijo en hex (no
+   variable) quedaban ilegibles sobre fondo oscuro — se suben a un tono
+   más brillante, mismo criterio de color por estado. */
+.admin-page .biz-res__status--confirmada { background: rgba(131, 208, 97, 0.16); color: #8FD979; }
+.admin-page .biz-res__status--pendiente { background: rgba(246, 205, 76, 0.16); color: var(--sun); }
+.admin-page .biz-res__status--cancelada,
+.admin-page .biz-res__status--rechazada { background: rgba(255, 131, 133, 0.16); color: #FF8385; }
+
+/* Punto de la leyenda "Comisión Pickmap" del gráfico: usaba var(--navy)
+   como color de swatch — con --navy ahora claro, se cambia a un tono
+   neutro propio para que la leyenda no se confunda con el texto. */
+.admin-page .admin-chart-dot--comision { background: var(--navy-2); }
+
+.admin-page .biz-modal { background: rgba(0, 0, 0, 0.62); }
