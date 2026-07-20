@@ -205,8 +205,18 @@
     if (!gustosDivergentes || gustosDivergentes.length !== 2) return null;
     const [cat1, cat2] = gustosDivergentes;
     if (!categoriasDelCombo.includes(cat1) || !categoriasDelCombo.includes(cat2)) return null;
-    const et1 = ETIQUETA_CATEGORIA[cat1] || cat1;
-    const et2 = ETIQUETA_CATEGORIA[cat2] || cat2;
+    // Bug real: esto describía SIEMPRE el orden en que el cliente las
+    // mencionó en el texto (gustosDivergentes), no el orden REAL de las
+    // actividades del combo — motor.js puede terminar armando el combo en
+    // el orden inverso al de mención cuando el orden "literal" no calza con
+    // los horarios reales (ej. una actividad nocturna no puede ir antes de
+    // una diurna sin pasarse del cierre). Usar el primero/último REAL del
+    // combo evita que el texto diga "empieza con X" mientras el itinerario
+    // mostrado arriba en realidad empieza con Y.
+    const catInicio = categoriasDelCombo[0];
+    const catCierre = categoriasDelCombo[categoriasDelCombo.length - 1];
+    const et1 = ETIQUETA_CATEGORIA[catInicio] || catInicio;
+    const et2 = ETIQUETA_CATEGORIA[catCierre] || catCierre;
     return `🤝 Sé que a uno le tinca ${et1} y al otro ${et2} — por eso parte con lo primero y cierra con lo segundo, así ninguno se queda sin lo suyo.`;
   }
 

@@ -196,6 +196,27 @@
     return null;
   }
 
+  // Bug real: nada en el chat extraía el tamaño del grupo del texto —
+  // perfil.grupo.adultos solo se poblaba desde el onboarding real
+  // (darwin-backend.js), así que en el chat un cliente que escribía "somos
+  // 4"/"para 2 personas" seguía tratado como 1 sola persona en todo el
+  // cálculo de precio (precio_total = precio_por_persona * personas).
+  const PATRON_GRUPO_PAREJA = /\ben pareja\b|con mi (pareja|polola|pololo|marido|esposa|novio|novia)/;
+  const PATRON_GRUPO_NINOS_SIN_NUMERO = /con (?:mis |los )?ni[nñ]os\b|en familia\b/;
+  function extraerGrupo(texto) {
+    const t = sinAcentos(texto);
+    let adultos = null;
+    if (PATRON_GRUPO_PAREJA.test(t)) adultos = 2;
+    const mPersonas = /(?:somos|seremos|vamos)\s+(\d{1,2})\b/.exec(t)
+      || /para\s+(\d{1,2})\s+personas\b/.exec(t)
+      || /(\d{1,2})\s+personas\b/.exec(t)
+      || /(\d{1,2})\s+adultos\b/.exec(t);
+    if (mPersonas) adultos = Number(mPersonas[1]);
+    const mNinos = /(\d{1,2})\s+(?:ni[nñ]os|hijos)\b/.exec(t);
+    const ninos = mNinos ? Number(mNinos[1]) : (PATRON_GRUPO_NINOS_SIN_NUMERO.test(t) ? 1 : null);
+    return { adultos, ninos };
+  }
+
   function perfilPorDefecto() {
     return {
       arquetipos: [], estado_emocional: null, destino: null, fechas: null,
@@ -232,7 +253,16 @@
   }
 
   function calcularArquetipos(perfil) {
-    const ordenado = [...perfil.intereses].sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
+    // Bug real: sin este filtro, una categoría con afinidad NEGATIVA (ej.
+    // el cliente descartó "fiesta" y calcularConfianza le asignó afinidad
+    // negativa por el evento 'descarte') podía terminar definiendo el
+    // arquetipo/tono de Darwin si era la única con datos — Darwin saludaba
+    // con el tono de algo que el cliente acaba de rechazar. Mismo criterio
+    // que ya usa calcularConfianza (algoritmos.js) para "fuerza": solo
+    // afinidades positivas cuentan como señal real de gusto.
+    const ordenado = [...perfil.intereses]
+      .filter((i) => (i.afinidad || 0) > 0)
+      .sort((a, b) => (b.afinidad || 0) - (a.afinidad || 0));
     const arquetipos = [];
     for (const i of ordenado) {
       const arq = CATEGORIA_A_ARQUETIPO[i.categoria];
@@ -311,7 +341,32 @@
       // secuencia que pidió cada persona.
       const primera = candidatos.find((c) => c.categoria === categoriasObjetivo[0]);
       const segunda = candidatos.find((c) => c.categoria === categoriasObjetivo[1]);
-      if (primera && segunda) combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+      if (primera && segunda) {
+        // Bug real: si la actividad mencionada primero es nocturna (ej.
+        // "fiesta" a las 21:00) y la segunda es diurna, ponerlas en ESE
+        // orden literal (mención en el texto) hacía que el combo terminara
+        // después de medianoche y el filtro de horario de cierre lo
+        // descartaba entero — "no encontré nada" para una combinación que
+        // sí es armable si simplemente se invierte el orden. Se prueban
+        // ambos órdenes como candidatos separados y se deja que el filtro
+        // de cupo/cierre y el ranking real elijan cuál(es) sobreviven —
+        // fraseDivergencia (plantillas.js) ya describe el orden REAL de las
+        // actividades del combo ganador, no el orden de mención, así que el
+        // texto nunca contradice el itinerario mostrado.
+        combosCompletos.push(D.tools.armarCombo([primera.id, segunda.id], opciones));
+        combosCompletos.push(D.tools.armarCombo([segunda.id, primera.id], opciones));
+      } else if (primera || segunda) {
+        // Bug real: si el gusto de UNA de las dos personas no tiene ningún
+        // candidato real (sin actividades de esa categoría, o quedaron
+        // todas filtradas por restricciones/descartados), esto devolvía
+        // combosCompletos vacío y el motor terminaba respondiendo "no
+        // encontré nada" — pese a tener una opción real y buena para la
+        // otra persona. Mejor ofrecer esa (fraseDivergencia en plantillas.js
+        // ya se auto-desactiva cuando el combo no trae las 2 categorías,
+        // así que no sale un texto roto tipo "empieza con X, cierra con Y"
+        // mostrando solo 1 actividad).
+        combosCompletos.push(D.tools.armarCombo([(primera || segunda).id], opciones));
+      }
     } else if (explorar) {
       // Comparar de verdad = actividades distintas entre si, no "A" vs
       // "A+B" (una opcion no puede contener a la otra adentro, si no no
@@ -475,7 +530,7 @@
   function sugerirRelacionados(D, perfil) {
     const ultimoCarrito = perfil.carrito[perfil.carrito.length - 1];
     if (!ultimoCarrito) return null;
-    const idsCombo = ultimoCarrito.combo_id.split('-');
+    const idsCombo = ultimoCarrito.ids || ultimoCarrito.combo_id.split('-');
     const base = D.tools.detalleActividad(idsCombo[0]);
     if (!base) return null;
 
@@ -525,10 +580,13 @@
     const fecha = extraerFecha(textoUsuario);
     const divergencia = detectarDivergencia(textoUsuario, categorias);
     const restriccionesDetectadas = detectarRestricciones(textoUsuario);
+    const grupo = extraerGrupo(textoUsuario);
 
     for (const c of categorias) if (!perfil.intereses.find((i) => i.categoria === c)) perfil.intereses.push({ categoria: c, afinidad: 0 });
     if (presupuesto) perfil.presupuesto.banda = [Math.round(presupuesto * 0.8), Math.round(presupuesto * 1.2)];
     if (fecha) perfil.fechas = fecha;
+    if (grupo.adultos) perfil.grupo.adultos = grupo.adultos;
+    if (grupo.ninos) perfil.grupo.ninos = grupo.ninos;
     if (ocasion) perfil.ocasion_especial = ocasion;
     if (estadoEmocional) perfil.estado_emocional = estadoEmocional;
     if (divergencia) perfil.grupo.gustos_divergentes = divergencia;
@@ -541,7 +599,8 @@
     // texto, así que esto corre pase o no haya categorías en el mensaje.
     let categoriasDescarte = categorias;
     if (descarte && perfil.carrito.length) {
-      const idsDescartados = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const ultimoDelCarrito = perfil.carrito[perfil.carrito.length - 1];
+      const idsDescartados = ultimoDelCarrito.ids || ultimoDelCarrito.combo_id.split('-');
       perfil.descartados = [...new Set([...(perfil.descartados || []), ...idsDescartados])];
       if (!categoriasDescarte.length) {
         // Si el mensaje no nombra una categoría ("sácala" a secas), se
@@ -583,6 +642,22 @@
     if (perfil.etapa_embudo === 'post_venta') {
       texto = '¡Que lo disfrutes muchísimo! Cuando vuelvas, cuéntame cómo te fue y te tengo el próximo panorama listo 🎉';
     } else if (perfil.etapa_embudo === 'decision') {
+      // Bug real: perfil.historial_ids nunca se poblaba en ningún lado, pese
+      // a que fNovedad (algoritmos.js) lo usa para no repetir actividades ya
+      // hechas — la dimensión "novedad" del ranking quedaba siempre en 1.0
+      // para cualquier combo (inerte, no discriminaba nada). Al confirmar
+      // una reserva real es el momento honesto de registrar qué se reservó.
+      // También se limpia el carrito/oferta pendiente: ya se compró, no
+      // sigue "pendiente" para el próximo turno (si no, C7 podía reenganchar
+      // con algo ya reservado, o un "sí" fuera de contexto podía re-agregar
+      // la oferta de combo vieja).
+      if (perfil.carrito.length) {
+        const idsComprados = (perfil.carrito[perfil.carrito.length - 1].ids)
+          || perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+        perfil.historial_ids = [...new Set([...(perfil.historial_ids || []), ...idsComprados])];
+      }
+      perfil.carrito = [];
+      perfil.oferta_combo = null;
       texto = 'Perfecto, te lo dejo apartado. En breve te llega la confirmación con el punto de encuentro y todo el detalle.';
     } else if (perfil.carrito.length && esSaludoVacio(textoUsuario) && !categorias.length && !señales.length) {
       // C7: retoma el carrito pendiente en vez de tratarlo como cliente
@@ -597,7 +672,8 @@
     } else if (perfil.carrito.length && !categorias.length && señales.includes('logistica')) {
       // Mismo bug con "¿Dónde nos juntamos?" — responde con el punto de
       // encuentro real de las actividades del combo actual.
-      const idsCombo = perfil.carrito[perfil.carrito.length - 1].combo_id.split('-');
+      const ultimoDelCarrito = perfil.carrito[perfil.carrito.length - 1];
+      const idsCombo = ultimoDelCarrito.ids || ultimoDelCarrito.combo_id.split('-');
       const actividadesCombo = idsCombo.map((id) => D.tools.detalleActividad(id)).filter(Boolean);
       texto = D.plantillas.respuestaLogistica(actividadesCombo);
     } else if (pideRelacionados(textoUsuario)) {
@@ -617,6 +693,20 @@
       } else {
         texto = resultado.texto;
         debug.plan = resultado.plan;
+        // Bug real: el plan multi-día nunca escribía en perfil.carrito, así
+        // que quedaba desconectado de TODO lo que depende de él: "¿cuánto
+        // cuesta en total?", "¿dónde nos juntamos?", el reenganche C7, la
+        // confirmación de reserva y el registro en historial_ids — todo eso
+        // seguía de largo como si no hubiera nada pendiente. Se lo conecta
+        // al mismo mecanismo que ya usan los combos de 1 día.
+        perfil.carrito = [{
+          combo_id: resultado.plan.plan_id,
+          ids: resultado.plan.dias.map((d) => d.actividad.id),
+          precio: resultado.plan.precio_total,
+          precio_por_persona: resultado.plan.precio_por_persona,
+          personas: resultado.plan.personas,
+        }];
+        perfil.oferta_combo = null;
       }
     } else if (estadoEmocional === 'frustrado') {
       texto = D.plantillas.respuestaEmocional('frustrado');
@@ -654,6 +744,9 @@
         debug.comboCompleto = resultado.comboElegido;
         perfil.carrito = [{
           combo_id: resultado.comboElegido.combo_id,
+          // ids reales (no reconstruidos con combo_id.split('-')): un id de
+          // negocio real con guion (ej. UUID) rompería ese split en silencio.
+          ids: resultado.comboElegido.actividades.map((a) => a.id),
           precio: resultado.comboElegido.precio_total,
           precio_por_persona: resultado.comboElegido.precio_por_persona,
           personas: resultado.comboElegido.personas,
@@ -676,6 +769,6 @@
     // pasar por la detección de texto de procesarMensaje — mismo motor,
     // sin necesitar un mensaje de chat escrito.
     proponerCombos, proponerPlanMultiDia,
-    _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo },
+    _internas: { detectarCategorias, detectarEstadoEmocional, detectarSenales, calcularArquetipos, detectarEtapaEmbudo, extraerGrupo },
   };
 })();

@@ -141,7 +141,9 @@ if ('serviceWorker' in navigator) {
       <div class="onboarding-field">
         <label for="city">¿Desde dónde te mueves?</label>
         <p class="onboarding-hint">Nos ayuda a calcular distancias y tiempos de traslado más reales.</p>
-        <input type="text" id="city" name="city" placeholder="Ej: Providencia, Santiago" required>
+        <select id="city" name="city" required>
+          <option value="">Selecciona tu comuna</option>
+        </select>
       </div>
 
       <p class="auth-error" id="onboardingError" hidden></p>
@@ -153,6 +155,10 @@ if ('serviceWorker' in navigator) {
 </main>
 
 <script src="js/skyline.js"></script>
+<script src="js/comunas-chile.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="js/onboarding.js"></script>
 </body>
 </html>

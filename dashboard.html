@@ -164,9 +164,13 @@ if ('serviceWorker' in navigator) {
 <script src="js/skyline.js"></script>
 <script src="js/dashboard.js"></script>
 <!-- Darwin backend: motor real de bot-darwin, silencioso (sin chat) —
-     ver js/darwin-backend.js. Data de testing (negocios reales, precio/
-     duración estimados), se reemplaza cuando el usuario conecte su BD/
-     CRM real. -->
+     ver js/darwin-backend.js. Perfil de preferencias + catálogo ahora
+     viven en Supabase (supabase/schema.sql); catalogo.real-sample.js
+     sigue cargado como fallback local mientras la tabla `businesses`
+     esté vacía (antes de correr scripts/importar_ghl_a_supabase.js). -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="bot-darwin/data/catalogo.real-sample.js"></script>
 <script src="bot-darwin/data/taxonomia-categorias.js"></script>
 <script src="bot-darwin/js/algoritmos.js"></script>

@@ -89,7 +89,7 @@ if ('serviceWorker' in navigator) {
       </label>
       <label class="auth-field">
         <span>Apellido</span>
-        <input type="text" name="lastName" placeholder="Soto" required autocomplete="family-name">
+        <input type="text" name="lastName" placeholder="Reyes" required autocomplete="family-name">
       </label>
       <label class="auth-field">
         <span>RUT</span>
@@ -100,10 +100,6 @@ if ('serviceWorker' in navigator) {
         <input type="email" name="email" placeholder="tu@correo.com" required autocomplete="email">
       </label>
       <label class="auth-field">
-        <span>Teléfono</span>
-        <input type="tel" name="phone" placeholder="+56 9 1234 5678" autocomplete="tel">
-      </label>
-      <label class="auth-field">
         <span>Contraseña</span>
         <input type="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
       </label>
@@ -111,47 +107,42 @@ if ('serviceWorker' in navigator) {
       <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="auth-link" id="goLogin">Inicia sesión</button></p>
     </form>
 
-    <div class="auth-form" id="formVerify" hidden>
-      <p class="auth-success" id="resendSuccess" hidden>Correo reenviado.</p>
-      <p class="auth-verify-note">📬 Te enviamos un correo de confirmación a <strong id="verifyEmailLabel"></strong>.</p>
-      <p class="auth-verify-note">Abre el enlace desde tu bandeja de entrada para activar tu cuenta.</p>
-      <p class="auth-verify-fallback" id="verifyLinkFallback" hidden>No pudimos enviarte el correo — <a href="#" id="verifyLinkFallbackHref">haz click aquí para confirmar tu cuenta</a>.</p>
+    <form class="auth-form" id="formVerify" hidden>
+      <div class="auth-verify-icon">📬</div>
+      <p class="auth-verify-note" style="text-align:center;">Te enviamos un correo de confirmación a</p>
+      <p class="auth-verify-email"><strong id="verifyEmailLabel"></strong></p>
+      <p class="auth-verify-note" style="text-align:center;">Abre el enlace desde tu bandeja de entrada para activar tu cuenta — después vuelve acá e inicia sesión.</p>
       <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="resendCode">Reenviar correo</button></p>
       <p class="auth-switch"><button type="button" class="auth-link" id="verifyBack">← Volver a iniciar sesión</button></p>
-    </div>
+    </form>
 
     <form class="auth-form" id="formForgotRequest" hidden>
-      <p class="auth-verify-note">Ingresa tu correo y te enviamos un código para recuperar tu contraseña.</p>
+      <p class="auth-verify-note">Ingresa tu correo y te enviamos un enlace real para restablecer tu contraseña.</p>
       <label class="auth-field">
         <span>Correo</span>
         <input type="email" name="email" id="forgotEmail" placeholder="tu@correo.com" required autocomplete="email">
       </label>
-      <button type="submit" class="btn btn--primary auth-submit">Enviar código</button>
+      <button type="submit" class="btn btn--primary auth-submit">Enviar enlace</button>
       <p class="auth-switch"><button type="button" class="auth-link" id="forgotBackToLogin1">← Volver</button></p>
     </form>
 
     <form class="auth-form" id="formForgotReset" hidden>
-      <p class="auth-verify-note">Enviamos un código a <strong id="forgotEmailLabel"></strong>. Revisa tu correo e ingrésalo aquí.</p>
-      <p class="auth-verify-fallback" id="forgotCodeFallback" hidden>No pudimos enviarte el correo — usa este código igual:</p>
-      <p class="auth-verify-code" id="forgotCodeDisplay" hidden>••••••</p>
-      <label class="auth-field">
-        <span>Código</span>
-        <input type="text" id="forgotCodeInput" placeholder="123456" required inputmode="numeric" maxlength="6" autocomplete="one-time-code">
-      </label>
+      <p class="auth-verify-note">Escribe tu nueva contraseña.</p>
       <label class="auth-field">
         <span>Nueva contraseña</span>
         <input type="password" id="forgotNewPassword" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
       </label>
       <button type="submit" class="btn btn--primary auth-submit">Cambiar contraseña</button>
-      <p class="auth-switch">¿No llegó? <button type="button" class="auth-link" id="forgotResend">Reenviar código</button></p>
-      <p class="auth-switch"><button type="button" class="auth-link" id="forgotBackToLogin2">← Volver</button></p>
     </form>
 
-    <p class="auth-note">Demo de Pickmap: tu cuenta se guarda solo en este navegador, no uses una contraseña real.</p>
+    <p class="auth-note" id="authNote">Tu cuenta Pickmap es real: usa una contraseña que efectivamente vayas a recordar.</p>
   </div>
 </main>
 
 <script src="js/skyline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
 </body>
 </html>

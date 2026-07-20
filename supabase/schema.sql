@@ -408,3 +408,252 @@ create policy clima_cache_public_read on clima_cache
 -- panoramas/clima_cache no tienen policy de insert/update/delete: solo el
 -- service role (que bypassea RLS) puede escribirlas, que es exactamente
 -- lo que hacen los endpoints del backend con SUPABASE_SERVICE_ROLE_KEY.
+
+-- ============================================================
+-- Fase backend real: Supabase Auth + perfil/catálogo persistente
+-- (js/auth.js, js/darwin-backend.js, js/supabase-client.js) —
+-- tablas independientes de las de arriba (motor Darwin LLM real),
+-- sirven la superficie 2 (backend silencioso conectado al dashboard).
+-- ============================================================
+
+-- Pickmap / Darwin — schema real de Supabase (fase de migración desde localStorage)
+--
+-- Cómo aplicar: pegar este archivo completo en el SQL Editor del proyecto
+-- Supabase real (Project → SQL Editor → New query → pegar → Run). No
+-- requiere el CLI de Supabase ni conexión desde este repo/sandbox.
+-- Seguro de correr más de una vez (cada `create policy`/`create trigger`
+-- va precedida de su `drop ... if exists`): si ya lo corriste antes y
+-- vuelves a pegarlo, no tira "already exists".
+--
+-- Alcance de esta primera migración: viajero + catálogo + perfil de
+-- preferencias de Darwin (Prioridad 1 declarada por el dueño del
+-- producto: la recomendación directa sin chat, Superficie 2). Las tablas
+-- de negocio/empresa aliada (reservas, pagos, reseñas propias del panel
+-- negocio-*.html) quedan para una fase posterior — hoy siguen en
+-- localStorage, no se tocan acá.
+--
+-- Principio de diseño: perfil de preferencias = una sola fuente de
+-- verdad compartida entre las dos superficies de Darwin (widget de
+-- chat y backend silencioso), con trazabilidad de qué evento generó
+-- cada actualización (onboarding declarado / inferido de
+-- comportamiento / mencionado al widget de soporte) — no un snapshot
+-- que se sobrescribe sin dejar rastro.
+
+-- ============================================================
+-- 1. profiles — datos de viajero (reemplaza pickmap_users)
+-- ============================================================
+create table if not exists public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  first_name text,
+  last_name text,
+  rut text,
+  phone text,
+  age int,
+  city text,
+  -- Respuestas crudas de onboarding.html, tal como las declara el cliente
+  -- (vocabulario simple: naturaleza/gastronomia/relax/etc., no los buckets
+  -- internos de Darwin — el mapeo a buckets vive en darwin_preferences).
+  company text[] default '{}',        -- ej. {'pareja'}
+  tastes text[] default '{}',         -- ej. {'naturaleza','gastronomia'}
+  difficulty text[] default '{}',
+  budget text[] default '{}',
+  travel_distance text[] default '{}',
+  preferred_day text[] default '{}',
+  onboarded boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "profiles: el dueño lee su propio perfil" on public.profiles;
+create policy "profiles: el dueño lee su propio perfil"
+  on public.profiles for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "profiles: el dueño actualiza su propio perfil" on public.profiles;
+create policy "profiles: el dueño actualiza su propio perfil"
+  on public.profiles for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "profiles: el dueño crea su propio perfil" on public.profiles;
+create policy "profiles: el dueño crea su propio perfil"
+  on public.profiles for insert
+  with check (auth.uid() = user_id);
+
+-- Crear la fila de `profiles` en el momento del signUp() del cliente
+-- viola RLS: en ese instante (con confirmación de correo activada) todavía
+-- no hay sesión autenticada, así que auth.uid() es null y el insert
+-- directo desde el navegador queda bloqueado ("new row violates row-level
+-- security policy"). Patrón estándar de Supabase: un trigger con
+-- `security definer` en auth.users crea la fila automáticamente, sin
+-- depender de que el cliente tenga sesión todavía.
+create or replace function public.crear_perfil_para_nuevo_usuario()
+returns trigger as $$
+begin
+  insert into public.profiles (user_id, first_name, last_name, rut)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'first_name',
+    new.raw_user_meta_data->>'last_name',
+    new.raw_user_meta_data->>'rut'
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.crear_perfil_para_nuevo_usuario();
+
+-- ============================================================
+-- 2. darwin_preferences — el "perfil" que consume motor.js
+-- ============================================================
+-- Mirror directo de la forma de `perfilPorDefecto()` en
+-- bot-darwin/js/motor.js (intereses, arquetipos, grupo, presupuesto,
+-- origen, contexto, restricciones, oferta_combo) para que la migración
+-- de js/darwin-backend.js no tenga que rediseñar el shape que motor.js
+-- ya entiende — solo cambia de dónde se lee/escribe.
+create table if not exists public.darwin_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  intereses jsonb not null default '[]',        -- [{categoria, afinidad}]
+  arquetipos jsonb not null default '[]',       -- string[]
+  grupo jsonb not null default '{}',            -- {adultos, ninos, tipo, gustos_divergentes}
+  presupuesto jsonb not null default '{}',      -- {banda, sensibilidad, gastado_en_combo}
+  origen jsonb,                                  -- {lat, lng, nombre} — última ubicación real conocida
+  contexto jsonb not null default '{}',         -- {clima_usuario, luz, eventos, afluencia}
+  restricciones text[] default '{}',
+  oferta_combo jsonb,                            -- {base_id, complemento_id} pendiente de aceptar
+  favoritos text[] default '{}',
+  descartados text[] default '{}',
+  historial_ids text[] default '{}',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.darwin_preferences enable row level security;
+
+drop policy if exists "darwin_preferences: el dueño lee su propio perfil" on public.darwin_preferences;
+create policy "darwin_preferences: el dueño lee su propio perfil"
+  on public.darwin_preferences for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "darwin_preferences: el dueño escribe su propio perfil" on public.darwin_preferences;
+create policy "darwin_preferences: el dueño escribe su propio perfil"
+  on public.darwin_preferences for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "darwin_preferences: el dueño actualiza su propio perfil" on public.darwin_preferences;
+create policy "darwin_preferences: el dueño actualiza su propio perfil"
+  on public.darwin_preferences for update
+  using (auth.uid() = user_id);
+
+-- ============================================================
+-- 3. preference_signals — log de trazabilidad (append-only)
+-- ============================================================
+-- Cada fila = un evento que movió (o pudo mover) la afinidad de una
+-- categoría para un cliente. Existe para poder responder "¿por qué
+-- Darwin recomendó esto?" y para poder revertir una inferencia mala,
+-- sin depender de que darwin_preferences.intereses sea la única memoria.
+create table if not exists public.preference_signals (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  categoria text,                      -- bucket interno de Darwin (aventura, foodie, relax, ...); null si el evento no es de una sola categoría (ej. recálculo completo del perfil)
+  fuente text not null check (fuente in ('onboarding', 'inferido', 'chat', 'reserva', 'resena')),
+  delta_afinidad numeric,              -- cuánto ajustó (positivo o negativo), null si es solo informativo
+  detalle jsonb,                       -- contexto libre: qué combo, qué mensaje, qué reserva, etc.
+  created_at timestamptz not null default now()
+);
+
+alter table public.preference_signals enable row level security;
+
+drop policy if exists "preference_signals: el dueño lee sus propias señales" on public.preference_signals;
+create policy "preference_signals: el dueño lee sus propias señales"
+  on public.preference_signals for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "preference_signals: el dueño escribe sus propias señales" on public.preference_signals;
+create policy "preference_signals: el dueño escribe sus propias señales"
+  on public.preference_signals for insert
+  with check (auth.uid() = user_id);
+
+-- ============================================================
+-- 4. businesses — catálogo real (reemplaza catalogo.real-sample.js)
+-- ============================================================
+-- Mismo contrato de datos documentado en bot-darwin/data/catalogo.mock.js
+-- y bot-darwin/README.md, para no tener que tocar bot-darwin/js/tools.js
+-- ni motor.js — solo cambia la fuente que tools.js consulta.
+create table if not exists public.businesses (
+  id text primary key,                 -- mismo id usado hoy en catalogo.real-sample.js
+  ghl_id text unique,                  -- mapeo al registro real en GoHighLevel, para sync futura
+  nombre text not null,
+  categoria text not null,
+  tags text[] default '{}',
+  precio int,
+  duracion_min int,
+  lat double precision,
+  lng double precision,
+  comuna text,
+  energia text check (energia in ('baja', 'media', 'alta')),
+  exterior boolean,
+  indoor_alt boolean,
+  accesible boolean,
+  experiencia_estimada int check (experiencia_estimada between 1 and 5),
+  hero_moment boolean default false,
+  horarios text[] default '{}',
+  punto_encuentro text,
+  incluye text[] default '{}',
+  no_incluye text[] default '{}',
+  restricciones text[] default '{}',
+  cupos jsonb default '{}',            -- { 'YYYY-MM-DD': { 'HH:MM': numeroDeCupos } }
+  tipo text,                            -- 'hospedaje' opcional, ausente = actividad de día normal
+  es_gema_oculta boolean,
+  evita_trampa text,
+  -- Estimado vs. real: mientras la ficha operativa real del negocio no
+  -- esté confirmada, precio/duracion_min/horarios/accesible pueden venir
+  -- de una heurística por categoría (mismo criterio que
+  -- generar_catalogo_real_sample.py) — este flag lo deja explícito en
+  -- vez de mezclarlo silenciosamente con negocios ya confirmados.
+  datos_estimados boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.businesses enable row level security;
+
+drop policy if exists "businesses: lectura pública" on public.businesses;
+create policy "businesses: lectura pública"
+  on public.businesses for select
+  using (true);
+
+-- Sin policy de insert/update/delete para el rol "anon"/"authenticated":
+-- el catálogo solo se escribe con la service role key, desde el script
+-- de importación (scripts/importar_ghl_a_supabase.js) o el SQL Editor,
+-- nunca desde el navegador del cliente.
+
+-- ============================================================
+-- 5. Trigger: updated_at automático
+-- ============================================================
+create or replace function public.tocar_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists profiles_updated_at on public.profiles;
+create trigger profiles_updated_at
+  before update on public.profiles
+  for each row execute function public.tocar_updated_at();
+
+drop trigger if exists darwin_preferences_updated_at on public.darwin_preferences;
+create trigger darwin_preferences_updated_at
+  before update on public.darwin_preferences
+  for each row execute function public.tocar_updated_at();
+
+drop trigger if exists businesses_updated_at on public.businesses;
+create trigger businesses_updated_at
+  before update on public.businesses
+  for each row execute function public.tocar_updated_at();

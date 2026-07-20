@@ -6,3 +6,11 @@
 # ubicaciones reales end-to-end en el sitio real — se va a reemplazar por
 # los negocios ya firmados más adelante, momento en el que este archivo
 # se vuelve a regenerar o se borra.
+
+# Secretos reales (fase Supabase/GHL, julio 2026): API keys de GoHighLevel,
+# service role key de Supabase, y cualquier .env local de scripts de
+# importación (scripts/importar_ghl_a_supabase.js) NUNCA se comitean —
+# solo viven como variables de entorno locales o en el dashboard de Vercel.
+.env
+.env.*
+!.env.example
