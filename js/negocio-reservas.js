@@ -38,7 +38,7 @@
           <p class="biz-modal__motivo-error" hidden>Cuéntanos el motivo antes de rechazar.</p>
           <div class="biz-modal__acciones-btns">
             <button type="button" class="btn btn--primary biz-res__btn-confirmar-rechazo" data-id="${r.id}">Confirmar rechazo</button>
-            <button type="button" class="auth-link biz-res__btn-cancelar-rechazo" data-id="${r.id}">Cancelar</button>
+            <button type="button" class="biz-linkbtn biz-res__btn-cancelar-rechazo" data-id="${r.id}">Cancelar</button>
           </div>
         </li>
       `

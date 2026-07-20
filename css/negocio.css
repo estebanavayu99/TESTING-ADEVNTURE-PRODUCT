@@ -12,6 +12,16 @@ html { font-size: 84%; }
   html { font-size: 68%; }
 }
 
+/* Bug real: 4 botones de "Cancelar"/"Responder" en el panel de negocio
+   (reseñas, reservas, modal compartido) usaban la clase `auth-link`, que
+   solo existe en css/auth.css — un archivo que NUNCA se carga en las 6
+   páginas negocio-*.html. Sin esa hoja de estilos, el botón caía al
+   estilo por defecto del navegador (recuadro gris) en vez del link de
+   texto coral que se veía en el resto del sitio. Clase propia acá, con
+   el mismo look que `.auth-link` pero sin depender de ese archivo. */
+.biz-linkbtn { background: none; border: none; padding: 0; font-weight: 700; color: var(--coral); cursor: pointer; font-size: inherit; font-family: inherit; }
+.biz-linkbtn:hover { text-decoration: underline; }
+
 /* Bug real de la pasada anterior: bajar el font-size raíz solo encoge lo
    que está en `rem` — pero casi todo el padding/margin/gap de este archivo
    estaba en `px` fijo, así que las tarjetas seguían viéndose grandes (texto
@@ -27,7 +37,9 @@ html { font-size: 84%; }
 
 .biz__greeting {
   margin-bottom: 1.75rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 1.125rem;
   background: rgba(255, 255, 255, 0.58);
   backdrop-filter: blur(22px) saturate(120%);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -37,6 +49,22 @@ html { font-size: 84%; }
 }
 .biz__greeting h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0.25rem 0 0.5rem; color: var(--navy); }
 .biz__sub { color: var(--navy-2); margin: 0; }
+
+/* Avatar con iniciales del negocio (color determinístico por email, mismo
+   patrón de "seedRandom(hashStr(bizEmail))" ya usado para la data demo) —
+   instrucción del usuario: profesionalizar más el panel, esto es un patrón
+   estándar de dashboard SaaS que faltaba (identidad visual de la cuenta). */
+.biz-avatar {
+  flex-shrink: 0;
+  width: 3.375rem; height: 3.375rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+.biz-avatar--nav { width: 2.25rem; height: 2.25rem; font-size: 0.82rem; }
 
 /* Sub-nav tabs (Resumen / Reservas / Pagos) reuse pill look */
 .biz__tabs {

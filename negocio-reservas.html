@@ -60,6 +60,7 @@ if ('serviceWorker' in navigator) {
       <a href="negocio-calendario.html">Calendario</a>
     </nav>
     <div class="nav__actions">
+      <span class="biz-avatar biz-avatar--nav" id="bizNavAvatar" hidden></span>
       <button type="button" class="nav__login" id="bizLogoutBtn">Cerrar sesión</button>
     </div>
   </div>
@@ -68,9 +69,12 @@ if ('serviceWorker' in navigator) {
 <main class="biz">
   <div class="container">
     <div class="biz__greeting">
-      <p class="eyebrow">Panel de aliado</p>
-      <h1>Reservas</h1>
-      <p class="biz__sub">Tus próximas reservas y el historial completo.</p>
+      <span class="biz-avatar" id="bizAvatar" hidden></span>
+      <div>
+        <p class="eyebrow">Panel de aliado</p>
+        <h1>Reservas</h1>
+        <p class="biz__sub">Tus próximas reservas y el historial completo.</p>
+      </div>
     </div>
 
     <section class="dcard">

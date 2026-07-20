@@ -372,7 +372,7 @@
           <p class="biz-modal__motivo-error" hidden>Cuéntanos el motivo antes de rechazar.</p>
           <div class="biz-modal__acciones-btns">
             <button type="button" class="btn btn--primary biz-modal__btn-confirmar-rechazo" data-id="${r.id}">Confirmar rechazo</button>
-            <button type="button" class="auth-link biz-modal__btn-cancelar-rechazo" data-id="${r.id}">Cancelar</button>
+            <button type="button" class="biz-linkbtn biz-modal__btn-cancelar-rechazo" data-id="${r.id}">Cancelar</button>
           </div>
         </div>
       </div>
@@ -508,4 +508,22 @@
     const biz = getBusiness();
     greetEl.textContent = `Hola, ${biz.name} 👋`;
   }
+
+  // Avatar con iniciales del negocio — mismo color determinístico
+  // (seedRandom/hashStr por bizEmail) que ya se usa para la data demo, así
+  // que cada negocio tiene siempre el mismo color entre recargas.
+  const AVATAR_COLORS = ['var(--coral)', 'var(--navy)', 'var(--green)', 'var(--deep-red)'];
+  function initialsOf(name) {
+    const words = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return '?';
+    return words.length === 1 ? words[0].slice(0, 2).toUpperCase() : (words[0][0] + words[1][0]).toUpperCase();
+  }
+  const avatarColor = AVATAR_COLORS[hashStr(bizEmail) % AVATAR_COLORS.length];
+  const avatarInitials = initialsOf(bizAccount.bizName);
+  document.querySelectorAll('#bizAvatar, #bizNavAvatar').forEach((el) => {
+    el.textContent = avatarInitials;
+    el.style.background = avatarColor;
+    el.hidden = false;
+    el.title = bizAccount.bizName || '';
+  });
 })();

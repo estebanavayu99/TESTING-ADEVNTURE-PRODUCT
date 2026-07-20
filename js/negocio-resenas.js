@@ -43,13 +43,13 @@
         </div>
       `
       : `
-        <button type="button" class="auth-link biz-review__btn-responder" data-id="${r.id}">Responder</button>
+        <button type="button" class="biz-linkbtn biz-review__btn-responder" data-id="${r.id}">Responder</button>
         <div class="biz-review__respuesta-form" data-form-id="${r.id}" hidden>
           <textarea class="biz-modal__motivo-input" rows="3" placeholder="Escribe tu respuesta pública a este cliente..."></textarea>
           <p class="biz-modal__motivo-error" hidden>Escribe algo antes de enviar tu respuesta.</p>
           <div class="biz-modal__acciones-btns">
             <button type="button" class="btn btn--primary biz-review__btn-enviar" data-id="${r.id}">Enviar respuesta</button>
-            <button type="button" class="auth-link biz-review__btn-cancelar" data-id="${r.id}">Cancelar</button>
+            <button type="button" class="biz-linkbtn biz-review__btn-cancelar" data-id="${r.id}">Cancelar</button>
           </div>
         </div>
       `;
