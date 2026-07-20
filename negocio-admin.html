@@ -63,17 +63,29 @@ if ('serviceWorker' in navigator) {
     <div class="biz__greeting">
       <p class="eyebrow">Panel de administrador</p>
       <h1>Hola, Pickmap 👋</h1>
-      <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada tarjeta de la tabla es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
+      <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada fila es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
     </div>
 
-    <div class="biz__stats">
+    <div class="biz__stats admin-stats">
       <div class="biz-stat biz-stat--accent">
         <p class="biz-stat__label">Negocios aliados</p>
         <p class="biz-stat__value" id="adminStatNegocios">—</p>
+        <p class="biz-stat__note" id="adminStatNegociosNote">&nbsp;</p>
       </div>
       <div class="biz-stat">
         <p class="biz-stat__label">Generado histórico (todos)</p>
         <p class="biz-stat__value" id="adminStatHistorico">—</p>
+        <p class="biz-stat__note">Lo que reciben los negocios, neto de comisión</p>
+      </div>
+      <div class="biz-stat">
+        <p class="biz-stat__label">Comisión Pickmap (histórica)</p>
+        <p class="biz-stat__value" id="adminStatComision">—</p>
+        <p class="biz-stat__note" id="adminStatComisionNote">&nbsp;</p>
+      </div>
+      <div class="biz-stat">
+        <p class="biz-stat__label">Pipeline activo</p>
+        <p class="biz-stat__value" id="adminStatPipeline">—</p>
+        <p class="biz-stat__note">Valor de reservas confirmadas/pendientes, aún no completadas</p>
       </div>
       <div class="biz-stat">
         <p class="biz-stat__label">Reservas activas (todas)</p>
@@ -87,12 +99,41 @@ if ('serviceWorker' in navigator) {
     </div>
 
     <section class="dcard">
-      <h2 class="dcard__title">Negocios aliados</h2>
+      <h2 class="dcard__title">Ingresos de la plataforma — últimos 6 meses</h2>
+      <p class="admin-chart-legend">
+        <span><span class="admin-chart-dot admin-chart-dot--total"></span> Generado total (todos los negocios)</span>
+        <span><span class="admin-chart-dot admin-chart-dot--comision"></span> Comisión Pickmap</span>
+      </p>
+      <div class="biz-chart" id="adminChart"></div>
+    </section>
+
+    <section class="dcard" id="adminTopSection" hidden>
+      <h2 class="dcard__title">Mejores negocios</h2>
+      <ul class="admin-top-list" id="adminTopList"></ul>
+    </section>
+
+    <section class="dcard" id="adminUnverifiedSection" hidden>
+      <h2 class="dcard__title">Negocios sin verificar</h2>
+      <ul class="biz-res-list" id="adminUnverifiedList"></ul>
+    </section>
+
+    <section class="dcard">
+      <h2 class="dcard__title">Todos los negocios aliados</h2>
       <p class="biz-res-list__empty" id="adminEmpty" hidden>Todavía no hay negocios registrados.</p>
       <ul class="biz-res-list" id="adminBizList"></ul>
     </section>
   </div>
 </main>
+
+<div class="biz-modal" id="adminModal" hidden>
+  <div class="biz-modal__panel">
+    <div class="biz-modal__head">
+      <h3 id="adminModalTitle">Detalle</h3>
+      <button type="button" class="biz-modal__close" id="adminModalClose" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="adminModalBody"></div>
+  </div>
+</div>
 
 <script src="js/skyline.js"></script>
 <script src="js/negocio-admin.js"></script>

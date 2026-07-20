@@ -379,7 +379,7 @@
       return;
     }
 
-    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false, referralCodeUsed });
+    users.push({ repName, repRut, bizName, legalName, bizRut, address, availability, email, password, verified: false, referralCodeUsed, createdAt: new Date().toISOString() });
     saveUsers(users);
     startVerification(email);
   });

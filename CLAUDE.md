@@ -785,13 +785,49 @@ plataforma — necesita poder ver "un resumen completo de mi empresa"
   nombre por URL directa. Simétricamente, `negocio-admin.html` redirige
   a `negocio.html` si alguien que NO es el admin llega ahí por URL
   directa con sesión de negocio normal activa.
-- Contenido: 4 stats agregados (negocios aliados, generado histórico de
-  TODOS, reservas activas de TODAS, rating promedio de la plataforma) +
-  una tabla ordenada por generado histórico descendente, con
-  nombre/representante/email/verificado por fila — **nunca el detalle de
-  reserva-por-reserva de cada negocio** (ver regla de aislamiento arriba).
-  Filas con `.biz-res--static` (mismo look que `.biz-res` pero sin cursor
-  de "clickeable", porque no abren modal).
+- **Expandido 2026-07-20** (instrucción del usuario: "haz un panel muy
+  completo... debo poder entender todo lo que está pasando"):
+  - **6 stats agregados**: negocios aliados (+ nota de cuántos
+    verificados/sin verificar), generado histórico de todos, **comisión
+    Pickmap histórica**, **pipeline activo** (valor de reservas
+    confirmadas/pendientes aún no completadas — no solo el conteo),
+    reservas activas totales, rating promedio de la plataforma.
+  - **`COMMISSION_RATE = 0.12` en `js/negocio-admin.js`**: no hay una
+    tasa de comisión real definida en ningún lugar del sitio — el `monto`
+    de cada reserva ya es lo que el NEGOCIO recibe, neto de comisión
+    (`terminos.html`: "Pickmap recauda el pago... transfiere los fondos...
+    descontando la comisión de intermediación"), pero el % nunca quedó
+    escrito en código. Se usa 12% como estimado (punto medio típico de
+    plataformas de reservas turísticas), etiquetado explícitamente en la
+    UI como "Estimado a 12% — tasa real pendiente de definir". Ajustar
+    esa única constante en cuanto el usuario defina la tasa real.
+  - **Gráfico de línea de los últimos 6 meses** (mismo patrón SVG que
+    `js/negocio-resumen.js`, ver "Rediseñar gráfico Ingresos" abajo) con
+    DOS series: generado total (línea sólida coral) y comisión Pickmap
+    (línea punteada navy) — clickeable por mes, abre un modal propio
+    (`#adminModal`, JS del mismo archivo, sin reutilizar el modal de
+    `js/negocio.js`) con el desglose **por negocio** de ese mes (nunca
+    por cliente/reserva individual — sigue la regla de aislamiento).
+  - **"Mejores negocios"**: top 5 por generado histórico, con medallas
+    🥇🥈🥉 para los primeros 3.
+  - **"Negocios sin verificar"**: lista aparte (solo visible si hay
+    alguno) para que el admin identifique fácil qué aliados nuevos faltan
+    por confirmar.
+  - Tabla completa "Todos los negocios aliados": cada fila ahora también
+    muestra pipeline y comisión por negocio, además de generado
+    histórico/activas/rating — **nunca el detalle de reserva-por-reserva
+    de cada negocio** (ver regla de aislamiento arriba). Filas con
+    `.biz-res--static` (mismo look que `.biz-res` pero sin cursor de
+    "clickeable", porque no abren modal) — con un override de mobile
+    aparte (`@media max-width:640px`) porque el wrap genérico de
+    `.biz-res` asumía una columna de fecha de 54px que estas filas no
+    tienen; sin ese override el monto/badges se superponían con el texto
+    de 3 líneas del info block.
+  - `js/auth-empresa.js` ahora también guarda `createdAt` en el signup
+    (antes no existía ningún timestamp de registro) para poder mostrar
+    "desde <fecha>" en la fila de cada negocio — cuentas ya creadas antes
+    de este cambio simplemente no muestran esa parte (no se fabrica una
+    fecha falsa).
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
