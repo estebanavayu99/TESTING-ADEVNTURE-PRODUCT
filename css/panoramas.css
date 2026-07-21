@@ -137,12 +137,6 @@
   .pano-advfilter__reset { margin-left: 0; align-self: stretch; justify-content: center; }
 }
 
-/* Sección "Todos" al final de la página — catálogo completo sin cap,
-   como grid (no scroll horizontal): pedido explícito del usuario de
-   bajar esta sección al fondo y mostrar ahí TODO lo que hay. */
-.pano-row--all { margin-top: 8px; }
-.pano-row__all-sub { margin: -6px 0 18px; color: var(--navy-2); font-size: 0.92rem; }
-
 .pano-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(234px, 1fr));

@@ -69,13 +69,19 @@ if ('serviceWorker' in navigator) {
     <div class="dash__greeting">
       <div class="dash__greeting-text">
         <p class="eyebrow">🤖 Darwin · tu IA de panoramas</p>
-        <h1>Darwin te armó este plan para hoy</h1>
-        <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
+        <h1>Darwin armó estos planes especialmente para ti</h1>
       </div>
       <div class="dash__weather" id="panoramasWeather" hidden>
         <span class="dash__weather-icon" id="panoramasWeatherIcon">🌤️</span>
         <div class="dash__weather-body">
           <p class="dash__weather-temp" id="panoramasWeatherTemp">—</p>
+          <p class="dash__weather-loc">Clima ahora</p>
+        </div>
+      </div>
+      <div class="dash__weather" id="panoramasLocation" hidden>
+        <span class="dash__weather-icon">📍</span>
+        <div class="dash__weather-body">
+          <p class="dash__weather-temp" id="panoramasLocationName">—</p>
           <p class="dash__weather-loc">Tu ubicación ahora</p>
         </div>
       </div>
@@ -118,10 +124,20 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterDay">📅 Día</label>
+          <label for="filterDay">📅 Cuándo</label>
           <select id="filterDay">
-            <option value="todos">Cualquier día</option>
-            <option value="semana">Entre semana</option>
+            <option value="hoy">Hoy</option>
+            <option value="manana">Mañana</option>
+            <option value="finde_que_sigue">El fin de semana que sigue</option>
+            <option value="todos" selected>Cualquiera</option>
+          </select>
+        </div>
+        <div class="pano-advfilter">
+          <label for="filterDias">🧳 Duración del paquete</label>
+          <select id="filterDias">
+            <option value="todos">Cualquiera</option>
+            <option value="1">1 día</option>
+            <option value="2">2 días</option>
             <option value="finde">Fin de semana</option>
           </select>
         </div>
@@ -157,14 +173,6 @@ if ('serviceWorker' in navigator) {
       </div>
 
       <div class="pano-grid" id="panoGrid"></div>
-    </section>
-
-    <section class="pano-row pano-row--all">
-      <div class="pano-row__header">
-        <h2>Todos</h2>
-      </div>
-      <p class="pano-row__all-sub">Todo lo que tenemos en PickMap, sin filtrar por Darwin.</p>
-      <div class="pano-grid" id="panoGridTodos"></div>
     </section>
   </div>
 </main>
