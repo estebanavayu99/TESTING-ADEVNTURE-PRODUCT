@@ -8,7 +8,7 @@
   // resumen agregado de TODOS los negocios (negocio-admin.html/js). Mismo
   // email que ya se usaba como OWNER_NOTIFICATION_EMAIL en js/negocio.js.
   const ADMIN_EMAIL = 'contacto@pickmap.cl';
-  function panelDestino(email) { return email === ADMIN_EMAIL ? 'negocio-admin.html' : 'negocio.html'; }
+  function panelDestino(email) { return (email || '').trim().toLowerCase() === ADMIN_EMAIL ? 'negocio-admin.html' : 'negocio.html'; }
 
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
@@ -234,9 +234,10 @@
     try {
       const session = await S.auth.getSession();
       if (session && session.user) {
-        setLegacySession(session.user.email);
-        await syncLegacyFromSupabase(session.user.id, session.user.email);
-        window.location.href = panelDestino(session.user.email);
+        const sessionEmail = (session.user.email || '').trim().toLowerCase();
+        setLegacySession(sessionEmail);
+        await syncLegacyFromSupabase(session.user.id, sessionEmail);
+        window.location.href = panelDestino(sessionEmail);
       }
     } catch { /* sin sesión activa, se queda en el login normal */ }
   })();

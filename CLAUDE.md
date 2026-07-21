@@ -1242,3 +1242,132 @@ schema, la recomendación concreta:
   gotcha nuevo, o cambie el flujo de trabajo, debe reflejarlo en este
   archivo (`CLAUDE.md`) como parte del mismo commit, no como tarea aparte.
   Este archivo es la memoria persistente del proyecto entre sesiones.
+
+## Toolbar de panoramas.html: rediseño "profesional y tecnológico" (2026-07-21)
+
+Instrucción explícita del usuario sobre el header + toolbar de filtros ya
+rediseñados ese mismo día ("resideña esta sección, a más profesional y
+tecnológica"). `css/panoramas.css`:
+- `.pano-hero__pulse`: punto pulsante (animación `panoHeroPulse`, expandir +
+  desvanecer) junto al eyebrow "🤖 Darwin · tu IA de panoramas", para que se
+  lea como "sistema en vivo" en vez de texto estático.
+- `.pano-hero__stat` (además de `.dash__weather`, en los widgets de
+  clima/ubicación): chip con fondo/borde propio, como si fuera una lectura
+  de sensor.
+- `.pano-toolbar__head` (nuevo wrapper): fila con el label a la izquierda y
+  `.pano-toolbar__head-actions` a la derecha (contador de resultados en
+  vivo `#panoResultCount` + botón "Limpiar filtros", que se movió de
+  dentro de `.pano-toolbar__row` a acá — se le quitó el `margin-left:auto`
+  que tenía porque ya no lo necesita en su nueva posición).
+- `#panoResultCount` se actualiza en cada `renderExplore()` (`js/panoramas.js`)
+  con el conteo real de tarjetas filtradas — antes solo existía el markup,
+  sin JS que lo poblara.
+- Cada ícono de filtro (`.pano-advfilter__badge`) y el del label
+  (`.pano-toolbar__label-icon`) pasan de emoji suelto a un chip cuadrado
+  con fondo tenue, mismo patrón visual repetido para que se sienta
+  "sistema", no una lista de emojis sueltos.
+
+## Super admin: modo "Ver como" (negocio/viajero) sin recambiar cuentas (2026-07-21)
+
+Instrucción explícita del usuario: poder moverse, desde `negocio-admin.html`,
+a la vista real de cualquier negocio aliado o cualquier viajero registrado
+— sin cerrar sesión ni loguearse de nuevo — para ir revisando cambios del
+sitio sin tener que alternar cuentas a mano. De paso se reportó un bug real
+("entro como empresa y me mete a otra cosa nada que ver") que se atacó en
+paralelo (ver bullet de case-insensitivity abajo).
+
+- **Mecanismo**: como tanto `js/negocio.js`/`negocio-*.html` como
+  `js/dashboard.js`/`js/panoramas.js`/etc. determinan "quién está
+  logueado" leyendo un puntero plano de `localStorage`
+  (`pickmap_business_session` / `pickmap_current_user`) y buscando ese
+  email en `pickmap_business_users` / `pickmap_users` — SIN re-verificar
+  una sesión viva de Supabase en cada carga de página (solo las páginas de
+  login mismas hacen ese chequeo, para auto-redirigir si ya hay sesión) —
+  "impersonar" para el admin es tan simple como pisar ese puntero
+  temporalmente y navegar al panel real. Cero código nuevo de
+  autenticación, se reusa el 100% del render existente.
+- **`negocio-admin.html`**: nueva tarjeta "🎭 Ver como" con dos selects
+  (negocio / viajero, poblados desde `pickmap_business_users` /
+  `pickmap_users`) + botón cada uno. `js/negocio-admin.js`: al hacer clic,
+  guarda `pickmap_admin_viewing_as` (`{type, email}`) y pisa
+  `pickmap_business_session` (o `pickmap_current_user`) con el email
+  elegido, redirige a `negocio.html` / `dashboard.html`. Además, al pasar
+  el guard de admin, ahora guarda `pickmap_admin_true_email` (marca
+  persistente de "quién está REALMENTE autenticado", separada del puntero
+  de sesión que sí se pisa) — se limpia al cerrar sesión de verdad.
+- **`js/admin-viewas.js`** (nuevo, cargado en las 13 páginas de negocio y
+  viajero — no en `negocio-admin.html`, que no lo necesita): no-op salvo
+  que `pickmap_admin_true_email === 'contacto@pickmap.cl'` Y
+  `pickmap_admin_viewing_as` esté seteado. Si aplica, inyecta una barra
+  superior sticky ("👑 Super admin viendo como negocio/viajero: <email>" +
+  botón "← Volver a super admin") que persiste al navegar entre páginas
+  del mismo negocio/viajero. El botón de salir limpia
+  `pickmap_admin_viewing_as`, restaura `pickmap_business_session` a
+  `contacto@pickmap.cl`, limpia `pickmap_current_user`, y redirige a
+  `negocio-admin.html`. También intercepta el `#logoutBtn`/`#bizLogoutBtn`
+  propio de cada página (bug real encontrado en auditoría propia: si el
+  admin usaba el "Cerrar sesión" normal en vez del botón de salir del
+  banner mientras impersonaba, las marcas de admin quedaban pisadas en ese
+  mismo navegador y el banner podía reaparecer con una sesión ya cerrada
+  la próxima vez) — limpia las mismas dos marcas ahí también.
+- **Solo el super admin ve esto**: el flag `pickmap_admin_true_email` se
+  setea únicamente dentro del guard de `js/negocio-admin.js` (solo
+  alcanzable tras pasar el chequeo de `contacto@pickmap.cl`), nunca en
+  ningún otro flujo — un negocio o viajero real jamás puede terminar con
+  ese flag seteado en su propio navegador, así que el banner nunca les
+  aparece a ellos.
+- Verificado end-to-end con Playwright (localStorage sembrado con un
+  negocio y un viajero reales, click en ambos botones, navegación entre
+  páginas del negocio con el banner visible, "volver a super admin"
+  restaura el estado): sin errores de consola en ningún punto del flujo.
+
+## Fix robustez: comparación de ADMIN_EMAIL case-insensitive (2026-07-21)
+
+Diagnóstico (no confirmado con 100% de certeza — no se pudo reproducir en
+vivo contra Supabase real por falta de internet en el sandbox, solo lectura
+estática de código) del bug reportado "entro como empresa [siendo el admin]
+y me mete a otra cosa nada que ver": los tres puntos que comparan el email
+de sesión contra `ADMIN_EMAIL = 'contacto@pickmap.cl'`
+(`js/auth-empresa.js`'s `panelDestino()` y el chequeo de sesión ya activa,
+`js/negocio.js`'s guard, `js/negocio-admin.js`'s guard) usaban `===`
+directo sin `trim()`/`toLowerCase()` — si `session.user.email` de Supabase
+vuelve con mayúsculas o espacios distintos al literal hardcodeado, el admin
+cae silenciosamente al camino de negocio normal en vez de a
+`negocio-admin.html`. Se normalizaron los tres (`(email ||
+'').trim().toLowerCase()` antes de comparar/usar), como hardening
+defensivo — se documenta como tal, no como causa raíz confirmada.
+
+## Solicitud de servicio: agregar o editar (2026-07-21)
+
+Instrucción explícita del usuario sobre la sección "Servicios" del panel de
+negocio ("acá puede ser agregar o editar servicio"): el form de solicitud
+solo contemplaba pedir un servicio NUEVO — se agregó un toggle "Agregar
+servicio nuevo" / "Editar un servicio existente" (`negocio-servicios.html`
++ `js/negocio-servicios.js`). Al elegir "editar", aparece un select con los
+servicios ya inscritos (mismo `N.getServices()` que ya lista arriba) y las
+etiquetas de nombre/descripción cambian a "Nuevo nombre (si cambia)"/"Qué
+quieres cambiar" — los campos no se auto-rellenan con los valores actuales
+del servicio (para no parecer que ya quedó guardado así, son "cambios
+propuestos", no una réplica editable). `js/negocio.js`:
+`solicitarNuevoServicio(nombre, descripcion, precioSugerido)` pasó a
+`solicitarServicio(tipo, nombre, descripcion, precioSugerido,
+servicioOriginal)` — la solicitud persistida ahora lleva `tipo`
+(`'nuevo'`/`'edicion'`) y, si aplica, `servicioOriginalId`/
+`servicioOriginalNombre`. La plantilla de correo interno
+`solicitud-nuevo-servicio-owner` (`api/_lib/email-templates.js`) cambia
+subject/heading/tabla según `datos.esEdicion`, agregando la fila "Servicio
+a editar" cuando corresponde — sigue siendo un aviso solo para
+`contacto@pickmap.cl`, no se auto-aprueba nada (mismo criterio de siempre).
+
+**Bug real encontrado y arreglado en la misma pasada**: el campo nuevo
+`#servicioAEditarField` (mismo patrón `.dash__field` que el resto del
+form) usaba el atributo `hidden` para mostrarse/ocultarse según el toggle
+— pero `.dash__field { display: flex; }` (definido en `css/dashboard.css`)
+le ganaba en la cascada al `[hidden] { display: none }` por defecto del
+navegador (mismo gotcha ya documentado arriba de "CSS `[hidden]` vs.
+cascada de autor", esta vez atrapado en revisión propia en vez de
+screenshot). El select "Servicio a editar" quedaba visible aunque el
+toggle volviera a "Agregar nuevo" después de enviar una solicitud de
+edición. Fix: se agregó `.dash__field[hidden] { display: none; }` en
+`css/dashboard.css` — si se agrega otro campo con `hidden` sobre esta
+clase en el futuro, ya queda cubierto.

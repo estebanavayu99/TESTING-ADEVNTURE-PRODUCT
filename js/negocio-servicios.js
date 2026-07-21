@@ -60,7 +60,7 @@
     list.innerHTML = requests.map((r) => `
       <li class="biz-res">
         <div class="biz-res__info">
-          <p class="biz-res__client">${r.nombre}</p>
+          <p class="biz-res__client">${r.tipo === 'edicion' ? `Editar: ${r.servicioOriginalNombre || '—'} → ${r.nombre}` : r.nombre}</p>
           <p class="biz-res__meta">${r.precioSugerido ? N.fmtMoney(r.precioSugerido) + ' · ' : ''}${N.fmtDate(new Date(r.fecha))}</p>
         </div>
         <span class="biz-res__status biz-res__status--pendiente">Pendiente de revisión</span>
@@ -71,11 +71,42 @@
   renderServicios();
   renderSolicitudes();
 
+  // Toggle "agregar nuevo" vs "editar existente" — instrucción explícita
+  // del usuario: la solicitud no es solo para servicios nuevos, también
+  // para pedir cambios a uno ya inscrito. El picker de "servicio a editar"
+  // se puebla desde N.getServices() (los mismos servicios ya listados
+  // arriba); los campos nombre/descripción pasan a representar el "cambio
+  // propuesto", no una réplica del servicio actual (no se auto-rellenan,
+  // para no parecer que ya quedó guardado así).
+  const tipoNuevo = document.getElementById('servicioTipoNuevo');
+  const tipoEdicion = document.getElementById('servicioTipoEdicion');
+  const editarField = document.getElementById('servicioAEditarField');
+  const editarSelect = document.getElementById('servicioAEditar');
+  const nombreLabel = document.getElementById('servicioNombreLabel');
+  const descripcionLabel = document.getElementById('servicioDescripcionLabel');
+  const nombreInput = document.getElementById('servicioNombre');
+
+  const services = N.getServices();
+  editarSelect.innerHTML = services.map((s) => `<option value="${s.id}">${s.nombre}</option>`).join('');
+
+  function applyTipoUI() {
+    const esEdicion = tipoEdicion.checked;
+    editarField.hidden = !esEdicion;
+    editarSelect.required = esEdicion;
+    nombreLabel.textContent = esEdicion ? 'Nuevo nombre (si cambia)' : 'Nombre del servicio';
+    descripcionLabel.textContent = esEdicion ? 'Qué quieres cambiar' : 'Descripción';
+    nombreInput.placeholder = esEdicion ? 'Deja el nombre actual si no cambia' : 'Ej: Tour nocturno de estrellas';
+  }
+  tipoNuevo.addEventListener('change', applyTipoUI);
+  tipoEdicion.addEventListener('change', applyTipoUI);
+  applyTipoUI();
+
   const form = document.getElementById('servicioRequestForm');
   const feedback = document.getElementById('servicioFeedback');
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const nombre = document.getElementById('servicioNombre').value.trim();
+    const tipo = tipoEdicion.checked ? 'edicion' : 'nuevo';
+    const nombre = nombreInput.value.trim();
     const descripcion = document.getElementById('servicioDescripcion').value.trim();
     const precioSugerido = Number(document.getElementById('servicioPrecio').value) || null;
     if (!nombre || !descripcion) {
@@ -83,8 +114,17 @@
       feedback.classList.add('is-error');
       return;
     }
-    N.solicitarNuevoServicio(nombre, descripcion, precioSugerido);
+    if (tipo === 'edicion' && !editarSelect.value) {
+      feedback.textContent = 'Selecciona qué servicio quieres editar.';
+      feedback.classList.add('is-error');
+      return;
+    }
+    const servicioOriginal = tipo === 'edicion'
+      ? services.find((s) => String(s.id) === editarSelect.value)
+      : null;
+    N.solicitarServicio(tipo, nombre, descripcion, precioSugerido, servicioOriginal);
     form.reset();
+    applyTipoUI();
     feedback.textContent = '¡Listo! Te avisamos por correo cuando lo revisemos.';
     feedback.classList.remove('is-error');
     renderSolicitudes();

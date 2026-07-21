@@ -32,14 +32,23 @@
   const ADMIN_EMAIL = 'contacto@pickmap.cl';
   const COMMISSION_RATE = 0.12;
 
-  const bizEmail = localStorage.getItem(BIZ_SESSION_KEY);
+  const bizEmail = (localStorage.getItem(BIZ_SESSION_KEY) || '').trim().toLowerCase();
   if (bizEmail !== ADMIN_EMAIL) {
     window.location.href = bizEmail ? 'negocio.html' : 'login-empresa.html';
     return;
   }
 
+  // Marca que quien está realmente autenticado es el super admin — se
+  // mantiene aunque más abajo "Ver como" pise pickmap_business_session /
+  // pickmap_current_user para entrar al panel real de un negocio o
+  // viajero. js/admin-viewas.js (cargado en esas páginas) usa esta marca
+  // para mostrar el banner "volver a super admin" solo cuando corresponde.
+  localStorage.setItem('pickmap_admin_true_email', ADMIN_EMAIL);
+
   document.getElementById('bizLogoutBtn').addEventListener('click', () => {
     localStorage.removeItem(BIZ_SESSION_KEY);
+    localStorage.removeItem('pickmap_admin_true_email');
+    localStorage.removeItem('pickmap_admin_viewing_as');
     window.location.href = 'index.html#alianzas';
   });
 
@@ -344,5 +353,53 @@
         openMonthBreakdown(m.labelLargo, m.porNegocio);
       }
     });
+  });
+
+  /* ---------- "Ver como" (instrucción explícita del usuario) ----------
+   * El admin entra al panel REAL de un negocio o de un viajero ya
+   * registrado, sin cerrar su propia sesión: pisa temporalmente
+   * pickmap_business_session / pickmap_current_user con el email
+   * elegido y redirige a su panel normal. pickmap_admin_true_email
+   * (seteado arriba) sigue marcando quién es el admin de verdad —
+   * js/admin-viewas.js, cargado en esas páginas, usa esa marca para
+   * mostrar el banner "volver a super admin". */
+  const viewAsBizSelect = document.getElementById('adminViewAsBizSelect');
+  const viewAsTravelerSelect = document.getElementById('adminViewAsTravelerSelect');
+  const travelerUsers = JSON.parse(localStorage.getItem('pickmap_users') || '[]');
+
+  if (viewAsBizSelect) {
+    bizUsers.forEach((u) => {
+      const opt = document.createElement('option');
+      opt.value = u.email;
+      opt.textContent = `${u.bizName || u.email} (${u.email})`;
+      viewAsBizSelect.appendChild(opt);
+    });
+  }
+  if (viewAsTravelerSelect) {
+    travelerUsers.forEach((u) => {
+      const opt = document.createElement('option');
+      opt.value = u.email;
+      opt.textContent = `${u.name || u.email} (${u.email})`;
+      viewAsTravelerSelect.appendChild(opt);
+    });
+  }
+  if (!bizUsers.length && !travelerUsers.length) {
+    const empty = document.getElementById('adminViewAsEmpty');
+    if (empty) empty.hidden = false;
+  }
+
+  document.getElementById('adminViewAsBizBtn').addEventListener('click', () => {
+    const target = viewAsBizSelect.value;
+    if (!target) return;
+    localStorage.setItem('pickmap_admin_viewing_as', JSON.stringify({ type: 'empresa', email: target }));
+    localStorage.setItem(BIZ_SESSION_KEY, target);
+    window.location.href = 'negocio.html';
+  });
+  document.getElementById('adminViewAsTravelerBtn').addEventListener('click', () => {
+    const target = viewAsTravelerSelect.value;
+    if (!target) return;
+    localStorage.setItem('pickmap_admin_viewing_as', JSON.stringify({ type: 'viajero', email: target }));
+    localStorage.setItem('pickmap_current_user', target);
+    window.location.href = 'dashboard.html';
   });
 })();

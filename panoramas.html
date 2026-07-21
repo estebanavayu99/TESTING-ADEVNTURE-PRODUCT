@@ -66,19 +66,22 @@ if ('serviceWorker' in navigator) {
 
 <main class="dash">
   <div class="container">
-    <div class="dash__greeting">
+    <div class="dash__greeting pano-hero">
       <div class="dash__greeting-text">
-        <p class="eyebrow">🤖 Darwin · tu IA de panoramas</p>
+        <p class="eyebrow pano-hero__eyebrow">
+          <span class="pano-hero__pulse" aria-hidden="true"></span>
+          🤖 Darwin · tu IA de panoramas
+        </p>
         <h1>Darwin armó estos planes especialmente para ti</h1>
       </div>
-      <div class="dash__weather" id="panoramasWeather" hidden>
+      <div class="dash__weather pano-hero__stat" id="panoramasWeather" hidden>
         <span class="dash__weather-icon" id="panoramasWeatherIcon">🌤️</span>
         <div class="dash__weather-body">
           <p class="dash__weather-temp" id="panoramasWeatherTemp">—</p>
           <p class="dash__weather-loc">Clima ahora</p>
         </div>
       </div>
-      <div class="dash__weather" id="panoramasLocation" hidden>
+      <div class="dash__weather pano-hero__stat" id="panoramasLocation" hidden>
         <span class="dash__weather-icon">📍</span>
         <div class="dash__weather-body">
           <p class="dash__weather-temp" id="panoramasLocationName">—</p>
@@ -88,10 +91,16 @@ if ('serviceWorker' in navigator) {
     </div>
 
     <div class="pano-toolbar">
-      <p class="pano-toolbar__label">🔍 Filtrar y ordenar</p>
+      <div class="pano-toolbar__head">
+        <p class="pano-toolbar__label"><span class="pano-toolbar__label-icon">⚙️</span> Parámetros de búsqueda</p>
+        <div class="pano-toolbar__head-actions">
+          <p class="pano-toolbar__count" id="panoResultCount" aria-live="polite"><span class="pano-toolbar__count-dot"></span>— resultados</p>
+          <button type="button" class="pano-advfilter__reset" id="resetFilters">✕ Limpiar filtros</button>
+        </div>
+      </div>
       <div class="pano-toolbar__row">
         <div class="pano-advfilter">
-          <label for="filterSort">↕️ Ordenar por</label>
+          <label for="filterSort"><span class="pano-advfilter__badge">↕️</span> Ordenar por</label>
           <select id="filterSort">
             <option value="recomendado">Recomendado para ti</option>
             <option value="rating">Mejor valorados</option>
@@ -100,13 +109,13 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterCategory">🏷️ Tipo de experiencia</label>
+          <label for="filterCategory"><span class="pano-advfilter__badge">🏷️</span> Tipo de experiencia</label>
           <select id="filterCategory">
             <option value="todas">Cualquiera</option>
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterDistance">📍 Distancia</label>
+          <label for="filterDistance"><span class="pano-advfilter__badge">📍</span> Distancia</label>
           <select id="filterDistance">
             <option value="todas">Cualquier distancia</option>
             <option value="cerca">Cerca · hasta 20 km</option>
@@ -115,7 +124,7 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterPrice">💰 Precio</label>
+          <label for="filterPrice"><span class="pano-advfilter__badge">💰</span> Precio</label>
           <select id="filterPrice">
             <option value="todos">Cualquier precio</option>
             <option value="bajo">Hasta $15.000</option>
@@ -124,7 +133,7 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterDay">📅 Cuándo</label>
+          <label for="filterDay"><span class="pano-advfilter__badge">📅</span> Cuándo</label>
           <select id="filterDay">
             <option value="hoy">Hoy</option>
             <option value="manana">Mañana</option>
@@ -133,7 +142,7 @@ if ('serviceWorker' in navigator) {
           </select>
         </div>
         <div class="pano-advfilter">
-          <label for="filterDias">🧳 Duración del paquete</label>
+          <label for="filterDias"><span class="pano-advfilter__badge">🧳</span> Duración del paquete</label>
           <select id="filterDias">
             <option value="todos">Cualquiera</option>
             <option value="1">1 día</option>
@@ -141,7 +150,6 @@ if ('serviceWorker' in navigator) {
             <option value="finde">Fin de semana</option>
           </select>
         </div>
-        <button type="button" class="pano-advfilter__reset" id="resetFilters">✕ Limpiar filtros</button>
       </div>
     </div>
 
@@ -183,5 +191,6 @@ if ('serviceWorker' in navigator) {
      es standalone: solo Open-Meteo, sin depender del resto del motor). -->
 <script src="bot-darwin/js/contexto.js"></script>
 <script src="js/panoramas-weather.js"></script>
+<script src="js/admin-viewas.js"></script>
 </body>
 </html>

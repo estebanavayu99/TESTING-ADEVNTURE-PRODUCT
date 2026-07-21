@@ -342,6 +342,7 @@ html { font-size: 90%; }
 .dash__settings { margin-bottom: 22px; }
 .dash__settings-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .dash__field { display: flex; flex-direction: column; gap: 6px; }
+.dash__field[hidden] { display: none; }
 .dash__field span { font-weight: 700; font-size: 0.85rem; color: var(--navy); }
 .dash__field input,
 .dash__field textarea {
