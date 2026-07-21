@@ -1578,3 +1578,35 @@ intentado verificar por Playwright primero con clicks manuales por
 coordenadas, que fallaron por imprecisión de un ícono de 24px, no por un
 bug real — el test de widget lo confirmó de forma determinística). Correr
 con `flutter test` desde `app_flutter/`.
+
+## Modal de detalle del panorama: rediseño minimalista + Reservar honesto
+
+A pedido explícito del usuario ("agrega un diseño minimalista pero
+profesional") tras la sesión de bugs de arriba — se le preguntó dónde
+aplicarlo (rechazó la pregunta estructurada), así que se usó criterio
+propio: el modal de detalle (`panorama_detail_sheet.dart`) era el punto
+más débil, con el botón "Reservar" sin dar ningún feedback al tocarlo.
+
+- **Barra inferior fija con precio + CTA** (patrón Airbnb/Booking): antes
+  el botón "Reservar" quedaba suelto al final del scroll; ahora el
+  contenido (foto/título/dato rápido/por qué Darwin) scrollea en un
+  `Expanded` y una `_BottomBar` separada (borde superior sutil, safe
+  area) queda siempre visible con "Precio" + monto a la izquierda y el
+  botón a la derecha.
+- **"Por qué Darwin te lo recomienda" con acento minimalista**: pasó de
+  una caja llena de color (fondo + borde) a una franja delgada de color
+  a la izquierda (`_WhyCallout`, patrón "cita/callout" común en apps
+  profesionales) — mismo contenido, menos peso visual.
+- **Dato rápido con ícono real** (`Icons.schedule_rounded` + `item.meta`)
+  y un separador delgado antes del callout, en vez de que todo quede
+  apilado sin jerarquía.
+- **"Reservar" ya no es un botón muerto**: como no existe backend de
+  reservas todavía (ver sección de arriba), tocarlo cierra el sheet y
+  muestra un aviso honesto ("Muy pronto vas a poder reservar directo
+  desde la app") en vez de fingir una reserva confirmada que no pasó por
+  ningún lado — mismo criterio de "no fabricar dato falso" del resto del
+  repo. Verificado con un test de widget (`panorama_detail_sheet_test.dart`)
+  en vez de Playwright, porque el intento con clicks por coordenadas no
+  disparaba el botón de forma confiable (mismo tipo de imprecisión que
+  ya se había visto con el corazón de favorito) — el test confirma de
+  forma determinística que el sheet se cierra y aparece el aviso.
