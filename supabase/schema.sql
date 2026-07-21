@@ -884,3 +884,32 @@ begin
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
+
+-- Backfill de negocios que ya se habían registrado ANTES de que
+-- `business_profiles`/su trigger existieran (confirmado en producción:
+-- la cuenta admin contacto@pickmap.cl, creada el 15 de julio, seguía sin
+-- fila acá después de aplicar este archivo por primera vez — el trigger
+-- solo corre en un INSERT nuevo en auth.users, nunca retroactivo). Toma
+-- los datos ya guardados en `raw_user_meta_data` desde el signup
+-- original, mismo shape que el trigger de arriba.
+insert into public.business_profiles (
+  user_id, email, rep_name, rep_rut, biz_name, legal_name, biz_rut,
+  region, comuna, street, availability, referral_code_used, verified
+)
+select
+  u.id, u.email,
+  u.raw_user_meta_data->>'rep_name',
+  u.raw_user_meta_data->>'rep_rut',
+  u.raw_user_meta_data->>'biz_name',
+  u.raw_user_meta_data->>'legal_name',
+  u.raw_user_meta_data->>'biz_rut',
+  u.raw_user_meta_data->>'region',
+  u.raw_user_meta_data->>'comuna',
+  u.raw_user_meta_data->>'street',
+  u.raw_user_meta_data->>'availability',
+  u.raw_user_meta_data->>'referral_code_used',
+  u.email_confirmed_at is not null
+from auth.users u
+where u.raw_user_meta_data->>'account_type' = 'empresa'
+  and not exists (select 1 from public.business_profiles bp where bp.user_id = u.id)
+on conflict (user_id) do nothing;
