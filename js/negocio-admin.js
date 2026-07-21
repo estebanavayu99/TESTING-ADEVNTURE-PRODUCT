@@ -213,7 +213,12 @@
   const localTravelerUsers = JSON.parse(localStorage.getItem('pickmap_users') || '[]');
   const [remoteBizUsers, remoteTravelerUsers] = await Promise.all([fetchRealBizUsers(), fetchRealTravelerUsers()]);
   const bizUsers = mergeByEmail(localBizUsers, remoteBizUsers).filter((u) => u.email !== ADMIN_EMAIL);
-  const travelerUsers = mergeByEmail(localTravelerUsers, remoteTravelerUsers);
+  // Bug real encontrado en producción: la cuenta admin (contacto@pickmap.cl)
+  // tiene una fila real en `profiles` (se creó ahí antes de tener acceso a
+  // negocio-admin.html, cuando todavía era una cuenta viajero normal) — sin
+  // este filtro, se colaba en el picker de "Ver como viajero" como si fuera
+  // un viajero real más.
+  const travelerUsers = mergeByEmail(localTravelerUsers, remoteTravelerUsers).filter((u) => u.email !== ADMIN_EMAIL);
 
   const rows = bizUsers.map((biz) => {
     const reservations = getReservationsFor(biz.email);
