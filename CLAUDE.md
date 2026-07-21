@@ -1207,6 +1207,30 @@ schema, la recomendación concreta:
   `cardItemFor()` se actualizó para resolver las tarjetas del pill
   "Todos" desde `general` (blurb genérico) en vez de `CATALOG` (razón
   personalizada), mismo criterio que ya aplicaba a la pestaña "General".
+- **Dos bugs reales encontrados en revisión propia del PR** (instrucción
+  del usuario: "busca bugs posibles" tras abrir el PR), ambos arreglados
+  antes de dejar el PR listo para review:
+  1. `parseDias()` (filtro de duración de paquete, ver arriba) solo
+     reconocía metas con un número de días explícito ("un día"/"2 días"/
+     "fin de semana") — 3 paquetes reales del catálogo tienen meta sin
+     mención de días ("Paquete nocturno", "Paquete para equipos",
+     "Paquete para grupo": *Bar + transporte de vuelta incluido*,
+     *Team building al aire libre*, *Entradas + previa con amigos*) y se
+     quedaban con `dias: null`, lo que los hacía desaparecer por completo
+     apenas se activaba CUALQUIER filtro de duración específico (nunca
+     calzaban con ningún valor). Fix: sin mención de "2 días"/"fin de
+     semana", el fallback es `'1'` en vez de `null` — ninguno de esos
+     tres describe una duración de varios días, así que "1 día" es la
+     inferencia correcta en vez de perderlos silenciosamente.
+  2. `dashboard.html` usaba la clase `class="dash__teasers"` para el
+     nuevo layout de 2 columnas de los teasers (Pick Points / Tus datos
+     de viajero) pero esa clase nunca se definió en `css/dashboard.css`
+     — sin CSS, los dos teasers caían por defecto en columna completa
+     apilados verticalmente en vez de lado a lado. Se agregó la regla
+     (`display:grid; grid-template-columns: 1fr 1fr`, con stack a 1
+     columna en mobile) y de paso se limpió `.dash__col-right` (clase
+     agregada en la vuelta anterior de esta sesión que quedó sin ningún
+     consumidor tras sacar la tarjeta de Darwin de esta página).
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 

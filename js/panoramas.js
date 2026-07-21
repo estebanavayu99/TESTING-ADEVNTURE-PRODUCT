@@ -196,12 +196,18 @@
   // ver TASTE_POOL/COMPANY_POOL/DEFAULT_POOL arriba) — pedido explícito del
   // usuario de poder filtrar por cuántos días dura el paquete. Los items
   // "simple" no tienen duración de varios días, quedan sin bucket (null).
+  // Bug real encontrado en revisión: algunos paquetes tienen un `meta` que
+  // no menciona días explícitos ("Paquete nocturno"/"para equipos"/"para
+  // grupo") — sin un fallback, quedaban con `dias: null` y desaparecían
+  // por completo apenas se activaba cualquier filtro de duración
+  // específico (nunca calzaban con "1"/"2"/"finde"). Ninguno de esos tres
+  // menciona una duración de varios días, así que caen en "1 día" por
+  // default en vez de perderse silenciosamente.
   function parseDias(meta, kind) {
     if (kind !== 'paquete') return null;
     if (/fin de semana/i.test(meta)) return 'finde';
     if (/2\s*d[ií]as/i.test(meta)) return '2';
-    if (/un\s*d[ií]a/i.test(meta)) return '1';
-    return null;
+    return '1';
   }
   const DIFFICULTY_OVERRIDES = {
     'Salto en parapente': 'extremo',

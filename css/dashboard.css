@@ -60,8 +60,11 @@ html { font-size: 90%; }
   align-items: start;
 }
 .dash__col-left { display: flex; flex-direction: column; gap: 22px; }
-.dash__col-right { display: flex; flex-direction: column; }
 .dash__section-label { margin: 0 0 14px; }
+.dash__teasers { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 720px) {
+  .dash__teasers { grid-template-columns: 1fr; }
+}
 .dcard {
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(18px) saturate(120%);
