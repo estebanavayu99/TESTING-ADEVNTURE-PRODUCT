@@ -1524,3 +1524,28 @@ signup (para no salirse del panel de super admin).
   para un viajero real. El lado empresa (`negocio.demo@pickmap.cl`) no
   necesitó nada de esto — `js/negocio.js` ya generaba reservas/reseñas/
   servicios demo determinísticos para CUALQUIER email desde antes.
+
+**Bug real encontrado y arreglado (loop infinito de onboarding bajo "Ver
+como")**: al completar `onboarding.html` mientras el admin está
+impersonando a un viajero, esa respuesta se guarda contra Supabase con la
+sesión REAL activa en ese navegador — que sigue siendo la del admin,
+nunca hay una sesión de Supabase real para el viajero impersonado (la
+impersonación es un puro swap de puntero en `localStorage`, no un login
+real). Por eso `profiles.onboarded` del viajero de verdad nunca queda en
+`true` en Supabase. Sin fix, cada clic en "Ver como viajero" volvía a
+traer `onboarded:false` desde Supabase (vía `fetchRealTravelerUsers`) y
+pisaba el `true` que sí había quedado guardado en el espejo local,
+mandando de vuelta a onboarding en un loop infinito. Fix en
+`js/negocio-admin.js`: antes de espejar el registro remoto, si el
+`pickmap_users` local YA tiene `onboarded:true` para ese email, se
+preserva ese valor por sobre el dato (potencialmente desactualizado) de
+Supabase — una vez completado el onboarding una vez en un navegador para
+una cuenta impersonada, queda completado ahí para siempre.
+**Limitación de fondo que sigue igual** (documentada, no resuelta):
+cualquier escritura real a Supabase que un viajero/negocio haría desde su
+propia sesión (onboarding, preferencias, reservas) queda mal atribuida
+mientras se usa "Ver como", porque la sesión de Supabase activa sigue
+siendo la del admin — este fix soluciona el síntoma más molesto
+(onboarding en loop) pero no reescribe la arquitectura de impersonación
+para que las escrituras reales queden bien atribuidas al usuario
+impersonado.
