@@ -471,7 +471,23 @@
     const target = viewAsTravelerSelect.value;
     if (!target) return;
     const travelerRecord = travelerUsers.find((u) => u.email === target);
-    if (travelerRecord) upsertLocalUser('pickmap_users', target, travelerRecord);
+    if (travelerRecord) {
+      // Bug real reportado por el usuario: al completar el onboarding
+      // mientras se "ve como" un viajero, esa respuesta se guarda en
+      // Supabase con la sesión REAL activa (la del admin, nunca hay una
+      // sesión de Supabase real para el viajero impersonado) — así que
+      // profiles.onboarded del viajero de verdad nunca queda en true ahí.
+      // Sin este chequeo, cada clic en "Ver como viajero" volvía a traer
+      // onboarded:false desde Supabase y pisaba el true que sí había
+      // quedado guardado localmente, mandando al onboarding de nuevo en
+      // un loop infinito. Una vez completado una vez en este navegador,
+      // se respeta ese true por sobre el dato (potencialmente desactualizado)
+      // de Supabase.
+      let existingLocal = null;
+      try { existingLocal = (JSON.parse(localStorage.getItem('pickmap_users')) || []).find((u) => u.email === target); } catch { /* noop */ }
+      if (existingLocal && existingLocal.onboarded) travelerRecord.onboarded = true;
+      upsertLocalUser('pickmap_users', target, travelerRecord);
+    }
     localStorage.setItem('pickmap_admin_viewing_as', JSON.stringify({ type: 'viajero', email: target }));
     localStorage.setItem('pickmap_current_user', target);
     window.location.href = 'dashboard.html';
