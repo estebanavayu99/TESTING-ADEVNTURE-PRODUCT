@@ -1,35 +1,41 @@
-/* ========== Panel super-admin (contacto@pickmap.cl) — dark mode "verde" ==========
+/* ========== Panel super-admin (contacto@pickmap.cl) — dark mode ==========
  * Instrucción explícita del usuario (2026-07-20): "solo el panel admin
  * hagámoslo en dark mode, elegante, profesional y muy útil" — SOLO
  * negocio-admin.html, ninguna de las 6 páginas negocio-*.html normales
  * (este archivo se carga únicamente ahí, después de css/negocio.css).
  *
- * Rediseño 2026-07-21 (instrucción explícita del usuario: "no me gustó
- * mucho el dark mode... prioriza colores verdes fuertes para poder ver
- * bien la información"): se reemplaza la paleta gris/coral de la primera
- * pasada por un esquema "sala de control" — fondo casi negro con tinte
- * verde, y un verde vívido como color primario de TODOS los datos clave
- * (stats, línea del gráfico, montos de la tabla, ranking de negocios).
- * Se logra redefiniendo `--coral` (variable de marca global) solo dentro
- * de este archivo (que solo carga en esta página) — todo lo que ya
- * pintaba con var(--coral) en css/negocio.css (línea del gráfico, relleno
- * del área, montos destacados, badge del stat principal) pasa a verde
- * automáticamente, sin tocar negocio.css ni negocio-admin.js. `--deep-red`
- * y `--sun` NO se tocan: siguen siendo el rojo/ámbar semántico real de
- * "cancelada/rechazada" y "pendiente", para no perder ese contraste de
- * significado contra el verde ahora dominante.
+ * Segundo rediseño 2026-07-21 (instrucción explícita del usuario: "no me
+ * convence [el look actual]... rediseñar, colores y posiciones"). La
+ * primera pasada pintaba TODO en verde vívido — se sentía plano/monótono.
+ * Este rediseño introduce jerarquía de color real:
+ *   - Verde (`--accent`) queda reservado para lo que de verdad importa:
+ *     el KPI principal (negocios aliados), el monto histórico, la línea
+ *     del gráfico y los botones de acción.
+ *   - Un celeste frío (`--accent-2`) marca los datos operativos/neutros
+ *     (pipeline, reservas activas, rating) — para que no todo grite verde
+ *     al mismo volumen.
+ *   - El fondo pasa de negro puro a un navy muy oscuro con un halo radial
+ *     sutil detrás del saludo, para dar algo de profundidad sin volver a
+ *     la ilustración de skyline (oculta a propósito en esta página).
+ * También se reorganizan las POSICIONES: "Ver como" deja de ser una
+ * tarjeta más en la columna principal (competía visualmente con los
+ * stats) y pasa a un sidebar fijo (`position: sticky`) a la derecha — el
+ * usuario pidió justamente poder ir revisando cambios sin tener que
+ * scrollear de vuelta hasta arriba cada vez que quiere cambiar de cuenta.
  *
  * Capas de profundidad (estándar dark-mode: más claro = más elevado):
- *   página (--bg, más oscuro) < tarjeta (--white) < fila en hover (--bg)
+ *   página (--bg, más oscuro) < tarjeta (--white) < fila en hover (--mist)
  */
 :root {
-  --bg: #070C09;
-  --white: #101915;
-  --navy: #EAF6EF;
-  --navy-2: #8FB39F;
-  --slate: #5E7C6C;
-  --mist: #1E2C24;
+  --bg: #0A0F14;
+  --white: #121A20;
+  --navy: #EAF2F6;
+  --navy-2: #7E97A3;
+  --slate: #5B7480;
+  --mist: #1B262E;
   --coral: #22C55E;
+  --accent: #22C55E;
+  --accent-2: #38BDF8;
 }
 
 body.admin-page { background: var(--bg); }
@@ -38,65 +44,89 @@ body.admin-page { background: var(--bg); }
 .admin-page .rain-canvas { display: none; }
 
 /* Nav: mismo patrón glass-blur del resto del sitio (nunca transparente del
-   todo, ver gotcha en CLAUDE.md), en tono oscuro con tinte verde. */
+   todo, ver gotcha en CLAUDE.md), en tono oscuro. */
 .admin-page .nav {
-  background: rgba(7, 12, 9, 0.86);
-  border-bottom: 1px solid rgba(34, 197, 94, 0.14);
+  background: rgba(10, 15, 20, 0.88);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.14);
 }
 .admin-page .logo { color: var(--navy); }
-.admin-page #adminAvatar { background: var(--coral); color: #05170D; }
+.admin-page #adminAvatar { background: var(--accent); color: #05170D; }
 
-/* .biz__greeting y .biz-stat traían blanco traslúcido hardcodeado (pensado
-   para flotar sobre el fondo ilustrado que acá se ocultó) — pasan a un
-   panel sólido oscuro con borde verde sutil, mismo radius/padding de
-   siempre. */
-.admin-page .biz__greeting,
-.admin-page .biz-stat {
-  background: var(--white);
-  border: 1px solid rgba(34, 197, 94, 0.12);
+/* Saludo: halo radial sutil detrás para dar profundidad sin volver a
+   encender la ilustración de skyline (oculta en esta página). */
+.admin-page .biz__greeting {
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgba(34, 197, 94, 0.1), transparent 60%),
+    var(--white);
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  border-top: 2px solid rgba(34, 197, 94, 0.45);
   box-shadow: 0 20px 46px rgba(0, 0, 0, 0.5);
 }
+.admin-page .biz-stat {
+  background: var(--white);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.4);
+}
 .admin-page .biz-stat--accent {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.06));
-  border-color: rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));
+  border-color: rgba(34, 197, 94, 0.32);
 }
 .admin-page .dcard {
   background: var(--white);
-  border: 1px solid rgba(34, 197, 94, 0.12);
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.4);
 }
 
-/* Verde fuerte en TODOS los números clave, no solo en la tarjeta accent —
-   pedido explícito: "verdes fuertes para poder ver bien la información". */
-.admin-page .biz-stat__value { color: var(--coral); }
-.admin-page .biz-res__amt { color: var(--coral); }
-.admin-page .admin-top__amt { color: var(--coral); }
+/* Jerarquía de color en los números: verde solo para lo que importa más
+   (KPI principal + monto histórico total); el resto de los stats usa el
+   celeste frío, más neutro, para que la página no quede "toda verde". */
+.admin-page #adminStatNegocios,
+.admin-page #adminStatHistorico { color: var(--accent); }
+.admin-page #adminStatComision,
+.admin-page #adminStatPipeline,
+.admin-page #adminStatActivas,
+.admin-page #adminStatRating { color: var(--accent-2); }
+.admin-page .biz-res__amt { color: var(--accent); }
+.admin-page .admin-top__amt { color: var(--accent); }
 
 /* Badges de estado: los que tienen color de texto fijo en hex (no
    variable) quedaban ilegibles sobre fondo oscuro — se suben a un tono
-   más brillante. Confirmada usa el mismo verde primario; pendiente y
-   cancelada/rechazada se mantienen ámbar/rojo semántico a propósito, para
-   no perder el contraste de significado contra el verde ahora dominante. */
+   más brillante. Confirmada usa verde; pendiente y cancelada/rechazada
+   se mantienen ámbar/rojo semántico, para no perder ese contraste de
+   significado. */
 .admin-page .biz-res__status--confirmada { background: rgba(34, 197, 94, 0.18); color: #4ADE80; }
 .admin-page .biz-res__status--pendiente { background: rgba(246, 205, 76, 0.16); color: var(--sun); }
 .admin-page .biz-res__status--cancelada,
 .admin-page .biz-res__status--rechazada { background: rgba(255, 99, 99, 0.16); color: #FF8385; }
 
-/* Punto de la leyenda "Comisión Pickmap" del gráfico: se mantiene en un
-   tono neutro (no verde) para distinguirse bien de la línea principal. */
-.admin-page .admin-chart-dot--comision { background: var(--navy-2); }
+/* Punto de la leyenda "Comisión Pickmap" del gráfico: tono neutro (celeste
+   frío) para distinguirse bien de la línea principal verde. */
+.admin-page .admin-chart-dot--comision { background: var(--accent-2); }
 
 .admin-page .biz-modal { background: rgba(0, 0, 0, 0.72); }
-.admin-page .biz-modal__panel { background: var(--white); border: 1px solid rgba(34, 197, 94, 0.14); }
+.admin-page .biz-modal__panel { background: var(--white); border: 1px solid rgba(56, 189, 248, 0.14); }
 
-/* ---------- Pasada de elegancia (2026-07-21, instrucción explícita del
-   usuario: "haz más elegante el panel del control del super admin") ----------
-   Sin cambiar la estructura ni los datos: bordes/sombras más definidos,
-   una micro-interacción de elevación en hover para que las tarjetas se
-   sientan "vivas" (consistente con el punto pulsante del header de
-   panoramas.html), y una barra superior de acento en cada tarjeta clave —
-   mismo lenguaje visual de "sala de control" que ya describía el header de
-   este archivo, ahora llevado al resto de la página. */
+/* ---------- Layout: "Ver como" pasa a sidebar fijo ----------
+ * Antes era una tarjeta más entre el saludo y los stats — competía por
+ * atención y obligaba a scrollear de vuelta arriba para cambiar de cuenta
+ * mientras se revisan los stats/tabla de abajo. Ahora es un sidebar
+ * `position: sticky` a la derecha, siempre visible mientras se scrollea
+ * la columna principal. En mobile (una sola columna) se apila como una
+ * tarjeta más, arriba del resto — sticky no aplica sin espacio de sobra. */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.admin-layout__main { min-width: 0; }
+.admin-layout__side { position: sticky; top: 24px; min-width: 0; }
+@media (max-width: 900px) {
+  .admin-layout { grid-template-columns: 1fr; }
+  .admin-layout__side { position: static; order: -1; }
+}
+
+/* ---------- Micro-interacciones ---------- */
 .admin-page .dcard,
 .admin-page .biz-stat {
   position: relative;
@@ -105,65 +135,65 @@ body.admin-page { background: var(--bg); }
 .admin-page .dcard:hover,
 .admin-page .biz-stat:hover {
   transform: translateY(-2px);
-  border-color: rgba(34, 197, 94, 0.28);
-  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.55);
+  border-color: rgba(56, 189, 248, 0.28);
+  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.5);
 }
+.admin-page .biz-stat--accent:hover { border-color: rgba(34, 197, 94, 0.4); }
 .admin-page .biz-stat::before {
   content: '';
   position: absolute; top: 0; left: 18px; right: 18px; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.55), transparent);
   border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
 }
-.admin-page .biz__greeting { border-top: 2px solid rgba(34, 197, 94, 0.4); }
-
-.admin-page .dcard__title {
-  display: flex; align-items: center; gap: 9px;
-  letter-spacing: 0.01em;
-}
-.admin-page .dcard__title::before {
-  content: '';
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--coral);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
-  flex-shrink: 0;
+.admin-page .biz-stat--accent::before {
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.6), transparent);
 }
 
-/* Filas de listas (negocios, sin verificar, ver como) — hover más
-   perceptible sobre fondo casi negro que el `--mist` genérico heredado. */
+.admin-page .dcard__title { letter-spacing: 0.01em; }
+
+/* Filas de listas (negocios, sin verificar) — hover sutil sobre fondo
+   oscuro, en el mismo celeste frío que el resto de acentos secundarios. */
 .admin-page .biz-res,
 .admin-page .biz-res--static { transition: background .15s ease, border-color .15s ease; }
 .admin-page .biz-res:hover,
 .admin-page .biz-res--static:hover {
-  background: rgba(34, 197, 94, 0.05);
-  border-color: rgba(34, 197, 94, 0.18);
+  background: rgba(56, 189, 248, 0.05);
+  border-color: rgba(56, 189, 248, 0.18);
 }
-.admin-page .admin-top:hover { background: rgba(34, 197, 94, 0.05); }
+.admin-page .admin-top:hover { background: rgba(56, 189, 248, 0.05); }
 
-/* "Ver como": el bloque más "operativo" de la página — se le da un
-   tratamiento propio (icono en badge redondo en vez de texto plano,
-   separación más clara entre las dos filas negocio/viajero) para que se
-   lea como un panel de control, no un formulario suelto. */
-.admin-page .admin-viewas { border-color: rgba(34, 197, 94, 0.18); }
+/* "Ver como": ahora vive en el sidebar sticky — tratamiento propio con
+   filas separadas y acento verde (es la acción principal de la página,
+   se le deja el color más "vivo" para que destaque del resto). */
+.admin-page .admin-viewas { border-color: rgba(34, 197, 94, 0.22); }
 .admin-page .admin-viewas__row {
   padding: 14px 16px;
   border-radius: 14px;
-  background: rgba(34, 197, 94, 0.035);
-  border: 1px solid rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.04);
+  border: 1px solid rgba(34, 197, 94, 0.12);
+  /* El sidebar siempre es la columna angosta (1fr de un grid 2fr/1fr) —
+     select y botón lado a lado quedarían apretados, así que acá se
+     apilan siempre, sin depender del breakpoint mobile genérico de
+     .admin-viewas__row en css/negocio.css. */
+  flex-direction: column;
+  align-items: stretch;
 }
+.admin-page .admin-viewas__field { max-width: none; }
 .admin-page .admin-viewas__row + .admin-viewas__row { margin-top: 10px; }
 .admin-page .admin-viewas__field select {
   background: var(--bg);
-  border-color: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.24);
   color: var(--navy);
 }
 .admin-page .admin-viewas__field select:focus {
   outline: none;
-  border-color: var(--coral);
+  border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 .admin-page .admin-viewas .btn--primary {
   background: linear-gradient(135deg, #22C55E, #16A34A);
   border: none;
   box-shadow: 0 10px 24px rgba(34, 197, 94, 0.25);
+  width: 100%;
 }
 .admin-page .admin-viewas .btn--primary:hover { box-shadow: 0 12px 30px rgba(34, 197, 94, 0.35); }

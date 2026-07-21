@@ -70,86 +70,92 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <section class="dcard admin-viewas">
-      <h2 class="dcard__title">🎭 Ver como</h2>
-      <p class="biz__sub admin-viewas__sub">Métete al panel real de un negocio o de un viajero para ir revisando los cambios, sin tener que cerrar sesión ni volver a iniciar sesión cada vez.</p>
-      <div class="admin-viewas__row">
-        <label class="admin-viewas__field">
-          <span>Ver como negocio</span>
-          <select id="adminViewAsBizSelect">
-            <option value="" disabled selected>Selecciona un negocio</option>
-          </select>
-        </label>
-        <button type="button" class="btn btn--primary" id="adminViewAsBizBtn">Ver panel del negocio</button>
-      </div>
-      <div class="admin-viewas__row">
-        <label class="admin-viewas__field">
-          <span>Ver como viajero</span>
-          <select id="adminViewAsTravelerSelect">
-            <option value="" disabled selected>Selecciona un viajero</option>
-          </select>
-        </label>
-        <button type="button" class="btn btn--primary" id="adminViewAsTravelerBtn">Ver cuenta del viajero</button>
-      </div>
-      <p class="admin-viewas__empty" id="adminViewAsEmpty" hidden>Todavía no hay negocios ni viajeros registrados para ver.</p>
-    </section>
+    <div class="admin-layout">
+      <div class="admin-layout__main">
+        <div class="biz__stats admin-stats">
+          <div class="biz-stat biz-stat--accent">
+            <p class="biz-stat__label">Negocios aliados</p>
+            <p class="biz-stat__value" id="adminStatNegocios">—</p>
+            <p class="biz-stat__note" id="adminStatNegociosNote">&nbsp;</p>
+          </div>
+          <div class="biz-stat">
+            <p class="biz-stat__label">Generado histórico (todos)</p>
+            <p class="biz-stat__value" id="adminStatHistorico">—</p>
+            <p class="biz-stat__note">Lo que reciben los negocios, neto de comisión</p>
+          </div>
+          <div class="biz-stat">
+            <p class="biz-stat__label">Comisión PickMap (histórica)</p>
+            <p class="biz-stat__value" id="adminStatComision">—</p>
+            <p class="biz-stat__note" id="adminStatComisionNote">&nbsp;</p>
+          </div>
+          <div class="biz-stat">
+            <p class="biz-stat__label">Pipeline activo</p>
+            <p class="biz-stat__value" id="adminStatPipeline">—</p>
+            <p class="biz-stat__note">Valor de reservas confirmadas/pendientes, aún no completadas</p>
+          </div>
+          <div class="biz-stat">
+            <p class="biz-stat__label">Reservas activas (todas)</p>
+            <p class="biz-stat__value" id="adminStatActivas">—</p>
+          </div>
+          <div class="biz-stat">
+            <p class="biz-stat__label">Rating promedio plataforma</p>
+            <p class="biz-stat__value" id="adminStatRating">—</p>
+            <p class="biz-stat__note" id="adminStatRatingNote">&nbsp;</p>
+          </div>
+        </div>
 
-    <div class="biz__stats admin-stats">
-      <div class="biz-stat biz-stat--accent">
-        <p class="biz-stat__label">Negocios aliados</p>
-        <p class="biz-stat__value" id="adminStatNegocios">—</p>
-        <p class="biz-stat__note" id="adminStatNegociosNote">&nbsp;</p>
+        <section class="dcard">
+          <h2 class="dcard__title">Ingresos de la plataforma — últimos 6 meses</h2>
+          <p class="admin-chart-legend">
+            <span><span class="admin-chart-dot admin-chart-dot--total"></span> Generado total (todos los negocios)</span>
+            <span><span class="admin-chart-dot admin-chart-dot--comision"></span> Comisión PickMap</span>
+          </p>
+          <div class="biz-chart" id="adminChart"></div>
+        </section>
+
+        <section class="dcard" id="adminTopSection" hidden>
+          <h2 class="dcard__title">Mejores negocios</h2>
+          <ul class="admin-top-list" id="adminTopList"></ul>
+        </section>
+
+        <section class="dcard" id="adminUnverifiedSection" hidden>
+          <h2 class="dcard__title">Negocios sin verificar</h2>
+          <ul class="biz-res-list" id="adminUnverifiedList"></ul>
+        </section>
+
+        <section class="dcard">
+          <h2 class="dcard__title">Todos los negocios aliados</h2>
+          <p class="biz-res-list__empty" id="adminEmpty" hidden>Todavía no hay negocios registrados.</p>
+          <ul class="biz-res-list" id="adminBizList"></ul>
+        </section>
       </div>
-      <div class="biz-stat">
-        <p class="biz-stat__label">Generado histórico (todos)</p>
-        <p class="biz-stat__value" id="adminStatHistorico">—</p>
-        <p class="biz-stat__note">Lo que reciben los negocios, neto de comisión</p>
-      </div>
-      <div class="biz-stat">
-        <p class="biz-stat__label">Comisión PickMap (histórica)</p>
-        <p class="biz-stat__value" id="adminStatComision">—</p>
-        <p class="biz-stat__note" id="adminStatComisionNote">&nbsp;</p>
-      </div>
-      <div class="biz-stat">
-        <p class="biz-stat__label">Pipeline activo</p>
-        <p class="biz-stat__value" id="adminStatPipeline">—</p>
-        <p class="biz-stat__note">Valor de reservas confirmadas/pendientes, aún no completadas</p>
-      </div>
-      <div class="biz-stat">
-        <p class="biz-stat__label">Reservas activas (todas)</p>
-        <p class="biz-stat__value" id="adminStatActivas">—</p>
-      </div>
-      <div class="biz-stat">
-        <p class="biz-stat__label">Rating promedio plataforma</p>
-        <p class="biz-stat__value" id="adminStatRating">—</p>
-        <p class="biz-stat__note" id="adminStatRatingNote">&nbsp;</p>
-      </div>
+
+      <aside class="admin-layout__side">
+        <section class="dcard admin-viewas">
+          <h2 class="dcard__title">Ver como</h2>
+          <p class="biz__sub admin-viewas__sub">Métete al panel real de un negocio o de un viajero para ir revisando los cambios, sin tener que cerrar sesión ni volver a iniciar sesión cada vez.</p>
+          <div class="admin-viewas__row">
+            <label class="admin-viewas__field">
+              <span>Ver como negocio</span>
+              <select id="adminViewAsBizSelect">
+                <option value="" disabled selected>Selecciona un negocio</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn--primary" id="adminViewAsBizBtn">Ver panel del negocio</button>
+          </div>
+          <div class="admin-viewas__row">
+            <label class="admin-viewas__field">
+              <span>Ver como viajero</span>
+              <select id="adminViewAsTravelerSelect">
+                <option value="" disabled selected>Selecciona un viajero</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn--primary" id="adminViewAsTravelerBtn">Ver cuenta del viajero</button>
+          </div>
+          <p class="admin-viewas__empty" id="adminViewAsEmpty" hidden>Todavía no hay negocios ni viajeros registrados para ver.</p>
+        </section>
+      </aside>
     </div>
-
-    <section class="dcard">
-      <h2 class="dcard__title">Ingresos de la plataforma — últimos 6 meses</h2>
-      <p class="admin-chart-legend">
-        <span><span class="admin-chart-dot admin-chart-dot--total"></span> Generado total (todos los negocios)</span>
-        <span><span class="admin-chart-dot admin-chart-dot--comision"></span> Comisión PickMap</span>
-      </p>
-      <div class="biz-chart" id="adminChart"></div>
-    </section>
-
-    <section class="dcard" id="adminTopSection" hidden>
-      <h2 class="dcard__title">Mejores negocios</h2>
-      <ul class="admin-top-list" id="adminTopList"></ul>
-    </section>
-
-    <section class="dcard" id="adminUnverifiedSection" hidden>
-      <h2 class="dcard__title">Negocios sin verificar</h2>
-      <ul class="biz-res-list" id="adminUnverifiedList"></ul>
-    </section>
-
-    <section class="dcard">
-      <h2 class="dcard__title">Todos los negocios aliados</h2>
-      <p class="biz-res-list__empty" id="adminEmpty" hidden>Todavía no hay negocios registrados.</p>
-      <ul class="biz-res-list" id="adminBizList"></ul>
-    </section>
   </div>
 </main>
 
