@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_primary_button.dart';
+import '../../../core/widgets/pm_shimmer.dart';
 import '../data/panorama_item.dart';
 
 Future<void> showPanoramaDetail(BuildContext context, PanoramaItem item) {
@@ -38,17 +39,52 @@ class _PanoramaDetailSheet extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                child: CachedNetworkImage(
-                  imageUrl: item.photo,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => Container(
-                    height: 200,
-                    color: PickmapColors.mist.withValues(alpha: 0.3),
-                    alignment: Alignment.center,
-                    child: Text(item.icon, style: const TextStyle(fontSize: 48)),
-                  ),
+                child: Stack(
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: item.photo,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 220),
+                      placeholder: (context, url) => const SizedBox(height: 200, width: double.infinity, child: PmShimmer()),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: PickmapColors.mist.withValues(alpha: 0.3),
+                        alignment: Alignment.center,
+                        child: Text(item.icon, style: const TextStyle(fontSize: 48)),
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), shape: BoxShape.circle),
+                          child: const Icon(Icons.close_rounded, size: 18, color: PickmapColors.navy),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Padding(

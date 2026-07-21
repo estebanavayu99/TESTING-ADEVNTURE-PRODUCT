@@ -151,9 +151,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                _payCard('VISA', '•••• •••• •••• 4231', 'Vence 08/28', tag: 'Principal'),
+                _payCard(_visaLogo(), '•••• •••• •••• 4231', 'Vence 08/28', tag: 'Principal'),
                 const SizedBox(height: 10),
-                _payCard('MC', '•••• •••• •••• 8890', 'Vence 03/27'),
+                _payCard(_mastercardLogo(), '•••• •••• •••• 8890', 'Vence 03/27'),
                 const SizedBox(height: 10),
                 const Text('🔒 Tus datos de pago están cifrados y protegidos.', style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
               ],
@@ -199,16 +199,47 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _payCard(String brand, String number, String sub, {String? tag}) {
+  Widget _visaLogo() {
+    return Container(
+      width: 48,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: PickmapColors.navy, borderRadius: BorderRadius.circular(6)),
+      child: const Text('VISA',
+          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, letterSpacing: 0.5)),
+    );
+  }
+
+  /// Dos círculos superpuestos (rojo/ámbar) — mismo tratamiento visual de
+  /// `.pay__logo--mc` en el sitio, en vez de un simple texto "MC".
+  Widget _mastercardLogo() {
+    return SizedBox(
+      width: 48,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 4,
+            child: Container(width: 20, height: 20, decoration: const BoxDecoration(color: PickmapColors.deepRed, shape: BoxShape.circle)),
+          ),
+          Positioned(
+            right: 4,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(color: PickmapColors.sun.withValues(alpha: 0.92), shape: BoxShape.circle),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _payCard(Widget logo, String number, String sub, {String? tag}) {
     return Row(
       children: [
-        Container(
-          width: 48,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: PickmapColors.navy, borderRadius: BorderRadius.circular(6)),
-          child: Text(brand, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
-        ),
+        logo,
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -41,6 +41,11 @@ class _AuthPageState extends State<AuthPage> {
   final _forgotEmail = TextEditingController();
   final _newPassword = TextEditingController();
 
+  /// Contraseñas actualmente reveladas (ojo abierto) — hay varios campos
+  /// de contraseña en pantallas distintas, cada uno se rastrea por su
+  /// propia clave.
+  final Set<String> _visiblePasswords = {};
+
   late final StreamSubscription<AuthState> _recoverySub;
 
   @override
@@ -244,15 +249,20 @@ class _AuthPageState extends State<AuthPage> {
       );
 
   Widget _tabs() {
+    final isSignup = _view == _AuthView.signup;
+    // Texto como `Text(style: TextStyle(...))` plano a propósito, NO
+    // `AnimatedDefaultTextStyle`/`DefaultTextStyle`: esos widgets fijan un
+    // nuevo estilo ambiente que REEMPLAZA por completo (no combina campo
+    // a campo) el de arriba, perdiendo `fontFamily` — mismo bug real ya
+    // encontrado y documentado en `ElevatedButtonThemeData` (ver
+    // CLAUDE.md). Un `Text` normal sí hereda/combina solo porque su
+    // `TextStyle` trae `inherit: true` por defecto.
     Widget tab(String label, bool active, VoidCallback onTap) => Expanded(
           child: GestureDetector(
             onTap: onTap,
-            child: Container(
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: active ? PickmapColors.coral.withValues(alpha: 0.12) : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
               child: Text(
                 label,
                 textAlign: TextAlign.center,
@@ -264,36 +274,76 @@ class _AuthPageState extends State<AuthPage> {
             ),
           ),
         );
+    // Píldora deslizante (AnimatedAlign) detrás de los labels, en vez de
+    // recolorear el fondo de cada tab por separado — transición más
+    // suave, patrón de segmented control nativo (iOS/Material 3).
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: PickmapColors.bg, borderRadius: BorderRadius.circular(12)),
-      child: Row(
+      child: Stack(
         children: [
-          tab('Iniciar sesión', _view == _AuthView.login, () => setState(() {
-                _view = _AuthView.login;
-                _error = null;
-                _success = null;
-              })),
-          tab('Crear cuenta', _view == _AuthView.signup, () => setState(() {
-                _view = _AuthView.signup;
-                _error = null;
-                _success = null;
-              })),
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            alignment: isSignup ? Alignment.centerRight : Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                height: 38,
+                decoration: BoxDecoration(
+                  color: PickmapColors.coral.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              tab('Iniciar sesión', !isSignup, () => setState(() {
+                    _view = _AuthView.login;
+                    _error = null;
+                    _success = null;
+                  })),
+              tab('Crear cuenta', isSignup, () => setState(() {
+                    _view = _AuthView.signup;
+                    _error = null;
+                    _success = null;
+                  })),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _field(String label, TextEditingController controller,
-      {bool obscure = false, TextInputType? keyboardType, String? hint}) {
+      {bool obscure = false, TextInputType? keyboardType, String? hint, String? passwordKey}) {
+    final revealed = passwordKey != null && _visiblePasswords.contains(passwordKey);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
-        obscureText: obscure,
+        obscureText: obscure && !revealed,
         keyboardType: keyboardType,
-        decoration: InputDecoration(labelText: label, hintText: hint),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          suffixIcon: obscure
+              ? IconButton(
+                  icon: Icon(revealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: PickmapColors.slate, size: 20),
+                  onPressed: () => setState(() {
+                    if (revealed) {
+                      _visiblePasswords.remove(passwordKey);
+                    } else {
+                      _visiblePasswords.add(passwordKey!);
+                    }
+                  }),
+                )
+              : null,
+        ),
       ),
     );
   }
@@ -323,7 +373,7 @@ class _AuthPageState extends State<AuthPage> {
         _tabs(),
         _banner(),
         _field('Correo', _loginEmail, keyboardType: TextInputType.emailAddress, hint: 'tu@correo.com'),
-        _field('Contraseña', _loginPassword, obscure: true, hint: '••••••••'),
+        _field('Contraseña', _loginPassword, obscure: true, hint: '••••••••', passwordKey: 'login'),
         const SizedBox(height: 4),
         PmPrimaryButton(label: 'Entrar', loading: _loading, onPressed: _submitLogin),
         _switchLink('', '¿Olvidaste tu contraseña?', () => setState(() {
@@ -351,7 +401,7 @@ class _AuthPageState extends State<AuthPage> {
         _field('Apellido', _signupLastName, hint: 'Reyes'),
         _field('RUT', _signupRut, hint: '12.345.678-9'),
         _field('Correo', _signupEmail, keyboardType: TextInputType.emailAddress, hint: 'tu@correo.com'),
-        _field('Contraseña', _signupPassword, obscure: true, hint: 'Mínimo 8 caracteres'),
+        _field('Contraseña', _signupPassword, obscure: true, hint: 'Mínimo 8 caracteres', passwordKey: 'signup'),
         const SizedBox(height: 4),
         PmPrimaryButton(label: 'Crear cuenta', loading: _loading, onPressed: _submitSignup),
         _switchLink('¿Ya tienes cuenta?', 'Inicia sesión', () => setState(() {
@@ -418,7 +468,7 @@ class _AuthPageState extends State<AuthPage> {
       children: [
         _kicker('Escribe tu nueva contraseña'),
         _banner(),
-        _field('Nueva contraseña', _newPassword, obscure: true, hint: 'Mínimo 8 caracteres'),
+        _field('Nueva contraseña', _newPassword, obscure: true, hint: 'Mínimo 8 caracteres', passwordKey: 'reset'),
         PmPrimaryButton(label: 'Cambiar contraseña', loading: _loading, onPressed: _submitForgotReset),
       ],
     );

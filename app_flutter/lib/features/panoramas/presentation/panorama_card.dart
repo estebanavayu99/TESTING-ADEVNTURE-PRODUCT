@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/widgets/pm_shimmer.dart';
 import '../data/panorama_item.dart';
 
 /// Tarjeta de panorama, estilo "foto + info debajo" (patrón tipo
@@ -26,49 +27,58 @@ class PanoramaCard extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1.05,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: item.photo,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: PickmapColors.mist.withValues(alpha: 0.3)),
-                    errorWidget: (context, url, error) => Container(
-                      color: PickmapColors.mist.withValues(alpha: 0.25),
-                      alignment: Alignment.center,
-                      child: Text(item.icon, style: const TextStyle(fontSize: 34)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.10), blurRadius: 14, offset: Offset(0, 6)),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: item.photo,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 220),
+                      placeholder: (context, url) => const PmShimmer(),
+                      errorWidget: (context, url, error) => Container(
+                        color: PickmapColors.mist.withValues(alpha: 0.25),
+                        alignment: Alignment.center,
+                        child: Text(item.icon, style: const TextStyle(fontSize: 34)),
+                      ),
                     ),
-                  ),
-                  if (item.reason != null)
+                    if (item.reason != null)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: _badge('🧠 Darwin'),
+                      ),
                     Positioned(
                       top: 8,
-                      left: 8,
-                      child: _badge('🧠 Darwin'),
-                    ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: onFavoriteToggle,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          favorited ? Icons.favorite : Icons.favorite_border,
-                          size: 16,
-                          color: favorited ? PickmapColors.coral : PickmapColors.navy,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: onFavoriteToggle,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            favorited ? Icons.favorite : Icons.favorite_border,
+                            size: 16,
+                            color: favorited ? PickmapColors.coral : PickmapColors.navy,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

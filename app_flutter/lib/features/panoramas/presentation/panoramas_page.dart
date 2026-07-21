@@ -26,6 +26,7 @@ class _PanoramasPageState extends State<PanoramasPage> {
   _ExploreTab _tab = _ExploreTab.recomendado;
   _PillFilter _pill = _PillFilter.todos;
   String _priceFilter = 'todos';
+  String _sort = 'recomendado';
 
   List<PanoramaItem> get _personalized => [
         ...catalog.recomendados,
@@ -58,7 +59,16 @@ class _PanoramasPageState extends State<PanoramasPage> {
     }
     // dedupe por id (mismo criterio que "Todos" en js/panoramas.js)
     final seen = <String>{};
-    return base.where((i) => seen.add(i.id)).toList();
+    final deduped = base.where((i) => seen.add(i.id)).toList();
+    switch (_sort) {
+      case 'price_asc':
+        deduped.sort((a, b) => a.priceClp.compareTo(b.priceClp));
+      case 'price_desc':
+        deduped.sort((a, b) => b.priceClp.compareTo(a.priceClp));
+      default:
+        break; // 'recomendado': se respeta el orden del catálogo
+    }
+    return deduped;
   }
 
   @override
@@ -106,6 +116,11 @@ class _PanoramasPageState extends State<PanoramasPage> {
             spacing: 10,
             runSpacing: 10,
             children: [
+              _dropdown('↕️ Ordenar', _sort, const {
+                'recomendado': 'Recomendado para ti',
+                'price_asc': 'Precio: menor a mayor',
+                'price_desc': 'Precio: mayor a menor',
+              }, (v) => setState(() => _sort = v)),
               _dropdown('💰 Precio', _priceFilter, const {
                 'todos': 'Cualquier precio',
                 'bajo': 'Hasta \$15.000',
@@ -115,6 +130,7 @@ class _PanoramasPageState extends State<PanoramasPage> {
               TextButton(
                 onPressed: () => setState(() {
                   _priceFilter = 'todos';
+                  _sort = 'recomendado';
                   _pill = _PillFilter.todos;
                   _tab = _ExploreTab.recomendado;
                 }),
@@ -160,7 +176,17 @@ class _PanoramasPageState extends State<PanoramasPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-            TextButton(onPressed: onSeeAll, child: const Text('Ver todo →')),
+            TextButton(
+              onPressed: onSeeAll,
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Ver todo'),
+                  SizedBox(width: 2),
+                  Icon(Icons.arrow_forward_rounded, size: 16),
+                ],
+              ),
+            ),
           ],
         ),
         SizedBox(

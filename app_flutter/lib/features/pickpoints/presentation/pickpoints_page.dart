@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
+import '../../../core/widgets/pm_cta_link.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
+import '../../panoramas/presentation/panoramas_page.dart';
 
 /// Mirror de `pickpoints.html` — tarjeta de Darwin con progreso +
 /// escalera de cashback + historial de actividad, tarjeta de nivel +
@@ -158,6 +160,13 @@ class PickpointsPage extends StatelessWidget {
                 for (final r in _rewards) _rewardRow(r.$1, r.$2, r.$3, r.$4),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          PmCtaLink(
+            icon: '🗺️',
+            title: 'Ver mis panoramas',
+            subtitle: 'Todo lo que Darwin armó especialmente para ti',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PanoramasPage()))),
           ),
         ],
       ),

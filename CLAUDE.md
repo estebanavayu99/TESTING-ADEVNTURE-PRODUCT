@@ -1406,3 +1406,78 @@ no, que mejorara el diseño directamente. Cambios reales de estructura
   de onboarding avanza de paso, valida y muestra error correctamente, que
   la tarjeta nueva y el nav flotante se ven bien, y que ninguna etiqueta
   del nav se corta.
+
+### Segundo pase de pulido (mismo día, "mejoralo y perfeccionalo aun más")
+
+Con la estructura ya redefinida, este pase agrega interacciones y
+detalles finos en vez de tocar el layout de nuevo:
+
+- **Toggle mostrar/ocultar contraseña** en los 3 campos de contraseña de
+  `auth_page.dart` (login, signup, nueva contraseña del reset) — ícono de
+  ojo en el `suffixIcon`, estado de visibilidad rastreado por
+  `passwordKey` (`'login'`/`'signup'`/`'reset'`) ya que son campos
+  distintos en vistas distintas de la misma pantalla.
+- **Píldora deslizante en los tabs de auth** (`_tabs()`): un
+  `AnimatedAlign` con un `FractionallySizedBox` de fondo, en vez de
+  recolorear el contenedor de cada tab — transición suave tipo segmented
+  control nativo al cambiar entre "Iniciar sesión"/"Crear cuenta".
+  **Bug real encontrado acá mismo armando esto**: la primera versión
+  envolvía el label en `AnimatedDefaultTextStyle` con un `TextStyle`
+  nuevo (solo `fontWeight`/`color`, sin `fontFamily`) — mismo bug de
+  fondo que el de `ElevatedButtonThemeData` documentado arriba:
+  `DefaultTextStyle`/`AnimatedDefaultTextStyle` **reemplazan** por
+  completo el estilo ambiente en vez de combinarlo, así que el texto caía
+  al fallback del engine. Con `.merge()` explícito se veía OK, pero en
+  una segunda vuelta de captura el texto salió como bloques de color
+  sólido en vez de glifos (glitch de renderizado en este entorno
+  CanvasKit+swiftshader+fuente de prueba, no reproducible con
+  confianza) — se optó por la solución más simple y robusta: volver a
+  `Text(style: TextStyle(...))` plano (que sí hereda/combina solo, por
+  `inherit: true` de fábrica) y animar únicamente el fondo de la
+  píldora, no el texto. Moraleja reforzada: evitar
+  `DefaultTextStyle`/`AnimatedDefaultTextStyle` sueltos en este proyecto
+  a menos que se combinen explícitamente con el estilo ambiente.
+- **`core/widgets/pm_shimmer.dart`** (nuevo): placeholder "shimmer"
+  (barrido diagonal de brillo vía `ShaderMask`) para fotos en carga —
+  reemplaza el rectángulo gris plano en `panorama_card.dart` y
+  `panorama_detail_sheet.dart`.
+- **`panorama_card.dart`**: sombra sutil bajo la foto (antes plana) y
+  `fadeInDuration` en `CachedNetworkImage` para que la transición
+  placeholder→foto no sea un corte seco.
+- **`panorama_detail_sheet.dart`**: agregado el drag handle (barrita
+  blanca centrada sobre la foto) y un botón de cerrar (✕) flotante
+  arriba-derecha — antes solo se podía cerrar arrastrando el sheet hacia
+  abajo, sin afordance visual de que se podía cerrar con un tap.
+- **`core/widgets/pm_cta_link.dart`** (nuevo): tarjeta "puente entre
+  secciones" (ícono + título/subtítulo + flecha), portada literal de
+  `.dash__cta` del sitio (`pickpoints.html`/`invita.html`) que se me
+  había quedado sin construir en el primer pase — "Ver mis panoramas" en
+  Pick Points y "Ver mis Pick Points" en Invita, navegando con
+  `Navigator.push` a la página destino envuelta en `Scaffold` (mismo
+  patrón ya usado por los teasers de `dashboard_page.dart`).
+- **Flechas reales, no unicode**: el único `Text('Ver todo →')` que
+  quedaba (`panoramas_page.dart`) pasó a `Icon(Icons.arrow_forward_rounded)`
+  — mismo criterio que ya usaban los teasers (`Icons.chevron_right`),
+  para que el glifo no dependa de qué fuente esté activa.
+- **`pm_chip_group.dart`**: cada chip ahora es su propio
+  `StatefulWidget` con un `AnimationController` de "pop" (`ScaleTransition`
+  0.94→1 al tocar) + un ✓ (`Icons.check_rounded`) que aparece con
+  `AnimatedSize` cuando el chip queda seleccionado — más feedback táctil
+  que el cambio de color solo.
+- **`pm_primary_button.dart`**: reescrito a `StatefulWidget` con un
+  leve "press-scale" (`AnimatedScale` a 0.97 mientras se mantiene
+  presionado). Implementado con `Listener` (`onPointerDown/Up/Cancel`),
+  **no** `GestureDetector` — un `GestureDetector` con callbacks de tap
+  ahí arriba compite en el gesture arena con el `onPressed` real del
+  botón y podía bloquearlo; `Listener` solo observa punteros sin
+  reclamar el gesto.
+- **Métodos de pago de `dashboard_page.dart`**: el logo de Mastercard
+  pasó de un texto "MC" suelto a los dos círculos superpuestos
+  (rojo/ámbar) del branding real, y VISA quedó en cursiva/bold — mismo
+  tratamiento visual de `.pay__logo--visa`/`.pay__logo--mc` del sitio.
+- **Toolbar de filtros de Panoramas**: se agregó de vuelta el selector
+  "Ordenar" (Recomendado/Precio asc/desc, con lógica real de
+  `sort()` sobre `_exploreList`, no solo decorativo) — en el primer pase
+  se había dejado solo el filtro de Precio y el toolbar se sentía
+  desbalanceado/incompleto comparado con el original de
+  `panoramas.html`.

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
+import '../../../core/widgets/pm_cta_link.dart';
 import '../../../core/widgets/pm_primary_button.dart';
+import '../../pickpoints/presentation/pickpoints_page.dart';
 
 /// Mirror de `invita.html`. El código de invitación real (derivado del
 /// email del viajero, mismo `hashStr`/`computeReferralCode` que usa el
@@ -96,6 +98,13 @@ class InvitaPage extends StatelessWidget {
                 _step('🎁', 'Ambos ganan Pick Points', 'Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.'),
               ],
             ),
+          ),
+          const SizedBox(height: 14),
+          PmCtaLink(
+            icon: '⭐',
+            title: 'Ver mis Pick Points',
+            subtitle: 'Revisa tu actividad y tus premios por logros',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PickpointsPage()))),
           ),
         ],
       ),
