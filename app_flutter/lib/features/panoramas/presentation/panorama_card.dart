@@ -68,12 +68,19 @@ class PanoramaCard extends StatelessWidget {
                         child: Text(item.icon, style: TextStyle(fontSize: compact ? 22 : 34)),
                       ),
                     ),
-                    if (item.reason != null)
-                      Positioned(
-                        top: compact ? 5 : 8,
-                        left: compact ? 5 : 8,
-                        child: _badge(compact ? '🧠' : '🧠 Darwin', compact),
+                    Positioned(
+                      top: compact ? 5 : 8,
+                      left: compact ? 5 : 8,
+                      right: badgeSize + (compact ? 10 : 16),
+                      child: Wrap(
+                        spacing: compact ? 4 : 6,
+                        runSpacing: compact ? 4 : 6,
+                        children: [
+                          _kindBadge(compact),
+                          if (item.reason != null) _badge(compact ? '🧠' : '🧠 Darwin', compact, color: PickmapColors.navy),
+                        ],
                       ),
+                    ),
                     Positioned(
                       top: compact ? 5 : 8,
                       right: compact ? 5 : 8,
@@ -117,12 +124,20 @@ class PanoramaCard extends StatelessWidget {
     );
   }
 
-  Widget _badge(String label, bool compact) => Container(
+  Widget _badge(String label, bool compact, {required Color color}) => Container(
         padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 3 : 4),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Text(label, style: TextStyle(fontSize: compact ? 9 : 10, fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+        child: Text(label, style: TextStyle(fontSize: compact ? 9 : 10, fontWeight: FontWeight.w800, color: color)),
+      );
+
+  /// Mismos colores que `.pano-card__kind--simple`/`--paquete` del sitio:
+  /// nunca deja ambigüedad sobre qué tipo de panorama es cada tarjeta.
+  Widget _kindBadge(bool compact) => _badge(
+        item.kindLabel.toUpperCase(),
+        compact,
+        color: item.kind == PanoramaKind.paquete ? PickmapColors.deepRed : const Color(0xFF3F7A2C),
       );
 }

@@ -1610,3 +1610,47 @@ más débil, con el botón "Reservar" sin dar ningún feedback al tocarlo.
   disparaba el botón de forma confiable (mismo tipo de imprecisión que
   ya se había visto con el corazón de favorito) — el test confirma de
   forma determinística que el sheet se cierra y aparece el aviso.
+
+## Claridad de "paquetes" en la app Flutter, basada literalmente en la web
+
+Instrucción explícita del usuario: "recuerda lo de los paquetes tiene que
+ser clarisimo. basate mucho en la web en la forma que une los paquetes" —
+antes de diseñar algo nuevo, se releyó `js/panoramas.js`
+(`cardHTML()`/`modalHTML()`) y `css/panoramas.css` (líneas ~195-215) para
+copiar el mecanismo real que ya usa el sitio en vez de inventar uno
+distinto: un badge `.pano-card__kind`/`.pano-modal__kind` visible SIEMPRE
+(tarjeta y modal), con texto "Simple" o "Paquete" y colores exactos
+(`#3f7a2c` verde para simple, `var(--deep-red)` para paquete, fondo
+`rgba(255,255,255,.9)`, texto mayúscula/bold/pequeño).
+
+- **`PanoramaItem.kindLabel`** (`panorama_item.dart`): mismo texto
+  "Simple"/"Paquete" que `kindLabel` en `js/panoramas.js`, derivado de
+  `kind`.
+- **`PanoramaItem.components`**: un paquete junta varias actividades en
+  un solo título unido por " + " (mismo patrón de copy que el catálogo
+  del sitio, ej. "Museo + almuerzo con guía") — este getter separa el
+  título en partes individuales para poder listarlas una por una, en vez
+  de dejarlas como un bloque de texto ambiguo. Cubierto por
+  `test/panorama_item_test.dart` (3 casos: paquete con 2+ componentes,
+  simple, y un título sin "+").
+- **`panorama_card.dart`**: el badge de tipo pasó a vivir en un `Wrap`
+  junto al badge de Darwin (antes solo existía el de Darwin) — mismos
+  colores exactos que el CSS de arriba, con `right:` reservado para no
+  superponerse con el corazón de favorito en la esquina opuesta.
+- **`panorama_detail_sheet.dart`**: mismo badge (`_KindBadge`) sobre la
+  foto del modal, en la misma posición relativa que
+  `.pano-modal__kind` en el sitio. Para un paquete con más de un
+  componente, se agregó una sección nueva **"🧳 Este paquete incluye"**
+  (`_PackageIncludes`) — cada actividad del título compuesto listada con
+  un ícono de check, entre el dato rápido (horario) y el callout de "Por
+  qué Darwin te lo recomienda". El sistema de addons/calendario de
+  reserva del sitio (`ADDONS_KEY`, `reserveModalHTML`) es una feature
+  mucho más grande y queda fuera de este alcance — acá el objetivo era
+  solo la claridad de "qué es" un paquete, no reproducir su flujo de
+  reserva completo.
+- Verificado con Playwright (mismo método de siempre: build web con
+  `lib/dev_preview_main.dart` temporal, CanvasKit local, capturas a
+  ~390px) mostrando la grilla con las tarjetas Simple/Paquete y el modal
+  de un paquete abierto con su desglose de componentes — capturas
+  descartadas tras verificar (no se commitea nada del entrypoint
+  temporal, mismo criterio que las rondas anteriores de este mismo día).

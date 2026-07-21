@@ -33,6 +33,17 @@ class PanoramaItem {
 
   String get formattedPrice => '\$${_thousands(priceClp)}';
 
+  /// Mismo texto que `kindLabel` en `js/panoramas.js` (badge visible
+  /// siempre en la tarjeta y en el modal, "Simple" o "Paquete") — el
+  /// sitio nunca deja ambigüedad sobre qué tipo de panorama es cada uno.
+  String get kindLabel => kind == PanoramaKind.paquete ? 'Paquete' : 'Simple';
+
+  /// Un paquete junta varias actividades en un solo título separado por
+  /// " + " (ej. "Museo + almuerzo con guía") — acá se separa para poder
+  /// listarlas una por una en el detalle ("Este paquete incluye"), en
+  /// vez de dejar el título compuesto como un solo bloque de texto.
+  List<String> get components => title.split(RegExp(r'\s*\+\s*')).map((p) => p.trim()).toList();
+
   static String _thousands(int n) {
     final s = n.toString();
     final buf = StringBuffer();

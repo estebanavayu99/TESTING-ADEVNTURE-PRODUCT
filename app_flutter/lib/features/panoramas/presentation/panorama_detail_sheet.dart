@@ -102,6 +102,7 @@ class _PanoramaDetailSheet extends StatelessWidget {
                               ),
                             ),
                           ),
+                          Positioned(top: 16, left: 16, child: _KindBadge(item: item)),
                         ],
                       ),
                     ),
@@ -120,6 +121,12 @@ class _PanoramaDetailSheet extends StatelessWidget {
                               Expanded(child: Text(item.meta, style: const TextStyle(color: PickmapColors.slate, fontSize: 13))),
                             ],
                           ),
+                          if (item.kind == PanoramaKind.paquete && item.components.length > 1) ...[
+                            const SizedBox(height: 18),
+                            Container(height: 1, color: PickmapColors.mist.withValues(alpha: 0.25)),
+                            const SizedBox(height: 18),
+                            _PackageIncludes(item: item),
+                          ],
                           if (item.reason != null) ...[
                             const SizedBox(height: 18),
                             Container(height: 1, color: PickmapColors.mist.withValues(alpha: 0.25)),
@@ -137,6 +144,69 @@ class _PanoramaDetailSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Mismo badge y mismos colores que `.pano-modal__kind--simple`/
+/// `--paquete` del sitio — nunca deja ambigüedad sobre si esto es un
+/// panorama simple o un paquete de varias actividades.
+class _KindBadge extends StatelessWidget {
+  const _KindBadge({required this.item});
+
+  final PanoramaItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPaquete = item.kind == PanoramaKind.paquete;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.92), borderRadius: BorderRadius.circular(999)),
+      child: Text(
+        item.kindLabel.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+          color: isPaquete ? PickmapColors.deepRed : const Color(0xFF3F7A2C),
+        ),
+      ),
+    );
+  }
+}
+
+/// Desglose explícito de qué actividades junta un paquete (ej. "Museo +
+/// almuerzo con guía" → Museo, Almuerzo con guía) — un paquete es varias
+/// experiencias combinadas y el sitio nunca lo deja como un solo bloque
+/// de texto ambiguo, siempre se puede ver de qué está compuesto.
+class _PackageIncludes extends StatelessWidget {
+  const _PackageIncludes({required this.item});
+
+  final PanoramaItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = item.components;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('🧳 Este paquete incluye', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy, fontSize: 13.5)),
+        const SizedBox(height: 10),
+        for (var i = 0; i < parts.length; i++)
+          Padding(
+            padding: EdgeInsets.only(bottom: i == parts.length - 1 ? 0 : 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle_rounded, size: 17, color: PickmapColors.deepRed.withValues(alpha: 0.85)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(parts[i], style: const TextStyle(color: PickmapColors.navy, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
