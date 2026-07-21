@@ -125,6 +125,15 @@
   }
 
   function doneRowHTML(r) {
+    // Bug real: una reserva marcada reviewed:true ANTES de que este
+    // historial existiera (cuando submitReview solo guardaba
+    // reviewed:true, sin rating/comentario en el registro del viajero)
+    // no tiene rating — mostrar '☆☆☆☆☆' ahí se ve como una reseña de 0
+    // estrellas, no como "sin dato". Se muestra un texto neutro en ese
+    // caso en vez de fabricar un rating que no existe.
+    const stars = r.rating
+      ? `<span class="dash__review-done-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>`
+      : `<span class="dash__review-done-stars">Reseña enviada</span>`;
     return `
       <li class="dash__review-done" data-id="${r.id}">
         <span class="dash__history-icon">${r.icon || '📍'}</span>
@@ -133,7 +142,7 @@
           <p class="dash__history-time">${fmtDateShort(r.fecha)}${r.businessName ? ` · ${escapeHTML(r.businessName)}` : ''}</p>
           ${r.comentario ? `<p class="dash__review-done-comment">"${escapeHTML(r.comentario)}"</p>` : ''}
         </div>
-        <span class="dash__review-done-stars">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</span>
+        ${stars}
       </li>
     `;
   }
