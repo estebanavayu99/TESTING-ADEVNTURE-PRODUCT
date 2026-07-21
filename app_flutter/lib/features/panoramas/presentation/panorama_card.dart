@@ -11,15 +11,33 @@ import '../data/panorama_item.dart';
 /// item trae `reason`) — reemplaza el hint de texto plano que antes iba
 /// debajo de la tarjeta, más compacto y más visual.
 class PanoramaCard extends StatelessWidget {
-  const PanoramaCard({super.key, required this.item, required this.onTap, this.favorited = false, this.onFavoriteToggle});
+  const PanoramaCard({
+    super.key,
+    required this.item,
+    required this.onTap,
+    this.favorited = false,
+    this.onFavoriteToggle,
+    this.compact = false,
+  });
 
   final PanoramaItem item;
   final VoidCallback onTap;
   final bool favorited;
   final VoidCallback? onFavoriteToggle;
 
+  /// Versión más chica (badges/texto reducidos) para las filas y la
+  /// grilla de `panoramas.html`, pensada para mostrar 3 tarjetas por
+  /// fila en vez de 2 — Favoritos sigue usando el tamaño normal.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
+    final badgeSize = compact ? 24.0 : 30.0;
+    final badgeIconSize = compact ? 13.0 : 16.0;
+    final titleSize = compact ? 12.0 : 13.5;
+    final metaSize = compact ? 10.5 : 11.5;
+    final priceSize = compact ? 12.0 : 13.5;
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -29,13 +47,13 @@ class PanoramaCard extends StatelessWidget {
             aspectRatio: 1.05,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 boxShadow: const [
                   BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.10), blurRadius: 14, offset: Offset(0, 6)),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -47,23 +65,23 @@ class PanoramaCard extends StatelessWidget {
                       errorWidget: (context, url, error) => Container(
                         color: PickmapColors.mist.withValues(alpha: 0.25),
                         alignment: Alignment.center,
-                        child: Text(item.icon, style: const TextStyle(fontSize: 34)),
+                        child: Text(item.icon, style: TextStyle(fontSize: compact ? 22 : 34)),
                       ),
                     ),
                     if (item.reason != null)
                       Positioned(
-                        top: 8,
-                        left: 8,
-                        child: _badge('🧠 Darwin'),
+                        top: compact ? 5 : 8,
+                        left: compact ? 5 : 8,
+                        child: _badge(compact ? '🧠' : '🧠 Darwin', compact),
                       ),
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: compact ? 5 : 8,
+                      right: compact ? 5 : 8,
                       child: GestureDetector(
                         onTap: onFavoriteToggle,
                         child: Container(
-                          width: 30,
-                          height: 30,
+                          width: badgeSize,
+                          height: badgeSize,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.92),
@@ -71,7 +89,7 @@ class PanoramaCard extends StatelessWidget {
                           ),
                           child: Icon(
                             favorited ? Icons.favorite : Icons.favorite_border,
-                            size: 16,
+                            size: badgeIconSize,
                             color: favorited ? PickmapColors.coral : PickmapColors.navy,
                           ),
                         ),
@@ -82,29 +100,29 @@ class PanoramaCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 6 : 8),
           Text(
             item.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy, fontSize: 13.5),
+            style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy, fontSize: titleSize),
           ),
           const SizedBox(height: 2),
-          Text(item.meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: PickmapColors.slate, fontSize: 11.5)),
-          const SizedBox(height: 4),
+          Text(item.meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: PickmapColors.slate, fontSize: metaSize)),
+          SizedBox(height: compact ? 2 : 4),
           Text('desde ${item.formattedPrice}',
-              style: const TextStyle(fontWeight: FontWeight.w800, color: PickmapColors.navy, fontSize: 13.5)),
+              style: TextStyle(fontWeight: FontWeight.w800, color: PickmapColors.navy, fontSize: priceSize)),
         ],
       ),
     );
   }
 
-  Widget _badge(String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  Widget _badge(String label, bool compact) => Container(
+        padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 3 : 4),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+        child: Text(label, style: TextStyle(fontSize: compact ? 9 : 10, fontWeight: FontWeight.w700, color: PickmapColors.navy)),
       );
 }

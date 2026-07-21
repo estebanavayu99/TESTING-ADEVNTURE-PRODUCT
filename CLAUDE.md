@@ -1481,3 +1481,26 @@ detalles finos en vez de tocar el layout de nuevo:
   se había dejado solo el filtro de Precio y el toolbar se sentía
   desbalanceado/incompleto comparado con el original de
   `panoramas.html`.
+
+### Ajuste puntual a Panoramas (mismo día, a pedido explícito del usuario)
+
+El usuario pidió mejorar específicamente la pantalla de Panoramas (la más
+visitada) en dos cosas concretas, dejando el resto de pantallas sin tocar:
+
+- **`_ForestBanner`/`_Tree`** (nuevos, privados de `panoramas_page.dart`):
+  el encabezado plano sobre fondo crema pasó a un banner degradado verde
+  de esquinas inferiores redondeadas con una silueta de "árboles"
+  (círculo de follaje + tronco, dos tonos de verde alternados, sin
+  ninguna imagen/asset — formas puras) asomando desde el borde inferior,
+  a pedido literal del usuario ("un fondo verde con árboles"). Mismo
+  patrón conceptual que el `.skyline` ilustrado del sitio web pero hecho
+  con `Container`s/`BoxDecoration`, no SVG.
+- **Tarjetas más chicas para ver 3 por fila**: `PanoramaCard` ganó un
+  parámetro `compact` (reduce badges/íconos/tamaños de texto
+  proporcionalmente) — `favoritos_page.dart` NO lo usa a propósito
+  (sigue con el tamaño normal, el usuario pidió tocar solo Panoramas).
+  En `panoramas_page.dart`: las filas horizontales (Combos/Simples)
+  bajaron de ancho 168→112px, y la grilla de "Explorar" de
+  `maxCrossAxisExtent: 234/childAspectRatio: 0.76` a `130/0.60` — ambos
+  ajustados para que quepan exactamente 3 columnas en ~390px de ancho en
+  vez de 2.

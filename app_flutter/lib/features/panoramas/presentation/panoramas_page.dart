@@ -77,27 +77,29 @@ class _PanoramasPageState extends State<PanoramasPage> {
     final rowSimple = _personalized.where((i) => i.kind == PanoramaKind.simple).take(6).toList();
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      child: Column(
         children: [
-          const Text('🤖 Darwin · tu IA de panoramas',
-              style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text('Darwin armó estos planes especialmente para ti', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 18),
-          _toolbar(),
-          const SizedBox(height: 22),
-          _rowSection('Combos', rowPaquete, () => setState(() {
-                _tab = _ExploreTab.recomendado;
-                _pill = _PillFilter.paquete;
-              })),
-          const SizedBox(height: 22),
-          _rowSection('Simples', rowSimple, () => setState(() {
-                _tab = _ExploreTab.recomendado;
-                _pill = _PillFilter.simple;
-              })),
-          const SizedBox(height: 26),
-          _exploreSection(),
+          const _ForestBanner(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+              children: [
+                _toolbar(),
+                const SizedBox(height: 22),
+                _rowSection('Combos', rowPaquete, () => setState(() {
+                      _tab = _ExploreTab.recomendado;
+                      _pill = _PillFilter.paquete;
+                    })),
+                const SizedBox(height: 22),
+                _rowSection('Simples', rowSimple, () => setState(() {
+                      _tab = _ExploreTab.recomendado;
+                      _pill = _PillFilter.simple;
+                    })),
+                const SizedBox(height: 26),
+                _exploreSection(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -190,14 +192,14 @@ class _PanoramasPageState extends State<PanoramasPage> {
           ],
         ),
         SizedBox(
-          height: 236,
+          height: 182,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
-            separatorBuilder: (context, i) => const SizedBox(width: 14),
+            separatorBuilder: (context, i) => const SizedBox(width: 10),
             itemBuilder: (context, i) => SizedBox(
-              width: 168,
-              child: PanoramaCard(item: items[i], onTap: () => showPanoramaDetail(context, items[i])),
+              width: 112,
+              child: PanoramaCard(item: items[i], onTap: () => showPanoramaDetail(context, items[i]), compact: true),
             ),
           ),
         ),
@@ -231,14 +233,14 @@ class _PanoramasPageState extends State<PanoramasPage> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _exploreList.length,
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 234,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.76,
+            maxCrossAxisExtent: 130,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.60,
           ),
           itemBuilder: (context, i) {
             final item = _exploreList[i];
-            return PanoramaCard(item: item, onTap: () => showPanoramaDetail(context, item));
+            return PanoramaCard(item: item, onTap: () => showPanoramaDetail(context, item), compact: true);
           },
         ),
       ],
@@ -270,6 +272,91 @@ class _PanoramasPageState extends State<PanoramasPage> {
           border: Border.all(color: active ? PickmapColors.coral : PickmapColors.mist.withValues(alpha: 0.6)),
         ),
         child: Text(label, style: TextStyle(color: active ? PickmapColors.coral : PickmapColors.slate, fontWeight: FontWeight.w600, fontSize: 12.5)),
+      ),
+    );
+  }
+}
+
+/// Banner superior tipo "bosque" (degradado verde + silueta de árboles) —
+/// reemplaza el encabezado plano sobre fondo crema, pensado para que
+/// Panoramas (la pantalla más visitada) se sienta con más identidad
+/// propia, en la línea del `.skyline` ilustrado del sitio web. Los
+/// árboles son formas simples (círculo + tronco), sin depender de
+/// ninguna imagen/asset.
+class _ForestBanner extends StatelessWidget {
+  const _ForestBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF3E7A57), Color(0xFF2A5A3E)],
+          ),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Positioned(bottom: -14, left: -14, child: _Tree(size: 56, tone: 0)),
+            const Positioned(bottom: -22, left: 30, child: _Tree(size: 76, tone: 1)),
+            const Positioned(bottom: -8, left: 94, child: _Tree(size: 42, tone: 0)),
+            const Positioned(bottom: -20, right: 66, child: _Tree(size: 62, tone: 1)),
+            const Positioned(bottom: -6, right: 22, child: _Tree(size: 40, tone: 0)),
+            const Positioned(bottom: -24, right: -16, child: _Tree(size: 72, tone: 1)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 42),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('🤖 Darwin · tu IA de panoramas',
+                      style: TextStyle(color: PickmapColors.sun, fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Darwin armó estos planes especialmente para ti',
+                    style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w700, height: 1.25),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Tree extends StatelessWidget {
+  const _Tree({required this.size, required this.tone});
+
+  final double size;
+  /// Alterna 2 tonos de verde en el follaje para dar sensación de
+  /// profundidad entre árboles (no es más que eso — no representa nada).
+  final int tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final canopy = tone == 0 ? const Color(0xFF6FA97C) : const Color(0xFF4F8F62);
+    return SizedBox(
+      width: size,
+      height: size * 1.15,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Container(width: size * 0.16, height: size * 0.4, color: const Color(0xFF4A3323)),
+          Positioned(
+            bottom: size * 0.22,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(color: canopy, shape: BoxShape.circle),
+            ),
+          ),
+        ],
       ),
     );
   }
