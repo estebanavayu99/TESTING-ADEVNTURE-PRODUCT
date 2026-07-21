@@ -8,14 +8,14 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pickmap">
+<meta name="apple-mobile-web-app-title" content="PickMap">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
 }
 </script>
-<title>Tus panoramas — Pickmap</title>
-<meta name="description" content="Todos los panoramas que Pickmap IA armó para ti, simples y en paquete, con la razón de por qué los elegimos.">
+<title>Tus panoramas — PickMap</title>
+<meta name="description" content="Todos los panoramas que PickMap IA armó para ti, simples y en paquete, con la razón de por qué los elegimos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -67,54 +67,66 @@ if ('serviceWorker' in navigator) {
 <main class="dash">
   <div class="container">
     <div class="dash__greeting">
-      <p class="eyebrow">🤖 Darwin · tu IA de panoramas</p>
-      <h1>Tus panoramas</h1>
-      <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
+      <div class="dash__greeting-text">
+        <p class="eyebrow">🤖 Darwin · tu IA de panoramas</p>
+        <h1>Darwin te armó este plan para hoy</h1>
+        <p class="dash__sub" id="panoramasSub">Esto armamos para ti según tu edad, con quién sueles ir y lo que más te gusta.</p>
+      </div>
+      <div class="dash__weather" id="panoramasWeather" hidden>
+        <span class="dash__weather-icon" id="panoramasWeatherIcon">🌤️</span>
+        <div class="dash__weather-body">
+          <p class="dash__weather-temp" id="panoramasWeatherTemp">—</p>
+          <p class="dash__weather-loc">Tu ubicación ahora</p>
+        </div>
+      </div>
     </div>
 
-    <div class="pano-advfilters">
-      <div class="pano-advfilter">
-        <label for="filterSort">Ordenar por</label>
-        <select id="filterSort">
-          <option value="recomendado">Recomendado para ti</option>
-          <option value="rating">Mejor valorados</option>
-          <option value="price_asc">Precio: menor a mayor</option>
-          <option value="price_desc">Precio: mayor a menor</option>
-        </select>
+    <div class="pano-toolbar">
+      <p class="pano-toolbar__label">🔍 Filtrar y ordenar</p>
+      <div class="pano-toolbar__row">
+        <div class="pano-advfilter">
+          <label for="filterSort">↕️ Ordenar por</label>
+          <select id="filterSort">
+            <option value="recomendado">Recomendado para ti</option>
+            <option value="rating">Mejor valorados</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+          </select>
+        </div>
+        <div class="pano-advfilter">
+          <label for="filterCategory">🏷️ Tipo de experiencia</label>
+          <select id="filterCategory">
+            <option value="todas">Cualquiera</option>
+          </select>
+        </div>
+        <div class="pano-advfilter">
+          <label for="filterDistance">📍 Distancia</label>
+          <select id="filterDistance">
+            <option value="todas">Cualquier distancia</option>
+            <option value="cerca">Cerca · hasta 20 km</option>
+            <option value="media">Media · 20-45 km</option>
+            <option value="lejos">Lejos · 45+ km</option>
+          </select>
+        </div>
+        <div class="pano-advfilter">
+          <label for="filterPrice">💰 Precio</label>
+          <select id="filterPrice">
+            <option value="todos">Cualquier precio</option>
+            <option value="bajo">Hasta $15.000</option>
+            <option value="medio">$15.000 - $30.000</option>
+            <option value="alto">Más de $30.000</option>
+          </select>
+        </div>
+        <div class="pano-advfilter">
+          <label for="filterDay">📅 Día</label>
+          <select id="filterDay">
+            <option value="todos">Cualquier día</option>
+            <option value="semana">Entre semana</option>
+            <option value="finde">Fin de semana</option>
+          </select>
+        </div>
+        <button type="button" class="pano-advfilter__reset" id="resetFilters">✕ Limpiar filtros</button>
       </div>
-      <div class="pano-advfilter">
-        <label for="filterCategory">Tipo de experiencia</label>
-        <select id="filterCategory">
-          <option value="todas">Cualquiera</option>
-        </select>
-      </div>
-      <div class="pano-advfilter">
-        <label for="filterDistance">Distancia</label>
-        <select id="filterDistance">
-          <option value="todas">Cualquier distancia</option>
-          <option value="cerca">Cerca · hasta 20 km</option>
-          <option value="media">Media · 20-45 km</option>
-          <option value="lejos">Lejos · 45+ km</option>
-        </select>
-      </div>
-      <div class="pano-advfilter">
-        <label for="filterPrice">Precio</label>
-        <select id="filterPrice">
-          <option value="todos">Cualquier precio</option>
-          <option value="bajo">Hasta $15.000</option>
-          <option value="medio">$15.000 - $30.000</option>
-          <option value="alto">Más de $30.000</option>
-        </select>
-      </div>
-      <div class="pano-advfilter">
-        <label for="filterDay">Día</label>
-        <select id="filterDay">
-          <option value="todos">Cualquier día</option>
-          <option value="semana">Entre semana</option>
-          <option value="finde">Fin de semana</option>
-        </select>
-      </div>
-      <button type="button" class="pano-advfilter__reset" id="resetFilters">Limpiar filtros</button>
     </div>
 
     <section class="pano-row">
@@ -133,14 +145,6 @@ if ('serviceWorker' in navigator) {
       <div class="pano-row__scroll" id="rowSimple"></div>
     </section>
 
-    <section class="pano-row">
-      <div class="pano-row__header">
-        <h2>Todos</h2>
-        <a href="#explorar" class="pano-row__seeall" data-target-filter="todos">Ver todo →</a>
-      </div>
-      <div class="pano-row__scroll" id="rowTodos"></div>
-    </section>
-
     <section class="pano-explore" id="explorar">
       <div class="pano-tabs">
         <button type="button" class="pano-tab is-active" data-tab="recomendado">Recomendado para ti</button>
@@ -154,10 +158,22 @@ if ('serviceWorker' in navigator) {
 
       <div class="pano-grid" id="panoGrid"></div>
     </section>
+
+    <section class="pano-row pano-row--all">
+      <div class="pano-row__header">
+        <h2>Todos</h2>
+      </div>
+      <p class="pano-row__all-sub">Todo lo que tenemos en PickMap, sin filtrar por Darwin.</p>
+      <div class="pano-grid" id="panoGridTodos"></div>
+    </section>
   </div>
 </main>
 
 <script src="js/skyline.js"></script>
 <script src="js/panoramas.js"></script>
+<!-- Widget de clima/ubicación real del header (bot-darwin/js/contexto.js
+     es standalone: solo Open-Meteo, sin depender del resto del motor). -->
+<script src="bot-darwin/js/contexto.js"></script>
+<script src="js/panoramas-weather.js"></script>
 </body>
 </html>

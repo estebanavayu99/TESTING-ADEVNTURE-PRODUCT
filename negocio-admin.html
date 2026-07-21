@@ -8,14 +8,14 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pickmap">
+<meta name="apple-mobile-web-app-title" content="PickMap">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
 }
 </script>
-<title>Panel de administrador — Pickmap</title>
-<meta name="description" content="Resumen agregado de todos los negocios aliados de Pickmap.">
+<title>Panel de administrador — PickMap</title>
+<meta name="description" content="Resumen agregado de todos los negocios aliados de PickMap.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F55E61%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,7 +65,7 @@ if ('serviceWorker' in navigator) {
       <span class="biz-avatar" id="adminAvatar">PM</span>
       <div>
         <p class="eyebrow">Panel de administrador</p>
-        <h1>Hola, Pickmap 👋</h1>
+        <h1>Hola, PickMap 👋</h1>
         <p class="biz__sub">Resumen agregado de todos los negocios aliados — cada fila es solo el total de ESE negocio, nunca el detalle cruzado de un mismo cliente entre negocios distintos.</p>
       </div>
     </div>
@@ -82,7 +82,7 @@ if ('serviceWorker' in navigator) {
         <p class="biz-stat__note">Lo que reciben los negocios, neto de comisión</p>
       </div>
       <div class="biz-stat">
-        <p class="biz-stat__label">Comisión Pickmap (histórica)</p>
+        <p class="biz-stat__label">Comisión PickMap (histórica)</p>
         <p class="biz-stat__value" id="adminStatComision">—</p>
         <p class="biz-stat__note" id="adminStatComisionNote">&nbsp;</p>
       </div>
@@ -106,7 +106,7 @@ if ('serviceWorker' in navigator) {
       <h2 class="dcard__title">Ingresos de la plataforma — últimos 6 meses</h2>
       <p class="admin-chart-legend">
         <span><span class="admin-chart-dot admin-chart-dot--total"></span> Generado total (todos los negocios)</span>
-        <span><span class="admin-chart-dot admin-chart-dot--comision"></span> Comisión Pickmap</span>
+        <span><span class="admin-chart-dot admin-chart-dot--comision"></span> Comisión PickMap</span>
       </p>
       <div class="biz-chart" id="adminChart"></div>
     </section>

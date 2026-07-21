@@ -51,53 +51,97 @@
 }
 .pano-filter.is-active { background: var(--sun); color: var(--navy); border-color: var(--sun); }
 
-.pano-advfilters {
+/* Toolbar de filtros/orden — rediseñada 2026-07-21 (instrucción explícita
+   del usuario: la barra plana de selects sueltos "se ve poco profesional y
+   poco elaborado"). Pasa a una tarjeta propia con eyebrow, selects con
+   ícono + chevron custom (en vez del <select> pelado del navegador) y un
+   botón real de "Limpiar filtros" en vez de un link de texto suelto. */
+.pano-toolbar {
+  margin-bottom: 28px;
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: 0 20px 46px rgba(15, 20, 22, 0.08);
+}
+.pano-toolbar__label {
+  margin: 0 0 14px;
+  font-weight: 800;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--slate);
+}
+.pano-toolbar__row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 14px;
-  margin-bottom: 28px;
-  padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 18px;
 }
-.pano-advfilter { display: flex; flex-direction: column; gap: 5px; }
+.pano-advfilter { display: flex; flex-direction: column; gap: 6px; flex: 1 1 168px; min-width: 168px; }
 .pano-advfilter label {
-  font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
   color: var(--slate);
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 .pano-advfilter select {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--navy);
-  background: var(--white);
-  border: 1px solid rgba(30, 45, 49, 0.12);
-  border-radius: 10px;
-  padding: 8px 12px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235E696C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center,
+    var(--white);
+  background-size: 14px;
+  border: 1.5px solid rgba(30, 45, 49, 0.12);
+  border-radius: 12px;
+  padding: 10px 34px 10px 14px;
   cursor: pointer;
-  min-width: 168px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  transition: border-color .18s, box-shadow .18s;
+}
+.pano-advfilter select:hover { border-color: rgba(245, 94, 97, 0.35); }
+.pano-advfilter select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(245, 94, 97, 0.14);
 }
 .pano-advfilter__reset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.82rem;
   color: var(--coral);
-  background: none;
-  border: none;
+  background: rgba(245, 94, 97, 0.1);
+  border: 1.5px solid rgba(245, 94, 97, 0.22);
+  border-radius: 12px;
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 10px 16px;
   margin-left: auto;
+  align-self: flex-end;
+  transition: background .18s, border-color .18s;
+  white-space: nowrap;
 }
-.pano-advfilter__reset:hover { text-decoration: underline; }
+.pano-advfilter__reset:hover { background: rgba(245, 94, 97, 0.18); border-color: rgba(245, 94, 97, 0.4); }
 
 @media (max-width: 720px) {
-  .pano-advfilters { flex-direction: column; align-items: stretch; }
-  .pano-advfilter select { min-width: 0; width: 100%; }
-  .pano-advfilter__reset { margin-left: 0; align-self: flex-start; }
+  .pano-toolbar__row { flex-direction: column; align-items: stretch; }
+  .pano-advfilter { min-width: 0; width: 100%; }
+  .pano-advfilter__reset { margin-left: 0; align-self: stretch; justify-content: center; }
 }
+
+/* Sección "Todos" al final de la página — catálogo completo sin cap,
+   como grid (no scroll horizontal): pedido explícito del usuario de
+   bajar esta sección al fondo y mostrar ahí TODO lo que hay. */
+.pano-row--all { margin-top: 8px; }
+.pano-row__all-sub { margin: -6px 0 18px; color: var(--navy-2); font-size: 0.92rem; }
 
 .pano-grid {
   display: grid;

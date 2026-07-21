@@ -57,9 +57,9 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
         ${ctaLabel ? `<a class="cta" href="${ctaHref || '#'}">${ctaLabel}</a>` : ''}
       </div>
       <div class="footer">
-        Pickmap SpA · Santiago, Chile<br>
-        Recibiste este correo porque tienes una cuenta activa en Pickmap.
-        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a>
+        PickMap SpA · Santiago, Chile<br>
+        Recibiste este correo porque tienes una cuenta activa en PickMap.
+        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a> · <a href="https://pickmap.cl/privacidad.html">Privacidad</a>
       </div>
     </div>
   </body></html>`;
@@ -72,7 +72,7 @@ function esc(valor) {
 const PLANTILLAS = {
   // ---------- Vista cliente ----------
   bienvenida: (d) => ({
-    subject: `¡Bienvenido a Pickmap, ${d.firstName || ''}! 🎉🧭`,
+    subject: `¡Bienvenido a PickMap, ${d.firstName || ''}! 🎉🧭`,
     html: shell(BRAND.greenInk, 'CUENTA NUEVA',
       'Cuéntanos qué te gusta y Darwin arma tu primer panorama.',
       `<h1>¡Hola, ${esc(d.firstName || '')}! 👋🎉</h1>
@@ -83,7 +83,7 @@ const PLANTILLAS = {
   }),
 
   recuperar: (d) => ({
-    subject: '🔒 Restablece tu contraseña de Pickmap',
+    subject: '🔒 Restablece tu contraseña de PickMap',
     html: shell(BRAND.navy2, 'SEGURIDAD',
       'Recibimos una solicitud para restablecer tu contraseña.',
       `<h1>Restablece tu contraseña</h1>
@@ -282,6 +282,50 @@ const PLANTILLAS = {
          <tr><td>Calificación</td><td>${'⭐'.repeat(Number(d.estrellas) || 5)} (${esc(d.estrellas)}/5)</td></tr>
        </table>
        <p style="font-style:italic;">"${esc(d.comentario)}"</p>`),
+  }),
+
+  // Instrucción explícita del usuario (2026-07-21): "acabo de responder una
+  // reseña desde una cuenta de empresa y me gustaría que, cuando pase eso,
+  // llegue un correo automático al Super Admin" — tampoco estaba en el spec
+  // original de 13, mismo patrón que nueva-resena-owner/accion-empresa-
+  // reserva-owner (aviso interno solo para contacto@pickmap.cl).
+  'empresa-respondio-resena-owner': (d) => ({
+    subject: `💬 ${d.negocio} respondió una reseña`,
+    html: shell(BRAND.greenInk, 'PANEL DE NEGOCIO',
+      `${esc(d.negocio)} le respondió a ${esc(d.cliente)} en su reseña de ${esc(d.estrellas)}/5.`,
+      `<h1>${esc(d.negocio)} respondió una reseña</h1>
+       <table class="kv" width="100%">
+         <tr><td>Negocio</td><td>${esc(d.negocio)}</td></tr>
+         <tr><td>Cliente</td><td>${esc(d.cliente)}</td></tr>
+         <tr><td>Actividad</td><td>${esc(d.actividad)}</td></tr>
+         <tr><td>Calificación</td><td>${'⭐'.repeat(Number(d.estrellas) || 5)} (${esc(d.estrellas)}/5)</td></tr>
+       </table>
+       <p style="font-style:italic;">"${esc(d.comentario)}"</p>
+       <hr class="divider">
+       <p><b>Respuesta del negocio:</b></p>
+       <p style="font-style:italic;">"${esc(d.respuesta)}"</p>`),
+  }),
+
+  // Instrucción explícita del usuario (2026-07-21): "en el panel de negocio
+  // quiero que pongas una sección en la que la empresa puede ver los
+  // servicios que ofrece... eso quiero que sea a través de una solicitud"
+  // — los servicios inscritos son de solo lectura, un negocio no puede
+  // agregar uno directo, solo pedirlo; este correo es el aviso interno al
+  // owner para que revise y lo agregue de verdad (tampoco en el spec
+  // original de 13, mismo patrón que las demás notificaciones internas).
+  'solicitud-nuevo-servicio-owner': (d) => ({
+    subject: `🛎️ ${d.negocio} solicitó agregar un servicio`,
+    html: shell(BRAND.sun, 'PANEL DE NEGOCIO',
+      `${esc(d.negocio)} quiere agregar "${esc(d.nombre)}" a su perfil.`,
+      `<h1>Solicitud de nuevo servicio</h1>
+       <table class="kv" width="100%">
+         <tr><td>Negocio</td><td>${esc(d.negocio)}</td></tr>
+         <tr><td>Correo</td><td>${esc(d.email)}</td></tr>
+         <tr><td>Servicio</td><td>${esc(d.nombre)}</td></tr>
+         <tr><td>Precio sugerido</td><td>${esc(d.precioSugerido)}</td></tr>
+       </table>
+       <p><b>Descripción:</b></p>
+       <p style="font-style:italic;">"${esc(d.descripcion)}"</p>`),
   }),
 
   // Instrucción explícita del usuario (2026-07-20): correo de "pago" — no

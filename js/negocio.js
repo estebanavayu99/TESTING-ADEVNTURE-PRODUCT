@@ -185,13 +185,112 @@
     return raw.map((r) => ({ ...r, fecha: new Date(r.fecha) }));
   }
 
+  // Instrucción explícita del usuario (2026-07-21): avisarle a él (owner de
+  // Pickmap) cada vez que un negocio responde una reseña, para poder estar
+  // al tanto de esas respuestas — mismo patrón fire-and-forget que
+  // notificarOwnerAccionReserva de arriba.
+  function notificarOwnerRespuestaResena(reviewOriginal, respuesta) {
+    const biz = getBusiness();
+    fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'empresa-respondio-resena-owner',
+        email: OWNER_NOTIFICATION_EMAIL,
+        datos: {
+          negocio: biz.name,
+          cliente: reviewOriginal.cliente,
+          actividad: reviewOriginal.actividad,
+          estrellas: reviewOriginal.rating,
+          comentario: reviewOriginal.comentario,
+          respuesta,
+        },
+      }),
+    }).catch(() => { /* fire-and-forget: nunca debe bloquear la acción del negocio */ });
+  }
+
   // El panel no tenía forma de responder una reseña — instrucción
   // explícita del usuario. Persiste la respuesta directo en REVIEWS_KEY
   // (mismo patrón que actualizarEstadoReserva para reservas).
   function responderResena(id, respuesta) {
     const raw = JSON.parse(localStorage.getItem(REVIEWS_KEY) || '[]');
+    const original = raw.find((r) => r.id === id);
     const actualizado = raw.map((r) => (r.id === id ? { ...r, respuesta, respuestaFecha: new Date().toISOString() } : r));
     localStorage.setItem(REVIEWS_KEY, JSON.stringify(actualizado));
+    if (original) notificarOwnerRespuestaResena(original, respuesta);
+  }
+
+  /* ---------- Servicios ---------- */
+  // Instrucción explícita del usuario (2026-07-21): el negocio debe poder
+  // VER los servicios que ya tiene inscritos (solo lectura, no editable
+  // directo) y mandar una SOLICITUD para agregar uno nuevo — no un editor
+  // libre. Los servicios inscritos se generan sembrados por bizEmail (mismo
+  // patrón que reservas/reseñas: estables entre recargas, distintos por
+  // cuenta) a partir de ACTIVIDADES, con un precio propio por servicio.
+  const SERVICES_KEY = `pickmap_business_services_${bizEmail}`;
+  const SERVICE_REQUESTS_KEY = `pickmap_business_service_requests_${bizEmail}`;
+
+  function generateServices() {
+    const rand = seedRandom(55112 + hashStr(bizEmail));
+    let id = 9001;
+    return ACTIVIDADES.map((nombre) => ({
+      id: id++,
+      nombre,
+      precio: 15000 + Math.floor(rand() * 12) * 5000,
+      capacidad: 2 + Math.floor(rand() * 5),
+      estado: 'activo',
+    }));
+  }
+
+  function getServices() {
+    let raw = JSON.parse(localStorage.getItem(SERVICES_KEY) || 'null');
+    if (!raw) {
+      raw = generateServices();
+      localStorage.setItem(SERVICES_KEY, JSON.stringify(raw));
+    }
+    return raw;
+  }
+
+  function getServiceRequests() {
+    try {
+      return JSON.parse(localStorage.getItem(SERVICE_REQUESTS_KEY)) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function notificarOwnerSolicitudServicio(solicitud) {
+    const biz = getBusiness();
+    fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'solicitud-nuevo-servicio-owner',
+        email: OWNER_NOTIFICATION_EMAIL,
+        datos: {
+          negocio: biz.name,
+          email: bizEmail,
+          nombre: solicitud.nombre,
+          descripcion: solicitud.descripcion,
+          precioSugerido: solicitud.precioSugerido ? fmtMoney(solicitud.precioSugerido) : 'No especificado',
+        },
+      }),
+    }).catch(() => { /* fire-and-forget: nunca debe bloquear el envío de la solicitud */ });
+  }
+
+  // No se auto-aprueba nada acá — el servicio real lo agrega el equipo de
+  // Pickmap tras revisar la solicitud (mismo criterio de "nunca fabricar un
+  // dato falso": no se inventa un estado "aprobada" que no pasó de verdad).
+  function solicitarNuevoServicio(nombre, descripcion, precioSugerido) {
+    const raw = getServiceRequests();
+    const solicitud = {
+      id: Date.now(), nombre, descripcion, precioSugerido: precioSugerido || null,
+      fecha: new Date().toISOString(), estado: 'pendiente',
+    };
+    raw.unshift(solicitud);
+    localStorage.setItem(SERVICE_REQUESTS_KEY, JSON.stringify(raw));
+    notificarOwnerSolicitudServicio(solicitud);
+    return solicitud;
   }
 
   /* ---------- Referidos ---------- */
@@ -492,6 +591,7 @@
   window.PickmapNegocio = {
     getBusiness, getBusinessEmail: () => bizEmail, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
     getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente, responderResena,
+    getServices, getServiceRequests, solicitarNuevoServicio,
   };
 
   /* ---------- Shared nav / logout ---------- */

@@ -1,7 +1,7 @@
 {
-  "name": "Pickmap — Panoramas personalizados",
-  "short_name": "Pickmap",
-  "description": "Pickmap arma panoramas personalizados según tu clima, tus gustos y tu grupo.",
+  "name": "PickMap — Panoramas personalizados",
+  "short_name": "PickMap",
+  "description": "PickMap arma panoramas personalizados según tu clima, tus gustos y tu grupo.",
   "start_url": "/index.html",
   "id": "/index.html",
   "display": "standalone",

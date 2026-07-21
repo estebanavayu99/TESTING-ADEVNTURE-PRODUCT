@@ -32,7 +32,7 @@
   const code = `${namePart}-${hashStr(user.email).toString(36).slice(0, 4).toUpperCase()}`;
   document.getElementById('referralCode').textContent = code;
 
-  const shareText = `¡Únete a Pickmap con mi código ${code} y arma panoramas hechos a tu medida! 🌄`;
+  const shareText = `¡Únete a PickMap con mi código ${code} y arma panoramas hechos a tu medida! 🌄`;
   const referralLink = `https://pickmap.cl/login.html?tab=signup&ref=${code}`;
 
   document.getElementById('shareWhatsapp').href =

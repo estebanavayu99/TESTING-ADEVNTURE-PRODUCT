@@ -270,7 +270,7 @@
     return pool[hashStr(item.title) % pool.length];
   }
   const ARRIVAL_BY_CATEGORY = {
-    naturaleza: 'En auto por camino pavimentado hasta el sector; Pickmap también ofrece transporte compartido opcional.',
+    naturaleza: 'En auto por camino pavimentado hasta el sector; PickMap también ofrece transporte compartido opcional.',
     extremo: 'Punto de encuentro con el operador; se recomienda auto propio o combi compartida coordinada al reservar.',
     nieve: 'En auto con cadenas (obligatorias en invierno) o bus de acceso a la montaña; estacionamiento pagado en el lugar.',
     playa: 'En auto por ruta costera o en buses directos desde el centro de Santiago.',
@@ -914,7 +914,7 @@
       <div class="reserve-success">
         <span class="reserve-success__icon">🎉</span>
         <h2 class="reserve-modal__title">¡Todo listo, ${firstName}!</h2>
-        <p class="reserve-success__sub">Tu aventura con Pickmap ya quedó confirmada. Te enviamos todos los detalles a <b>${data.email}</b> 💌</p>
+        <p class="reserve-success__sub">Tu aventura con PickMap ya quedó confirmada. Te enviamos todos los detalles a <b>${data.email}</b> 💌</p>
         <div class="reserve-success__card">
           <div class="reserve-success__row reserve-success__row--code"><span>🎫 Código de reserva</span><b>${code}</b></div>
           ${data.schedule.map((s) => `<div class="reserve-success__row"><span>${s.icon || '📍'} ${s.title}</span><b>${s.date} · ${s.slot}</b></div>`).join('')}
@@ -1446,7 +1446,10 @@
   // always keeps the personalized reason, so resolving strictly from CATALOG
   // would leak the personal reason into the modal even for General-tab cards.
   function cardItemFor(card) {
-    if (grid.contains(card) && activeTab === 'general') {
+    // La sección "Todos" del fondo siempre resuelve desde `general` (blurb
+    // genérico, sin razón personalizada) — mismo criterio que la pestaña
+    // "General" del explorador, ver comentario de arriba.
+    if (gridTodos.contains(card) || (grid.contains(card) && activeTab === 'general')) {
       const fromGeneral = general.find((i) => i.title === card.dataset.title);
       if (fromGeneral) return fromGeneral;
     }
@@ -1502,6 +1505,7 @@
 
   /* ---------- Filters (shared by rows + explore grid) ---------- */
   const grid = document.getElementById('panoGrid');
+  const gridTodos = document.getElementById('panoGridTodos');
   let activeTab = 'recomendado';
   let activeFilter = 'todos';
   let activeCategory = 'todas';
@@ -1547,14 +1551,6 @@
     const filteredRecommended = applySort(applyAdvFilters(recommended));
     renderRow('rowSimple', filteredRecommended.filter((i) => i.kind === 'simple').slice(0, 8));
     renderRow('rowPaquete', filteredRecommended.filter((i) => i.kind === 'paquete').slice(0, 8));
-    // Bug real reportado por el usuario: la fila "Todos" decía mostrar
-    // TODO el catálogo pero en realidad usaba `recommended` (el mismo
-    // subconjunto personalizado de Combos/Simples) — así que el cliente
-    // nunca tenía forma de ver el catálogo completo sin filtrar por Darwin
-    // si su mood no calzaba con lo recomendado. "Todos" ahora sale de
-    // `general` (catálogo completo, sin personalizar) a propósito.
-    const filteredGeneral = applySort(applyAdvFilters(general));
-    renderRow('rowTodos', filteredGeneral.slice(0, 8));
   }
 
   function renderExplore() {
@@ -1568,9 +1564,23 @@
     grid.innerHTML = filtered.map((item) => cardHTML(item)).join('');
   }
 
+  // Sección "Todos" al fondo de la página: instrucción explícita del
+  // usuario de bajarla y que ahí se muestre TODO el catálogo (general,
+  // sin personalizar, sin cap de 8 como la fila horizontal que tenía
+  // antes) — respeta igual la barra de filtros/orden de arriba.
+  function renderTodos() {
+    const filteredGeneral = applySort(applyAdvFilters(general));
+    if (filteredGeneral.length === 0) {
+      gridTodos.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
+      return;
+    }
+    gridTodos.innerHTML = filteredGeneral.map((item) => cardHTML(item)).join('');
+  }
+
   function renderAll() {
     renderRows();
     renderExplore();
+    renderTodos();
   }
 
   document.querySelectorAll('.pano-tab').forEach((btn) => {

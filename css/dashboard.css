@@ -24,6 +24,34 @@ html { font-size: 90%; }
 .dash__greeting h1 { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 4px 0 8px; color: var(--navy); }
 .dash__sub { color: var(--navy-2); margin: 0; }
 
+/* Header de panoramas.html: cuando trae el widget de clima/ubicación real
+   (.dash__weather), pasa de inline-block a una fila con el texto a la
+   izquierda y el clima a la derecha — el resto de páginas que reusan
+   .dash__greeting sin ese widget no se ven afectadas. */
+.dash__greeting:has(.dash__weather) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  max-width: 100%;
+}
+.dash__weather {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-left: 24px;
+  border-left: 1px solid rgba(30, 45, 49, 0.12);
+}
+.dash__weather[hidden] { display: none; }
+.dash__weather-icon { font-size: 1.8rem; }
+.dash__weather-temp { margin: 0; font-family: var(--font-display); font-size: 1.3rem; color: var(--navy); }
+.dash__weather-loc { margin: 2px 0 0; font-size: 0.75rem; color: var(--navy-2); white-space: nowrap; }
+@media (max-width: 640px) {
+  .dash__greeting:has(.dash__weather) { flex-wrap: wrap; }
+  .dash__weather { padding-left: 0; border-left: none; border-top: 1px solid rgba(30, 45, 49, 0.12); padding-top: 12px; width: 100%; }
+}
+
 .dash__grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -32,6 +60,8 @@ html { font-size: 90%; }
   align-items: start;
 }
 .dash__col-left { display: flex; flex-direction: column; gap: 22px; }
+.dash__col-right { display: flex; flex-direction: column; }
+.dash__section-label { margin: 0 0 14px; }
 .dcard {
   background: rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(18px) saturate(120%);
@@ -310,7 +340,8 @@ html { font-size: 90%; }
 .dash__settings-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .dash__field { display: flex; flex-direction: column; gap: 6px; }
 .dash__field span { font-weight: 700; font-size: 0.85rem; color: var(--navy); }
-.dash__field input {
+.dash__field input,
+.dash__field textarea {
   font-family: var(--font-body);
   font-size: 0.95rem;
   padding: 11px 14px;
@@ -318,8 +349,10 @@ html { font-size: 90%; }
   border: 1px solid rgba(30, 45, 49, 0.18);
   background: rgba(255, 255, 255, 0.85);
   color: var(--navy);
+  resize: vertical;
 }
-.dash__field input:focus {
+.dash__field input:focus,
+.dash__field textarea:focus {
   outline: none;
   border-color: var(--coral);
   box-shadow: 0 0 0 3px rgba(245, 94, 97, 0.18);

@@ -22,7 +22,7 @@
       'Los Pick Points se acumulan con cada check-in y reseña, y los canjeas en tu próxima reserva. ¡Mientras más vives, más ganas! ⭐',
     ] },
     { test: /empresa|aliad|negocio/, replies: [
-      'Si tienes un negocio turístico puedes sumarte como aliado Pickmap: te traemos clientes y solo pagas comisión por reserva confirmada, sin publicidad extra. Mira la sección "Para empresas" 👆',
+      'Si tienes un negocio turístico puedes sumarte como aliado PickMap: te traemos clientes y solo pagas comisión por reserva confirmada, sin publicidad extra. Mira la sección "Para empresas" 👆',
     ] },
     { test: /clima|lluv|sol|tiempo/, replies: [
       'Reviso el clima en tiempo real para que tus panoramas siempre tengan sentido según el pronóstico del momento.',
@@ -31,7 +31,7 @@
       'Por ahora soy 100% IA 🤖, pero estamos sumando soporte humano pronto. Mientras tanto, ¡pregúntame lo que quieras!',
     ] },
     { test: /hola|buenas|hey|holi/, replies: [
-      '¡Hola! 👋 Soy Darwin, la IA de Pickmap. ¿En qué te ayudo?',
+      '¡Hola! 👋 Soy Darwin, la IA de PickMap. ¿En qué te ayudo?',
     ] },
     { test: /gracias|genial|excelente|perfecto/, replies: [
       '¡De nada! Que tengas un panorama increíble 🎉',
@@ -42,7 +42,7 @@
   ];
 
   const FALLBACKS = [
-    'Buena pregunta 🤖 todavía estoy aprendiendo esa parte, pero puedo ayudarte con reservas, precios, Pick Points o cómo funciona Pickmap.',
+    'Buena pregunta 🤖 todavía estoy aprendiendo esa parte, pero puedo ayudarte con reservas, precios, Pick Points o cómo funciona PickMap.',
     'Mmm no estoy 100% seguro de eso, pero cuéntame si quieres saber sobre reservas, panoramas o cómo sumar Pick Points 😊',
     'No manejo ese detalle todavía, pero mientras tanto puedo contarte cómo armo tus panoramas o cómo funciona la alianza para empresas.',
   ];
@@ -80,7 +80,7 @@
     badge.hidden = true;
     if (!opened) {
       opened = true;
-      addMessage('¡Hola! Soy Darwin 🤖, la IA de Pickmap. Pregúntame lo que quieras sobre panoramas, reservas, Pick Points o cómo sumarte como aliado.', 'bot');
+      addMessage('¡Hola! Soy Darwin 🤖, la IA de PickMap. Pregúntame lo que quieras sobre panoramas, reservas, Pick Points o cómo sumarte como aliado.', 'bot');
     }
     input.focus();
   }

@@ -23,7 +23,22 @@
 
   let client = null;
   if (configured && window.supabase && typeof window.supabase.createClient === 'function') {
-    client = window.supabase.createClient(url, anonKey);
+    // flowType: 'implicit' explícito — bug real reportado por el usuario
+    // (2026-07-21): al crear una cuenta en un navegador/sesión y confirmar
+    // el correo desde OTRO navegador/sesión (celular, otra ventana, otro
+    // perfil de Chrome), la confirmación fallaba. Causa: el flow por
+    // defecto de supabase-js (PKCE) guarda un `code_verifier` en el
+    // localStorage del navegador que llama a signUp()/resetPasswordForEmail();
+    // el link de confirmación solo manda un `code` que debe intercambiarse
+    // contra ESE `code_verifier` — si se abre en otro navegador, ese valor
+    // no existe ahí y el intercambio falla (por eso "no manda a una página
+    // válida"). Con 'implicit', Supabase entrega el access_token/refresh_token
+    // directamente en la URL de confirmación (verificado server-side, sin
+    // depender de storage local), así que el link funciona sin importar
+    // desde qué dispositivo/navegador se abra — el caso real y esperado
+    // acá (alguien crea la cuenta desde el compu y confirma desde el
+    // celular, u otro navegador).
+    client = window.supabase.createClient(url, anonKey, { auth: { flowType: 'implicit' } });
   }
 
   function requireClient() {

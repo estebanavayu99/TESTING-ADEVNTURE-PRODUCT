@@ -254,7 +254,7 @@
     modalBody.innerHTML = `
       <div class="biz-modal__rows">
         <div class="biz-modal__row"><span>Total generado (todos)</span><span>${fmtMoney(total)}</span></div>
-        <div class="biz-modal__row"><span>Comisión Pickmap</span><span>${fmtMoney(total * COMMISSION_RATE)}</span></div>
+        <div class="biz-modal__row"><span>Comisión PickMap</span><span>${fmtMoney(total * COMMISSION_RATE)}</span></div>
       </div>
       <div class="biz-modal__divider"></div>
       <p class="biz-modal__group-label">Por negocio</p>

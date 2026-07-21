@@ -1040,6 +1040,138 @@ schema, la recomendación concreta:
 - En resumen: Table Editor + Storage para el día a día, script/CSV
   reservado para el próximo batch grande si llega.
 
+## Sesión 2026-07-21: bugfix auth, rediseños, servicios, legal
+
+- **Bug real arreglado: confirmación de correo fallaba entre navegadores/
+  dispositivos distintos**. El usuario reportó: crear la cuenta en un
+  navegador y confirmar el correo desde otra sesión/navegador no
+  funcionaba ("no manda a una página válida"). Causa raíz: el flow por
+  defecto de `supabase-js` (PKCE) guarda un `code_verifier` en el
+  `localStorage` del navegador que llama a `signUp()`/
+  `resetPasswordForEmail()` — el link de confirmación solo manda un
+  `code` que debe intercambiarse contra ESE `code_verifier`; si se abre en
+  otro navegador/dispositivo (el caso real y esperado: confirmar desde el
+  celular después de registrarse en el compu), ese valor no existe ahí y
+  el intercambio falla. Fix: `js/supabase-client.js` ahora pasa
+  `{ auth: { flowType: 'implicit' } }` a `createClient()` — con esto
+  Supabase entrega el `access_token`/`refresh_token` directo en la URL de
+  confirmación (verificado server-side, sin depender de storage local),
+  así que el link funciona desde cualquier navegador/dispositivo. Aplica
+  tanto al signup del viajero como al de empresa (mismo cliente
+  compartido).
+- **Panel super-admin: rediseño completo del dark mode a "verdes
+  fuertes"** (`css/negocio-admin.css`, instrucción explícita del usuario:
+  "no me gustó mucho el dark mode... prioriza colores verdes fuertes para
+  poder ver bien la información"). En vez de la paleta gris/coral de la
+  primera pasada, ahora es fondo casi negro con tinte verde
+  (`--bg: #070C09`, `--white: #101915`) y la variable de marca `--coral`
+  se REDEFINE dentro de este archivo (que solo carga en esta página) a un
+  verde vívido (`#22C55E`) — como casi todo lo que ya pintaba con
+  `var(--coral)` en `css/negocio.css` (línea del gráfico, relleno del
+  área, monto del ranking, badge del stat accent) automáticamente pasa a
+  verde sin tocar `negocio.css` ni `negocio-admin.js`. Se agregaron
+  overrides explícitos para que TODOS los números clave (no solo la
+  tarjeta accent) salgan en verde: `.biz-stat__value`, `.biz-res__amt`,
+  `.admin-top__amt`. `--deep-red`/`--sun` NO se tocaron — siguen siendo el
+  rojo/ámbar real de "cancelada/rechazada" y "pendiente", para no perder
+  el contraste de significado contra el verde ahora dominante.
+- **Notificación al owner cuando un negocio responde una reseña**
+  (instrucción explícita del usuario). `js/negocio.js` →
+  `notificarOwnerRespuestaResena()`, llamada desde `responderResena()`,
+  manda `POST /api/send-notification` con la plantilla nueva
+  `empresa-respondio-resena-owner` (no estaba en el spec original de 13,
+  mismo patrón interno-solo-owner que `accion-empresa-reserva-owner`/
+  `nueva-resena-owner`) a `contacto@pickmap.cl`.
+- **"PickMap" con M mayúscula en todo el texto visible del sitio**
+  (instrucción explícita del usuario). Se reemplazó "Pickmap" → "PickMap"
+  en: todo el HTML visible (títulos, meta descriptions, copy de página),
+  `manifest.json` (nombre de la PWA), y las cadenas de texto real que ve
+  el usuario en JS (mensajes del chat de Darwin, subjects/cuerpos de
+  correo en `api/_lib/email-templates.js`/`api/send-verification.js`/
+  `api/send-notification.js`, el `from:` del remitente del correo,
+  toasts/success messages). Deliberadamente NO se tocaron: el dominio real
+  `pickmap.cl` y las direcciones `@pickmap.cl` (van en minúscula, son
+  reales), los identificadores de código `window.PickmapNegocio`/
+  `PickmapSupabase`/`PickmapDarwin` (API interna, no texto visible), las
+  claves de `localStorage` (`pickmap_users`, etc., todas en minúscula), ni
+  los comentarios de código (no son visibles para el usuario final). Si se
+  agrega texto visible nuevo sobre la marca, usar "PickMap".
+- **Nueva sección "Servicios" en el panel de negocio** (`negocio-
+  servicios.html` + `js/negocio-servicios.js`, 7ma página del panel,
+  agregada al nav de las otras 6 — instrucción explícita del usuario: la
+  empresa debe poder VER los servicios que tiene inscritos, de solo
+  lectura, y solo puede pedir agregar uno nuevo vía una SOLICITUD, no
+  editarlo directo). `js/negocio.js` expone `getServices()` (genera,
+  sembrado por `bizEmail`, un set estable de servicios a partir de
+  `ACTIVIDADES` con precio/capacidad propios — persistido en
+  `pickmap_business_services_<email>`), `getServiceRequests()` y
+  `solicitarNuevoServicio(nombre, descripcion, precioSugerido)` — esta
+  última persiste en `pickmap_business_service_requests_<email>` con
+  `estado: 'pendiente'` (nunca se auto-aprueba, mismo criterio de "no
+  fabricar un dato falso") y dispara `POST /api/send-notification` con la
+  plantilla nueva `solicitud-nuevo-servicio-owner` a `contacto@pickmap.cl`
+  para que el equipo la revise y agregue el servicio de verdad.
+- **Términos y Condiciones completados + Política de Privacidad nueva**
+  (instrucción explícita del usuario: "inventa un término de condiciones
+  y privacidad"). `terminos.html` ya tenía un documento de 31 cláusulas
+  muy completo (roles Usuario/Proveedor, responsabilidad, cancelaciones,
+  Pickpoints, Referidos, etc.) con placeholders sin rellenar — se
+  completaron: `[fecha]` → 21 de julio de 2026, `[correo de contacto]` →
+  `contacto@pickmap.cl` (las 4 apariciones), `[ciudad]` → Santiago, y se
+  quitó `[teléfono de contacto]` (no hay uno real que ofrecer, mejor no
+  inventar un número que parezca real). `privacidad.html` (nuevo, mismas
+  `css/legal.css` y estructura de header/footer que `terminos.html`, 14
+  secciones): responsable del tratamiento, normativa (Ley 19.628 + Ley
+  21.719), datos recopilados, finalidades, con quién se comparten,
+  cookies, conservación, seguridad, derechos ARCO+, menores de edad,
+  transferencia internacional, cambios y contacto — enlazada
+  recíprocamente desde `terminos.html` (cláusula 21 y el header) y desde
+  el footer de `index.html` y de `api/_lib/email-templates.js`/
+  `notificaciones-preview.html`.
+- **Rediseño de "Mi cuenta" (dashboard.html, viajero)** (instrucción
+  explícita del usuario: no le convencía el orden/presentación, pero sí
+  la información y los colores — pidió explícitamente NO borrar la
+  tarjeta de Darwin). Pasa de una columna larga de tarjetas apiladas a
+  `.dash__grid` (2fr/1fr, mismo patrón ya usado en `pickpoints.html`):
+  columna izquierda = tarjeta de Darwin + CTA grande "Ver mis panoramas";
+  columna derecha (`.dash__col-right`, nuevo) = teasers de Pick Points y
+  "Tus datos de viajero" apilados. Debajo, tras un separador `eyebrow`
+  "Tu cuenta", quedan "Configura tu cuenta" y "Métodos de pago" (lo más
+  administrativo, al final). Mismos componentes/colores de siempre, solo
+  reordenados.
+- **Header de `panoramas.html` + widget de clima/ubicación real**
+  (instrucción explícita del usuario). El h1 cambia de "Tus panoramas" a
+  "Darwin te armó este plan para hoy". A la derecha del texto (mismo
+  `.dash__greeting`, con un `:has(.dash__weather)` en CSS que solo activa
+  el layout de fila cuando el widget está presente — no afecta a las
+  demás páginas que comparten `.dash__greeting`) se agregó
+  `js/panoramas-weather.js`: pide geolocalización real del navegador y
+  llama a `PickmapDarwin.contexto.clima()` (Open-Meteo, ya usado en
+  bot-darwin, cargado standalone vía `bot-darwin/js/contexto.js` sin el
+  resto del motor) para mostrar un ícono + temperatura reales de "ahora".
+  Si no hay permiso de ubicación o el fetch falla, el widget se queda
+  oculto — nunca se fabrica un dato de clima falso.
+- **Toolbar de filtros de `panoramas.html` rediseñada** (instrucción
+  explícita del usuario: se veía "poco profesional y poco elaborado").
+  `.pano-advfilters` (plana, selects pelados) pasa a `.pano-toolbar`: una
+  tarjeta con eyebrow "🔍 Filtrar y ordenar", cada select con ícono +
+  chevron custom (`appearance:none` + SVG de fondo en vez de la flecha
+  nativa del navegador) y focus ring coral, y "Limpiar filtros" pasa de
+  link de texto a un botón real con ícono. Mismos IDs (`filterSort`,
+  `filterCategory`, etc.) — cero cambios de JS necesarios.
+- **Sección "Todos" bajada al fondo de la página + catálogo completo sin
+  cap** (instrucción explícita del usuario). Antes había una fila
+  horizontal "Todos" (capada a 8 tarjetas) entre "Simples" y el
+  explorador con tabs. Se eliminó esa fila y se agregó una sección nueva
+  al final de la página (`.pano-row--all`, después de `#explorar`) con un
+  `.pano-grid` propio (`#panoGridTodos`) que renderiza el catálogo
+  `general` COMPLETO (sin `.slice()`), respetando igual la barra de
+  filtros/orden de arriba. `cardItemFor()` en `js/panoramas.js` se
+  actualizó para resolver las tarjetas de esta sección desde `general`
+  (blurb genérico, sin razón personalizada) — mismo criterio que la
+  pestaña "General" del explorador, para no filtrar el `reason`
+  personalizado en una sección que se supone genérica.
+
 ## Instrucción permanente del usuario: código blindado + todo registrado
 
 - **Blindar el código**: antes de dar por hecho un cambio, verificarlo

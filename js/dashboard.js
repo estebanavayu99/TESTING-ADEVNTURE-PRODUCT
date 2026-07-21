@@ -65,7 +65,7 @@
       const likesText = likes.length > 1
         ? `${likes.slice(0, -1).join(', ')} y ${likes[likes.length - 1]}`
         : likes[0];
-      subEl.textContent = `Como te gusta ${likesText}, así arma Pickmap tu semana.`;
+      subEl.textContent = `Como te gusta ${likesText}, así arma PickMap tu semana.`;
     }
   }
 

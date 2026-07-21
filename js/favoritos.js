@@ -135,7 +135,7 @@
     return pool[hashStr(item.title) % pool.length];
   }
   const ARRIVAL_BY_CATEGORY = {
-    naturaleza: 'En auto por camino pavimentado hasta el sector; Pickmap también ofrece transporte compartido opcional.',
+    naturaleza: 'En auto por camino pavimentado hasta el sector; PickMap también ofrece transporte compartido opcional.',
     extremo: 'Punto de encuentro con el operador; se recomienda auto propio o combi compartida coordinada al reservar.',
     nieve: 'En auto con cadenas (obligatorias en invierno) o bus de acceso a la montaña; estacionamiento pagado en el lugar.',
     playa: 'En auto por ruta costera o en buses directos desde el centro de Santiago.',
@@ -642,7 +642,7 @@
       <div class="reserve-success">
         <span class="reserve-success__icon">🎉</span>
         <h2 class="reserve-modal__title">¡Todo listo, ${firstName}!</h2>
-        <p class="reserve-success__sub">Tu aventura con Pickmap ya quedó confirmada. Te enviamos todos los detalles a <b>${data.email}</b> 💌</p>
+        <p class="reserve-success__sub">Tu aventura con PickMap ya quedó confirmada. Te enviamos todos los detalles a <b>${data.email}</b> 💌</p>
         <div class="reserve-success__card">
           <div class="reserve-success__row reserve-success__row--code"><span>🎫 Código de reserva</span><b>${code}</b></div>
           ${data.schedule.map((s) => `<div class="reserve-success__row"><span>${s.icon || '📍'} ${s.title}</span><b>${s.date} · ${s.slot}</b></div>`).join('')}

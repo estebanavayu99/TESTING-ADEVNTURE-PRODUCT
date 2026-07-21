@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'Pickmap <contacto@pickmap.cl>',
+        from: 'PickMap <contacto@pickmap.cl>',
         to: [email],
         subject,
         html,

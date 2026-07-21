@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     ? `
       <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1E2D31;padding:32px;">
         <h1 style="font-size:1.3rem;">${greeting}</h1>
-        <p>Gracias por crear tu cuenta en Pickmap. Confirma tu correo para activarla:</p>
+        <p>Gracias por crear tu cuenta en PickMap. Confirma tu correo para activarla:</p>
         <p style="text-align:center;margin:28px 0;">
           <a href="${link}" style="background:#83D061;color:#000000;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:999px;display:inline-block;">Confirmar mi correo</a>
         </p>
@@ -36,13 +36,13 @@ module.exports = async (req, res) => {
     : `
       <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1E2D31;padding:32px;">
         <h1 style="font-size:1.3rem;">${greeting}</h1>
-        <p>Recibimos una solicitud para recuperar tu contraseña de Pickmap. Tu código es:</p>
+        <p>Recibimos una solicitud para recuperar tu contraseña de PickMap. Tu código es:</p>
         <p style="text-align:center;font-size:1.8rem;font-weight:bold;letter-spacing:0.25em;color:#F55E61;margin:28px 0;">${code}</p>
         <p style="font-size:0.85rem;color:#5E696C;">Si no fuiste tú, ignora este correo.</p>
       </div>
     `;
 
-  const subject = link ? 'Confirma tu correo en Pickmap' : 'Tu código para recuperar tu contraseña';
+  const subject = link ? 'Confirma tu correo en PickMap' : 'Tu código para recuperar tu contraseña';
 
   try {
     const resendRes = await fetch('https://api.resend.com/emails', {
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'Pickmap <contacto@pickmap.cl>',
+        from: 'PickMap <contacto@pickmap.cl>',
         to: [email],
         subject,
         html,

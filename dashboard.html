@@ -8,14 +8,14 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pickmap">
+<meta name="apple-mobile-web-app-title" content="PickMap">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
 }
 </script>
-<title>Mi cuenta — Pickmap</title>
-<meta name="description" content="Tu panel de viajero Pickmap: próximos panoramas, Pick Points y combos recomendados.">
+<title>Mi cuenta — PickMap</title>
+<meta name="description" content="Tu panel de viajero PickMap: próximos panoramas, Pick Points y combos recomendados.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -68,12 +68,47 @@ if ('serviceWorker' in navigator) {
     <div class="dash__greeting">
       <p class="eyebrow">Tu cuenta</p>
       <h1 id="greetingName">Hola 👋</h1>
-      <p class="dash__sub">Esto es lo que Pickmap armó para ti esta semana.</p>
+      <p class="dash__sub">Esto es lo que PickMap armó para ti esta semana.</p>
     </div>
 
-    <section class="dcard dash__darwin-backend" id="darwinBackendCard">
-      <p class="darwin-backend__empty">Buscando tu combinación perfecta…</p>
-    </section>
+    <div class="dash__grid">
+      <div class="dash__col-left">
+        <section class="dcard dash__darwin-backend" id="darwinBackendCard">
+          <p class="darwin-backend__empty">Buscando tu combinación perfecta…</p>
+        </section>
+
+        <a href="panoramas.html#explorar" class="dash__cta">
+          <span class="dash__cta-icon">🗺️</span>
+          <span class="dash__cta-text">
+            <strong>Ver mis panoramas</strong>
+            <small>Todo lo que Darwin armó especialmente para ti</small>
+          </span>
+          <span class="dash__cta-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="dash__col-right">
+        <a href="pickpoints.html" class="dcard dash__points-teaser">
+          <span class="dash__points-teaser-icon">⭐</span>
+          <div class="dash__points-teaser-body">
+            <p class="dash__points-teaser-total"><span class="count-up" data-target="1240">0</span> <small>Pick Points</small></p>
+            <p class="dash__points-teaser-tier">Nivel Fiel · hasta 4% cashback en tus reservas</p>
+          </div>
+          <span class="dash__points-teaser-arrow">→</span>
+        </a>
+
+        <a href="onboarding.html" class="dcard dash__points-teaser">
+          <span class="dash__points-teaser-icon">🧭</span>
+          <div class="dash__points-teaser-body">
+            <p class="dash__points-teaser-total">Tus datos de viajero</p>
+            <p class="dash__points-teaser-tier">Tu edad, con quién viajas y tus gustos — edítalos cuando quieras</p>
+          </div>
+          <span class="dash__points-teaser-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <p class="eyebrow dash__section-label">Tu cuenta</p>
 
     <section class="dcard dash__settings">
       <h2 class="dcard__title">Configura tu cuenta</h2>
@@ -103,24 +138,6 @@ if ('serviceWorker' in navigator) {
       </form>
     </section>
 
-    <a href="onboarding.html" class="dcard dash__points-teaser">
-      <span class="dash__points-teaser-icon">🧭</span>
-      <div class="dash__points-teaser-body">
-        <p class="dash__points-teaser-total">Tus datos de viajero</p>
-        <p class="dash__points-teaser-tier">Tu edad, con quién viajas y tus gustos — edítalos cuando quieras</p>
-      </div>
-      <span class="dash__points-teaser-arrow">→</span>
-    </a>
-
-    <a href="pickpoints.html" class="dcard dash__points-teaser">
-      <span class="dash__points-teaser-icon">⭐</span>
-      <div class="dash__points-teaser-body">
-        <p class="dash__points-teaser-total"><span class="count-up" data-target="1240">0</span> <small>Pick Points</small></p>
-        <p class="dash__points-teaser-tier">Nivel Fiel · hasta 4% cashback en tus reservas</p>
-      </div>
-      <span class="dash__points-teaser-arrow">→</span>
-    </a>
-
     <section class="dcard dash__payments">
       <div class="dash__payments-head">
         <h2 class="dcard__title">Métodos de pago</h2>
@@ -149,15 +166,6 @@ if ('serviceWorker' in navigator) {
       </div>
       <p class="pay__note">🔒 Tus datos de pago están cifrados y protegidos.</p>
     </section>
-
-    <a href="panoramas.html#explorar" class="dash__cta">
-      <span class="dash__cta-icon">🗺️</span>
-      <span class="dash__cta-text">
-        <strong>Ver mis panoramas</strong>
-        <small>Todo lo que Darwin armó especialmente para ti</small>
-      </span>
-      <span class="dash__cta-arrow">→</span>
-    </a>
   </div>
 </main>
 

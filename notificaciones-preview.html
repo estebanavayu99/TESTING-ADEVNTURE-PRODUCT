@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Pickmap — Preview de notificaciones</title>
+<title>PickMap — Preview de notificaciones</title>
 <style>
   :root {
     --ink: #1E2D31;
@@ -272,7 +272,7 @@
     </div>
 
     <div class="mailhead">
-      <div class="mailhead__row"><span class="mailhead__label">De</span><span class="mailhead__value">Pickmap &lt;hola@pickmap.cl&gt;</span></div>
+      <div class="mailhead__row"><span class="mailhead__label">De</span><span class="mailhead__value">PickMap &lt;hola@pickmap.cl&gt;</span></div>
       <div class="mailhead__row"><span class="mailhead__label">Para</span><span class="mailhead__value" id="mailTo">contacto@pickmap.cl</span></div>
       <div class="mailhead__subject" id="mailSubject">—</div>
     </div>
@@ -337,9 +337,9 @@ function shell(accent, badgeLabel, preheader, bodyHtml, ctaLabel, ctaHref, opts)
         ${ctaLabel ? `<a class="cta" href="${ctaHref || '#'}">${ctaLabel}</a>` : ''}
       </div>
       <div class="footer">
-        Pickmap SpA · Santiago, Chile<br>
-        Recibiste este correo porque tienes una cuenta activa en Pickmap.
-        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a>
+        PickMap SpA · Santiago, Chile<br>
+        Recibiste este correo porque tienes una cuenta activa en PickMap.
+        <a href="https://pickmap.cl/dashboard.html">Gestionar notificaciones</a> · <a href="https://pickmap.cl/terminos.html">Términos y Condiciones</a> · <a href="https://pickmap.cl/privacidad.html">Privacidad</a>
       </div>
     </div>
   </body></html>`;
@@ -350,7 +350,7 @@ const NOTIFS = [
   {
     id: 'bienvenida', group: 'cliente', dot: BRAND.greenInk,
     title: 'Bienvenida', desc: 'Al crear la cuenta',
-    subject: '¡Bienvenido a Pickmap, Camila! 🎉🧭',
+    subject: '¡Bienvenido a PickMap, Camila! 🎉🧭',
     body: shell(BRAND.greenInk, 'CUENTA NUEVA',
       'Cuéntanos qué te gusta y Darwin arma tu primer panorama.',
       `<h1>¡Hola, Camila! 👋🎉</h1>
@@ -362,7 +362,7 @@ const NOTIFS = [
   {
     id: 'recuperar', group: 'cliente', dot: BRAND.navy2,
     title: 'Recuperar contraseña', desc: 'Enlace seguro',
-    subject: '🔒 Restablece tu contraseña de Pickmap',
+    subject: '🔒 Restablece tu contraseña de PickMap',
     body: shell(BRAND.navy2, 'SEGURIDAD',
       'Recibimos una solicitud para restablecer tu contraseña.',
       `<h1>Restablece tu contraseña</h1>
