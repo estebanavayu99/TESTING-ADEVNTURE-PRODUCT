@@ -85,15 +85,26 @@ if ('serviceWorker' in navigator) {
     </section>
 
     <section class="dcard">
-      <h2 class="dcard__title">¿Quieres agregar un nuevo servicio?</h2>
-      <p class="biz__sub" style="margin:0 0 1.125rem;">Los servicios de tu perfil los agrega nuestro equipo — cuéntanos qué quieres sumar y te confirmamos por correo, no se publica directo.</p>
+      <h2 class="dcard__title" id="servicioFormTitle">¿Quieres agregar o editar un servicio?</h2>
+      <p class="biz__sub" style="margin:0 0 1.125rem;">Los servicios de tu perfil los agrega o edita nuestro equipo — cuéntanos qué quieres agregar o cambiar y te confirmamos por correo, no se publica directo.</p>
       <form id="servicioRequestForm" class="biz-service-form">
+        <div class="dash__field">
+          <span>Tipo de solicitud</span>
+          <div class="biz-service-form__tipo">
+            <label><input type="radio" name="servicioTipo" value="nuevo" id="servicioTipoNuevo" checked> Agregar servicio nuevo</label>
+            <label><input type="radio" name="servicioTipo" value="edicion" id="servicioTipoEdicion"> Editar un servicio existente</label>
+          </div>
+        </div>
+        <label class="dash__field" id="servicioAEditarField" hidden>
+          <span>Servicio a editar</span>
+          <select id="servicioAEditar"></select>
+        </label>
         <label class="dash__field">
-          <span>Nombre del servicio</span>
+          <span id="servicioNombreLabel">Nombre del servicio</span>
           <input type="text" id="servicioNombre" placeholder="Ej: Tour nocturno de estrellas" required>
         </label>
         <label class="dash__field">
-          <span>Descripción</span>
+          <span id="servicioDescripcionLabel">Descripción</span>
           <textarea id="servicioDescripcion" rows="3" placeholder="Cuéntanos en qué consiste, duración, para cuántas personas..." required></textarea>
         </label>
         <label class="dash__field">
@@ -115,5 +126,6 @@ if ('serviceWorker' in navigator) {
 <script src="js/skyline.js"></script>
 <script src="js/negocio.js"></script>
 <script src="js/negocio-servicios.js"></script>
+<script src="js/admin-viewas.js"></script>
 </body>
 </html>

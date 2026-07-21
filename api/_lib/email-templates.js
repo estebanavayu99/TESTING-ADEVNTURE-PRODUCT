@@ -314,17 +314,22 @@ const PLANTILLAS = {
   // owner para que revise y lo agregue de verdad (tampoco en el spec
   // original de 13, mismo patrón que las demás notificaciones internas).
   'solicitud-nuevo-servicio-owner': (d) => ({
-    subject: `🛎️ ${d.negocio} solicitó agregar un servicio`,
+    subject: d.esEdicion
+      ? `🛎️ ${d.negocio} solicitó editar un servicio`
+      : `🛎️ ${d.negocio} solicitó agregar un servicio`,
     html: shell(BRAND.sun, 'PANEL DE NEGOCIO',
-      `${esc(d.negocio)} quiere agregar "${esc(d.nombre)}" a su perfil.`,
-      `<h1>Solicitud de nuevo servicio</h1>
+      d.esEdicion
+        ? `${esc(d.negocio)} quiere editar "${esc(d.servicioOriginal)}".`
+        : `${esc(d.negocio)} quiere agregar "${esc(d.nombre)}" a su perfil.`,
+      `<h1>${d.esEdicion ? 'Solicitud de edición de servicio' : 'Solicitud de nuevo servicio'}</h1>
        <table class="kv" width="100%">
          <tr><td>Negocio</td><td>${esc(d.negocio)}</td></tr>
          <tr><td>Correo</td><td>${esc(d.email)}</td></tr>
-         <tr><td>Servicio</td><td>${esc(d.nombre)}</td></tr>
+         ${d.esEdicion ? `<tr><td>Servicio a editar</td><td>${esc(d.servicioOriginal)}</td></tr>` : ''}
+         <tr><td>${d.esEdicion ? 'Nuevo nombre' : 'Servicio'}</td><td>${esc(d.nombre)}</td></tr>
          <tr><td>Precio sugerido</td><td>${esc(d.precioSugerido)}</td></tr>
        </table>
-       <p><b>Descripción:</b></p>
+       <p><b>${d.esEdicion ? 'Cambios propuestos:' : 'Descripción:'}</b></p>
        <p style="font-style:italic;">"${esc(d.descripcion)}"</p>`),
   }),
 

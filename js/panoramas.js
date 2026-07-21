@@ -1603,6 +1603,10 @@
       ? general
       : (activeTab === 'recomendado' ? recommended : general).filter((i) => i.kind === activeFilter);
     const filtered = applySort(applyAdvFilters(source));
+    const countEl = document.getElementById('panoResultCount');
+    if (countEl) {
+      countEl.innerHTML = `<span class="pano-toolbar__count-dot"></span>${filtered.length} resultado${filtered.length === 1 ? '' : 's'}`;
+    }
     if (filtered.length === 0) {
       grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
       return;

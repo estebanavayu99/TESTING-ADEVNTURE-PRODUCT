@@ -8,7 +8,7 @@
   // resumen agregado de TODOS los negocios (negocio-admin.html/js). Mismo
   // email que ya se usaba como OWNER_NOTIFICATION_EMAIL en js/negocio.js.
   const ADMIN_EMAIL = 'contacto@pickmap.cl';
-  function panelDestino(email) { return email === ADMIN_EMAIL ? 'negocio-admin.html' : 'negocio.html'; }
+  function panelDestino(email) { return (email || '').trim().toLowerCase() === ADMIN_EMAIL ? 'negocio-admin.html' : 'negocio.html'; }
 
   function cleanRut(v) { return (v || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
   function formatRut(v) {
@@ -234,9 +234,10 @@
     try {
       const session = await S.auth.getSession();
       if (session && session.user) {
-        setLegacySession(session.user.email);
-        await syncLegacyFromSupabase(session.user.id, session.user.email);
-        window.location.href = panelDestino(session.user.email);
+        const sessionEmail = (session.user.email || '').trim().toLowerCase();
+        setLegacySession(sessionEmail);
+        await syncLegacyFromSupabase(session.user.id, sessionEmail);
+        window.location.href = panelDestino(sessionEmail);
       }
     } catch { /* sin sesión activa, se queda en el login normal */ }
   })();
@@ -311,6 +312,23 @@
         rep_name: repName, rep_rut: repRut, biz_name: bizName, legal_name: legalName, biz_rut: bizRut,
         region, comuna, street, availability, referral_code_used: referralCodeUsed,
       });
+      // Bug real reportado por el usuario (2026-07-21): Supabase, por
+      // seguridad, no lanza error cuando se llama signUp() con un correo
+      // que YA tiene una cuenta confirmada — devuelve un "éxito" falso
+      // (sin sesión, `result.user.identities` vacío) para no revelar que
+      // el correo existe. Sin este chequeo, el formulario mostraba la
+      // pantalla de "verifica tu correo" igual, prometiendo un correo que
+      // nunca se manda (no hay nada que confirmar) — dejaba a la persona
+      // esperando un email que jamás iba a llegar (caso real: la cuenta
+      // admin contacto@pickmap.cl ya estaba confirmada desde el día
+      // anterior). Se detecta acá y se manda derecho al login con el
+      // correo precargado.
+      if (result.user && Array.isArray(result.user.identities) && result.user.identities.length === 0) {
+        showForm('login');
+        formLogin.querySelector('[name=email]').value = email;
+        showError('Ya existe una cuenta de empresa con ese correo. Inicia sesión con tu contraseña, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.');
+        return;
+      }
       if (result.session) {
         // Confirmación de correo desactivada en el proyecto Supabase: la
         // sesión queda activa de inmediato — se sigue directo al panel sin

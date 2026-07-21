@@ -51,11 +51,45 @@
 }
 .pano-filter.is-active { background: var(--sun); color: var(--navy); border-color: var(--sun); }
 
+/* Header "Darwin armó estos planes..." — rediseño 2026-07-21 a más
+   profesional/tecnológico (instrucción explícita del usuario). El eyebrow
+   lleva un punto pulsante tipo "sistema en vivo" y los widgets de
+   clima/ubicación (.dash__weather + .pano-hero__stat) pasan de simple
+   texto a chip con fondo/borde propio, para que se lean como "lecturas de
+   sensor" en vez de texto suelto flotando en la tarjeta. */
+.pano-hero__eyebrow { display: flex; align-items: center; gap: 8px; }
+.pano-hero__pulse {
+  position: relative;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  flex-shrink: 0;
+}
+.pano-hero__pulse::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: var(--coral);
+  animation: panoHeroPulse 1.8s ease-out infinite;
+}
+@keyframes panoHeroPulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+.pano-hero__stat {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(30, 45, 49, 0.1);
+  border-radius: 16px;
+  padding: 10px 18px !important;
+}
+
 /* Toolbar de filtros/orden — rediseñada 2026-07-21 (instrucción explícita
    del usuario: la barra plana de selects sueltos "se ve poco profesional y
-   poco elaborado"). Pasa a una tarjeta propia con eyebrow, selects con
-   ícono + chevron custom (en vez del <select> pelado del navegador) y un
-   botón real de "Limpiar filtros" en vez de un link de texto suelto. */
+   poco elaborado", luego pidió una segunda pasada "más profesional y
+   tecnológica"). Pasa a una tarjeta propia con eyebrow, selects con
+   ícono + chevron custom (en vez del <select> pelado del navegador), un
+   contador de resultados en vivo y un botón real de "Limpiar filtros" en
+   vez de un link de texto suelto. */
 .pano-toolbar {
   margin-bottom: 28px;
   padding: 20px 22px;
@@ -65,13 +99,51 @@
   border-radius: 22px;
   box-shadow: 0 20px 46px rgba(15, 20, 22, 0.08);
 }
+.pano-toolbar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
 .pano-toolbar__label {
-  margin: 0 0 14px;
+  margin: 0;
   font-weight: 800;
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--slate);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pano-toolbar__label-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 7px;
+  background: rgba(245, 94, 97, 0.12);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.pano-toolbar__head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pano-toolbar__count {
+  display: flex; align-items: center; gap: 7px;
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  color: var(--navy-2);
+  background: rgba(30, 45, 49, 0.06);
+  border-radius: 999px;
+  padding: 7px 14px;
+  white-space: nowrap;
+}
+.pano-toolbar__count-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #3fb56a;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(63, 181, 106, 0.18);
 }
 .pano-toolbar__row {
   display: flex;
@@ -85,7 +157,15 @@
   color: var(--slate);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+}
+.pano-advfilter__badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 6px;
+  background: rgba(30, 45, 49, 0.07);
+  font-size: 0.7rem;
+  flex-shrink: 0;
 }
 .pano-advfilter select {
   font-family: var(--font-body);
@@ -124,8 +204,6 @@
   border-radius: 12px;
   cursor: pointer;
   padding: 10px 16px;
-  margin-left: auto;
-  align-self: flex-end;
   transition: background .18s, border-color .18s;
   white-space: nowrap;
 }

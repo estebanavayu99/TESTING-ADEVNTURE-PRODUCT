@@ -10,7 +10,7 @@
     return h;
   }
 
-  const bizEmail = localStorage.getItem(BIZ_SESSION_KEY);
+  const bizEmail = (localStorage.getItem(BIZ_SESSION_KEY) || '').trim().toLowerCase();
   if (!bizEmail) {
     window.location.href = 'login-empresa.html';
     return;
@@ -270,6 +270,8 @@
         datos: {
           negocio: biz.name,
           email: bizEmail,
+          esEdicion: solicitud.tipo === 'edicion',
+          servicioOriginal: solicitud.servicioOriginalNombre || '',
           nombre: solicitud.nombre,
           descripcion: solicitud.descripcion,
           precioSugerido: solicitud.precioSugerido ? fmtMoney(solicitud.precioSugerido) : 'No especificado',
@@ -278,13 +280,19 @@
     }).catch(() => { /* fire-and-forget: nunca debe bloquear el envío de la solicitud */ });
   }
 
-  // No se auto-aprueba nada acá — el servicio real lo agrega el equipo de
-  // Pickmap tras revisar la solicitud (mismo criterio de "nunca fabricar un
-  // dato falso": no se inventa un estado "aprobada" que no pasó de verdad).
-  function solicitarNuevoServicio(nombre, descripcion, precioSugerido) {
+  // No se auto-aprueba nada acá — el cambio real (agregar o editar) lo hace
+  // el equipo de Pickmap tras revisar la solicitud (mismo criterio de
+  // "nunca fabricar un dato falso": no se inventa un estado "aprobada" que
+  // no pasó de verdad). `tipo` es 'nuevo' o 'edicion'; `servicioOriginal`
+  // solo aplica a 'edicion' — el servicio ya inscrito que se quiere
+  // modificar (id + nombre, para que el owner sepa cuál es sin ambigüedad).
+  function solicitarServicio(tipo, nombre, descripcion, precioSugerido, servicioOriginal) {
     const raw = getServiceRequests();
     const solicitud = {
-      id: Date.now(), nombre, descripcion, precioSugerido: precioSugerido || null,
+      id: Date.now(), tipo: tipo === 'edicion' ? 'edicion' : 'nuevo',
+      nombre, descripcion, precioSugerido: precioSugerido || null,
+      servicioOriginalId: servicioOriginal ? servicioOriginal.id : null,
+      servicioOriginalNombre: servicioOriginal ? servicioOriginal.nombre : null,
       fecha: new Date().toISOString(), estado: 'pendiente',
     };
     raw.unshift(solicitud);
@@ -591,7 +599,7 @@
   window.PickmapNegocio = {
     getBusiness, getBusinessEmail: () => bizEmail, getReservations, fmtMoney, fmtDate, fmtDateShort, isActive, isPaid, NOW, openReservationModal, openDayModal, openMonthModal,
     getReviews, getReferrals, getReferralCode, actualizarEstadoReserva, proximoPagoPendiente, responderResena,
-    getServices, getServiceRequests, solicitarNuevoServicio,
+    getServices, getServiceRequests, solicitarServicio,
   };
 
   /* ---------- Shared nav / logout ---------- */

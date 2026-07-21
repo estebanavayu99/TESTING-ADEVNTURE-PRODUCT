@@ -70,6 +70,30 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <section class="dcard admin-viewas">
+      <h2 class="dcard__title">🎭 Ver como</h2>
+      <p class="biz__sub admin-viewas__sub">Métete al panel real de un negocio o de un viajero para ir revisando los cambios, sin tener que cerrar sesión ni volver a iniciar sesión cada vez.</p>
+      <div class="admin-viewas__row">
+        <label class="admin-viewas__field">
+          <span>Ver como negocio</span>
+          <select id="adminViewAsBizSelect">
+            <option value="" disabled selected>Selecciona un negocio</option>
+          </select>
+        </label>
+        <button type="button" class="btn btn--primary" id="adminViewAsBizBtn">Ver panel del negocio</button>
+      </div>
+      <div class="admin-viewas__row">
+        <label class="admin-viewas__field">
+          <span>Ver como viajero</span>
+          <select id="adminViewAsTravelerSelect">
+            <option value="" disabled selected>Selecciona un viajero</option>
+          </select>
+        </label>
+        <button type="button" class="btn btn--primary" id="adminViewAsTravelerBtn">Ver cuenta del viajero</button>
+      </div>
+      <p class="admin-viewas__empty" id="adminViewAsEmpty" hidden>Todavía no hay negocios ni viajeros registrados para ver.</p>
+    </section>
+
     <div class="biz__stats admin-stats">
       <div class="biz-stat biz-stat--accent">
         <p class="biz-stat__label">Negocios aliados</p>
@@ -140,6 +164,9 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script src="js/skyline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="js/negocio-admin.js"></script>
 </body>
 </html>

@@ -528,6 +528,38 @@ html { font-size: 84%; }
 .biz-service__amt { font-weight: 800; color: var(--navy); font-size: 0.92rem; flex-shrink: 0; white-space: nowrap; }
 .biz-service-form { display: flex; flex-direction: column; gap: 0.875rem; max-width: 30rem; }
 .biz-service-form .btn { align-self: flex-start; }
+.biz-service-form__tipo { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.25rem; }
+.biz-service-form__tipo label { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.88rem; color: var(--navy-2); cursor: pointer; }
+.biz-service-form__tipo input { accent-color: var(--coral); }
+
+/* "Ver como" (negocio-admin.html): el super admin entra al panel real de
+   un negocio o de un viajero para ir revisando cambios sin cerrar sesión
+   ni volver a iniciar sesión cada vez — ver js/admin-viewas.js para el
+   banner "volver a super admin" que aparece en esas páginas. */
+.admin-viewas__sub { margin: 0 0 1.125rem; }
+.admin-viewas__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+.admin-viewas__row:last-of-type { margin-bottom: 0; }
+.admin-viewas__field { flex: 1; display: flex; flex-direction: column; gap: 0.375rem; max-width: 22rem; }
+.admin-viewas__field span { font-weight: 700; font-size: 0.85rem; color: var(--navy); }
+.admin-viewas__field select {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(30, 45, 49, 0.18);
+  background: var(--bg);
+  color: var(--navy);
+}
+.admin-viewas__empty { margin: 0; font-size: 0.88rem; color: var(--slate); }
+@media (max-width: 640px) {
+  .admin-viewas__row { flex-direction: column; align-items: stretch; }
+  .admin-viewas__field { max-width: none; }
+}
 
 @media (max-width: 640px) {
   .biz-cal__cell { min-height: 3.5rem; padding: 0.375rem; }
