@@ -37,6 +37,43 @@
   }
   function saveTravelerReservations(list) { localStorage.setItem(TRAVELER_KEY, JSON.stringify(list)); }
 
+  // Cuenta demo genérica de viajero (instrucción explícita del usuario,
+  // 2026-07-21: "quiero poder ver TODO lo que ellos ven... agrégale un
+  // historial al viajero"). Esta cuenta se crea directo por SQL para
+  // probar el panel de super admin, así que nunca reservó nada de verdad
+  // — sin esto, el historial le saldría vacío por más que la función ya
+  // exista. Solo aplica a este correo puntual, nunca a un viajero real
+  // (mismo criterio que ADMIN_EMAIL/OWNER_NOTIFICATION_EMAIL hardcodeados
+  // en otros archivos: no se fabrica historial para nadie más).
+  const DEMO_TRAVELER_EMAIL = 'viajero.demo@pickmap.cl';
+  function seedDemoHistoryIfNeeded() {
+    if (email !== DEMO_TRAVELER_EMAIL) return;
+    if (getTravelerReservations().length) return;
+    const now = Date.now();
+    const day = 86400000;
+    saveTravelerReservations([
+      {
+        id: 'demo-1', title: 'Cabaña + tinaja caliente (2 noches)', icon: '🏕️',
+        businessEmail: 'negocio.demo@pickmap.cl', businessName: 'Negocio Demo',
+        fecha: new Date(now - 21 * day).toISOString(), slot: '15:00', personas: 2, monto: 85000,
+        reviewed: true, rating: 5, comentario: 'Increíble la tinaja con vista, volveríamos altiro.',
+      },
+      {
+        id: 'demo-2', title: 'Cabaña romántica + cena', icon: '🍽️',
+        businessEmail: 'negocio.demo@pickmap.cl', businessName: 'Negocio Demo',
+        fecha: new Date(now - 10 * day).toISOString(), slot: '20:00', personas: 2, monto: 53000,
+        reviewed: true, rating: 4, comentario: 'Muy rica la cena, el servicio se demoró un poco.',
+      },
+      {
+        id: 'demo-3', title: 'Cabaña grupo (6 personas)', icon: '👥',
+        businessEmail: 'negocio.demo@pickmap.cl', businessName: 'Negocio Demo',
+        fecha: new Date(now - 3 * day).toISOString(), slot: '12:00', personas: 6, monto: 101000,
+        reviewed: false,
+      },
+    ]);
+  }
+  seedDemoHistoryIfNeeded();
+
   const POINTS_KEY = `pickmap_points_${email}`;
   const DEFAULT_POINTS = 1240;
   function getPoints() {
@@ -56,13 +93,14 @@
 
   const card = document.getElementById('reviewsPendingCard');
   const list = document.getElementById('reviewsPendingList');
+  const emptyEl = document.getElementById('reviewsEmpty');
   if (!card || !list) return;
 
-  function pending() {
-    return getTravelerReservations().filter((r) => !r.reviewed);
+  function allReservations() {
+    return [...getTravelerReservations()].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   }
 
-  function rowHTML(r) {
+  function pendingRowHTML(r) {
     return `
       <li class="dash__review-pending" data-id="${r.id}">
         <span class="dash__history-icon">${r.icon || '📍'}</span>
@@ -86,10 +124,24 @@
     `;
   }
 
+  function doneRowHTML(r) {
+    return `
+      <li class="dash__review-done" data-id="${r.id}">
+        <span class="dash__history-icon">${r.icon || '📍'}</span>
+        <div class="dash__history-info">
+          <p class="dash__history-title">${escapeHTML(r.title)}</p>
+          <p class="dash__history-time">${fmtDateShort(r.fecha)}${r.businessName ? ` · ${escapeHTML(r.businessName)}` : ''}</p>
+          ${r.comentario ? `<p class="dash__review-done-comment">"${escapeHTML(r.comentario)}"</p>` : ''}
+        </div>
+        <span class="dash__review-done-stars">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</span>
+      </li>
+    `;
+  }
+
   function render() {
-    const items = pending();
-    card.hidden = items.length === 0;
-    list.innerHTML = items.map(rowHTML).join('');
+    const items = allReservations();
+    if (emptyEl) emptyEl.hidden = items.length > 0;
+    list.innerHTML = items.map((r) => (r.reviewed ? doneRowHTML(r) : pendingRowHTML(r))).join('');
   }
   render();
 
@@ -106,7 +158,7 @@
     const idx = all.findIndex((r) => String(r.id) === String(id));
     if (idx === -1) return;
     const reserva = all[idx];
-    all[idx] = { ...reserva, reviewed: true };
+    all[idx] = { ...reserva, reviewed: true, rating, comentario };
     saveTravelerReservations(all);
 
     if (reserva.businessEmail) {

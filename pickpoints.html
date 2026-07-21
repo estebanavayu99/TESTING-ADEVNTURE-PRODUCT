@@ -226,9 +226,10 @@ if ('serviceWorker' in navigator) {
       </section>
     </div>
 
-    <section class="dcard" id="reviewsPendingCard" hidden>
-      <h2 class="dcard__title">Reservas por reseñar</h2>
-      <p class="dash__rewards-sub">Cuéntale a otros viajeros (y al negocio) cómo te fue — ganas +15 Pick Points por cada reseña.</p>
+    <section class="dcard" id="reviewsPendingCard">
+      <h2 class="dcard__title">Historial de reservas</h2>
+      <p class="dash__rewards-sub">Todas tus reservas reales — deja una reseña en las que todavía no calificaste y gana +15 Pick Points por cada una.</p>
+      <p class="dash__reviews-empty" id="reviewsEmpty" hidden>Todavía no tienes reservas. Cuando reserves un panorama, va a aparecer acá.</p>
       <ul class="dash__review-pending-list" id="reviewsPendingList"></ul>
     </section>
 

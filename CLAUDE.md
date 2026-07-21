@@ -1467,3 +1467,60 @@ header de `panoramas.html`), hover más perceptible en filas de listas
 como" (filas con fondo/borde verde tenue separadas, selects con foco verde,
 botones con gradiente). Todo dentro de `.admin-page`, no afecta ninguna
 otra página.
+
+## Cuentas demo genéricas para "Ver como" + creación directa por SQL (2026-07-21)
+
+Instrucción explícita del usuario: quiere una cuenta de empresa y una de
+viajero genéricas, siempre disponibles, para poder ir revisando cambios en
+tiempo real desde "Ver como" sin tener que loguearse/desloguearse — y
+pidió crearlas directo por SQL en vez de pasar por el formulario de
+signup (para no salirse del panel de super admin).
+
+- **Cómo se crean cuentas reales de Supabase Auth sin pasar por la UI**:
+  insertar directo en `auth.users` (con `encrypted_password` vía
+  `crypt()`/`gen_salt('bf')`, mismo mecanismo ya usado para forzar la
+  contraseña de `contacto@pickmap.cl`) + una fila en `auth.identities`
+  (necesaria en versiones recientes de GoTrue para que
+  `signInWithPassword` funcione) — los triggers ya instalados
+  (`crear_perfil_para_nuevo_usuario`/`crear_perfil_empresa_para_nuevo_usuario`)
+  se disparan solos con el `INSERT` y crean la fila de `profiles`/
+  `business_profiles` automáticamente a partir de `raw_user_meta_data`, sin
+  necesitar un segundo insert manual. `email_confirmed_at = now()` en el
+  mismo insert evita todo el problema de correos de confirmación que no
+  llegan. Cuentas creadas así: `negocio.demo@pickmap.cl` (empresa) y
+  `viajero.demo@pickmap.cl` (viajero), password `Demo2026!` para ambas.
+- **Gotcha real encontrado: caché de esquema de PostgREST**. Justo después
+  de crear la tabla `business_profiles` por primera vez (pegando el
+  `schema.sql` completo), las consultas desde el navegador a esa tabla
+  devolvían vacío por un rato aunque los datos ya estaban ahí (confirmado
+  con `select` directo en el SQL Editor) — típico retraso de PostgREST en
+  reconocer una tabla nueva. Se resolvió solo esperando y recargando; no
+  requirió ninguna acción further.
+- **Bug real encontrado y arreglado**: `js/negocio-admin.js` filtraba
+  `ADMIN_EMAIL` de la lista de negocios del picker "Ver como" pero no de
+  la lista de viajeros — como `contacto@pickmap.cl` tiene su propia fila
+  en `profiles` (se creó cuando todavía era una cuenta viajero normal,
+  antes de tener acceso a `negocio-admin.html`), se colaba como si fuera
+  un viajero real más. Se agregó el mismo filtro a `travelerUsers`.
+- **Historial de reservas del viajero + reseñas (pickpoints.html)**: antes
+  la tarjeta "Reservas por reseñar" solo mostraba reservas SIN reseñar, y
+  desaparecía por completo apenas todas quedaban reseñadas — no existía
+  ningún historial persistente visible. Ahora es "Historial de reservas":
+  siempre visible (o un estado vacío explícito si no hay ninguna),
+  muestra TODAS las reservas reales del viajero ordenadas por fecha
+  — las ya reseñadas en modo solo-lectura (estrellas + comentario que
+  el viajero dejó, guardado ahora también en su propio registro de
+  `pickmap_traveler_reservations_<email>`, antes solo se guardaba en la
+  reseña del NEGOCIO) y las pendientes con el mismo formulario de
+  estrellas + texto de siempre.
+- **Seed de historial demo, solo para `viajero.demo@pickmap.cl`**: como
+  esta cuenta se creó directo por SQL, nunca reservó nada real — sin
+  datos, el historial le saldría vacío. `js/pickpoints.js` siembra 3
+  reservas de ejemplo (2 ya reseñadas con distintos ratings/comentarios, 1
+  pendiente) la primera vez que esta cuenta puntual visita la página, si
+  no tiene ninguna reserva todavía. Mismo criterio que `ADMIN_EMAIL`/
+  `OWNER_NOTIFICATION_EMAIL` hardcodeados en otros archivos: el hardcode
+  aplica a un correo específico y conocido, nunca se generan datos falsos
+  para un viajero real. El lado empresa (`negocio.demo@pickmap.cl`) no
+  necesitó nada de esto — `js/negocio.js` ya generaba reservas/reseñas/
+  servicios demo determinísticos para CUALQUIER email desde antes.
