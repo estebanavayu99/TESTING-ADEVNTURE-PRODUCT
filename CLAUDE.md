@@ -1128,49 +1128,85 @@ schema, la recomendación concreta:
   recíprocamente desde `terminos.html` (cláusula 21 y el header) y desde
   el footer de `index.html` y de `api/_lib/email-templates.js`/
   `notificaciones-preview.html`.
-- **Rediseño de "Mi cuenta" (dashboard.html, viajero)** (instrucción
-  explícita del usuario: no le convencía el orden/presentación, pero sí
-  la información y los colores — pidió explícitamente NO borrar la
-  tarjeta de Darwin). Pasa de una columna larga de tarjetas apiladas a
-  `.dash__grid` (2fr/1fr, mismo patrón ya usado en `pickpoints.html`):
-  columna izquierda = tarjeta de Darwin + CTA grande "Ver mis panoramas";
-  columna derecha (`.dash__col-right`, nuevo) = teasers de Pick Points y
-  "Tus datos de viajero" apilados. Debajo, tras un separador `eyebrow`
-  "Tu cuenta", quedan "Configura tu cuenta" y "Métodos de pago" (lo más
-  administrativo, al final). Mismos componentes/colores de siempre, solo
-  reordenados.
-- **Header de `panoramas.html` + widget de clima/ubicación real**
-  (instrucción explícita del usuario). El h1 cambia de "Tus panoramas" a
-  "Darwin te armó este plan para hoy". A la derecha del texto (mismo
+- **Rediseño de "Mi cuenta" (dashboard.html, viajero) — SIN oferta de
+  Darwin**. Primero se reordenó a `.dash__grid` (2fr/1fr) con la tarjeta
+  de Darwin a la izquierda; después el usuario reconsideró y pidió
+  explícitamente "en Mi cuenta no me ofrezcas nada, es para otras cosas
+  ahí" — Mi Cuenta es solo administración de cuenta (Pick Points/datos de
+  viajero como teasers de navegación, Configura tu cuenta, Métodos de
+  pago), no un lugar donde Darwin ofrezca planes. Se quitaron de
+  `dashboard.html`: la tarjeta `#darwinBackendCard`, el CTA "Ver mis
+  panoramas", y los 9 `<script>` de bot-darwin/Supabase que solo servían
+  para esa tarjeta (`js/darwin-backend.js` y el resto de `bot-darwin/js/*`
+  NO se borraron del repo, solo dejaron de cargarse en esta página —
+  quedan disponibles por si se reengancha esa oferta en otra parte, p.ej.
+  `panoramas.html`, donde ya vive el mensaje "Darwin armó estos planes
+  especialmente para ti"). Los dos teasers (Pick Points, Tus datos de
+  viajero) pasan a `.dash__teasers` (grid simple 2 columnas, ya no hay
+  columna angosta de sidebar sin la tarjeta de Darwin al lado).
+- **Header de `panoramas.html` + widgets reales de clima Y ubicación**.
+  El h1 se simplificó dos veces siguiendo instrucciones del usuario:
+  primero "Darwin te armó este plan para hoy", después "SOLO pongas:
+  'Darwin armó estos planes especialmente para ti'" — quedó ese texto
+  como único contenido del bloque (se sacó el `<p class="dash__sub">` de
+  abajo, ya no hay subtítulo separado). A la derecha (mismo
   `.dash__greeting`, con un `:has(.dash__weather)` en CSS que solo activa
-  el layout de fila cuando el widget está presente — no afecta a las
-  demás páginas que comparten `.dash__greeting`) se agregó
-  `js/panoramas-weather.js`: pide geolocalización real del navegador y
-  llama a `PickmapDarwin.contexto.clima()` (Open-Meteo, ya usado en
-  bot-darwin, cargado standalone vía `bot-darwin/js/contexto.js` sin el
-  resto del motor) para mostrar un ícono + temperatura reales de "ahora".
-  Si no hay permiso de ubicación o el fetch falla, el widget se queda
-  oculto — nunca se fabrica un dato de clima falso.
-- **Toolbar de filtros de `panoramas.html` rediseñada** (instrucción
-  explícita del usuario: se veía "poco profesional y poco elaborado").
-  `.pano-advfilters` (plana, selects pelados) pasa a `.pano-toolbar`: una
-  tarjeta con eyebrow "🔍 Filtrar y ordenar", cada select con ícono +
-  chevron custom (`appearance:none` + SVG de fondo en vez de la flecha
-  nativa del navegador) y focus ring coral, y "Limpiar filtros" pasa de
-  link de texto a un botón real con ícono. Mismos IDs (`filterSort`,
-  `filterCategory`, etc.) — cero cambios de JS necesarios.
-- **Sección "Todos" bajada al fondo de la página + catálogo completo sin
-  cap** (instrucción explícita del usuario). Antes había una fila
-  horizontal "Todos" (capada a 8 tarjetas) entre "Simples" y el
-  explorador con tabs. Se eliminó esa fila y se agregó una sección nueva
-  al final de la página (`.pano-row--all`, después de `#explorar`) con un
-  `.pano-grid` propio (`#panoGridTodos`) que renderiza el catálogo
-  `general` COMPLETO (sin `.slice()`), respetando igual la barra de
-  filtros/orden de arriba. `cardItemFor()` en `js/panoramas.js` se
-  actualizó para resolver las tarjetas de esta sección desde `general`
-  (blurb genérico, sin razón personalizada) — mismo criterio que la
-  pestaña "General" del explorador, para no filtrar el `reason`
-  personalizado en una sección que se supone genérica.
+  el layout de fila cuando hay al menos un widget — no afecta a las demás
+  páginas que comparten `.dash__greeting`) hay DOS widgets iguales,
+  agrandados (ícono 2.4rem, valor 1.7rem — antes 1.8rem/1.3rem), uno al
+  lado del otro con un separador vertical entre cada uno:
+  1. **Clima** — `js/panoramas-weather.js` pide geolocalización real del
+     navegador y llama a `PickmapDarwin.contexto.clima()` (Open-Meteo, ya
+     usado en bot-darwin, cargado standalone vía
+     `bot-darwin/js/contexto.js` sin el resto del motor).
+  2. **Ubicación** (agregado a pedido explícito del usuario: "pon otro
+     igual al lado con la ubicación") — mismo archivo, reverse-geocoding
+     real vía BigDataCloud (`api.bigdatacloud.net/data/reverse-geocode-
+     client`, gratis, sin API key, CORS abierto — primera vez que se usa
+     este proveedor en el repo, justificado porque el resto del sitio
+     deliberadamente evitaba reverse geocoding hasta que el usuario lo
+     pidió explícito acá) para mostrar el nombre real de la comuna/ciudad.
+  Si no hay permiso de ubicación o cualquiera de los dos fetch falla, ESE
+  widget en particular se queda oculto — nunca se fabrica un dato falso
+  de clima ni de ubicación; cada uno se muestra independiente del otro.
+- **Toolbar de filtros de `panoramas.html` rediseñada + filtro "Cuándo"
+  con semántica nueva + filtro nuevo de duración de paquete**
+  (instrucción explícita del usuario: la barra se veía "poco profesional
+  y poco elaborado"). `.pano-advfilters` (plana, selects pelados) pasa a
+  `.pano-toolbar`: tarjeta con eyebrow "🔍 Filtrar y ordenar", cada select
+  con ícono + chevron custom (`appearance:none` + SVG de fondo en vez de
+  la flecha nativa) y focus ring coral, "Limpiar filtros" como botón real
+  con ícono. El filtro "Día" (antes "Entre semana"/"Fin de semana") pasó a
+  "Cuándo": **Hoy / Mañana / El fin de semana que sigue / Cualquiera**
+  (pedido explícito del usuario) — como cada item del catálogo solo trae
+  un bucket fijo `semana`/`finde` (ver `parseDay()`, no un día de la
+  semana exacto), "Hoy"/"Mañana" traducen la fecha real (`new Date()`,
+  `diaBucketDeFecha()`) a ese mismo bucket, y "el fin de semana que sigue"
+  siempre cae en `finde` sea cual sea hoy. Se agregó además un filtro
+  nuevo **"Duración del paquete"** (1 día / 2 días / Fin de semana /
+  Cualquiera, pedido explícito del usuario) — `parseDias()` lo deriva del
+  mismo `item.meta` ("Paquete de un día"/"2 días"/"fin de semana"); los
+  items `simple` no tienen duración de varios días (`dias: null`), así
+  que activar este filtro los excluye naturalmente.
+- **Filtro "Todos" (Explorar) y "Ver todo" (Combos/Simples) muestran el
+  catálogo COMPLETO, no el subconjunto personalizado** (dos bugs reales
+  reportados por el usuario, misma causa raíz). Se había agregado una
+  sección nueva separada al fondo de la página para "Todos" — el usuario
+  la rechazó explícitamente ("no pongas aparte una fila con Todos, quiero
+  que en esta sección [la de Explorar] salgan TODOS") y se eliminó esa
+  sección. En su lugar, `renderExplore()` en `js/panoramas.js` ahora
+  ignora la pestaña activa cuando el pill "Todos" está seleccionado y
+  siempre muestra `general` (catálogo completo, deduplicado) — antes,
+  con la pestaña "Recomendado para ti" activa (el estado por defecto de
+  la página), "Todos" en realidad mostraba solo `recommended` (el mismo
+  subconjunto chico de ~6 items usado en las filas Combos/Simples de
+  arriba). Mismo bug afectaba los links "Ver todo" de esas dos filas —
+  llevaban a la pestaña "Recomendado" y filtraban ese subconjunto chico
+  por tipo, mostrando muy pocos resultados; ahora ambos siempre navegan a
+  la pestaña "General" (catálogo completo) filtrado por tipo.
+  `cardItemFor()` se actualizó para resolver las tarjetas del pill
+  "Todos" desde `general` (blurb genérico) en vez de `CATALOG` (razón
+  personalizada), mismo criterio que ya aplicaba a la pestaña "General".
 
 ## Instrucción permanente del usuario: código blindado + todo registrado
 

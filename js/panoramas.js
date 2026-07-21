@@ -192,6 +192,17 @@
     if (/lunes|martes|mi[eé]rcoles|jueves/i.test(meta)) return 'semana';
     return h % 2 === 0 ? 'semana' : 'finde';
   }
+  // Duración de los paquetes ("Paquete de un día"/"2 días"/"fin de semana" —
+  // ver TASTE_POOL/COMPANY_POOL/DEFAULT_POOL arriba) — pedido explícito del
+  // usuario de poder filtrar por cuántos días dura el paquete. Los items
+  // "simple" no tienen duración de varios días, quedan sin bucket (null).
+  function parseDias(meta, kind) {
+    if (kind !== 'paquete') return null;
+    if (/fin de semana/i.test(meta)) return 'finde';
+    if (/2\s*d[ií]as/i.test(meta)) return '2';
+    if (/un\s*d[ií]a/i.test(meta)) return '1';
+    return null;
+  }
   const DIFFICULTY_OVERRIDES = {
     'Salto en parapente': 'extremo',
     'Paracaidismo en tándem': 'extremo',
@@ -304,6 +315,7 @@
       price: priceNum.toLocaleString('es-CL'),
       km: parseKm(item.meta, h),
       day: parseDay(item.meta, h),
+      dias: parseDias(item.meta, item.kind),
       difficulty: getDifficulty(item.title),
       gear: getGear(item.title, category),
       category,
@@ -1446,10 +1458,11 @@
   // always keeps the personalized reason, so resolving strictly from CATALOG
   // would leak the personal reason into the modal even for General-tab cards.
   function cardItemFor(card) {
-    // La sección "Todos" del fondo siempre resuelve desde `general` (blurb
-    // genérico, sin razón personalizada) — mismo criterio que la pestaña
-    // "General" del explorador, ver comentario de arriba.
-    if (gridTodos.contains(card) || (grid.contains(card) && activeTab === 'general')) {
+    // Con el filtro "Todos" activo, la grilla se pobló desde `general`
+    // (blurb genérico) sin importar la pestaña activa — hay que resolver
+    // desde ahí también, o se filtraría la razón personalizada de CATALOG
+    // en tarjetas que en pantalla mostraron el blurb genérico.
+    if (grid.contains(card) && (activeFilter === 'todos' || activeTab === 'general')) {
       const fromGeneral = general.find((i) => i.title === card.dataset.title);
       if (fromGeneral) return fromGeneral;
     }
@@ -1505,14 +1518,15 @@
 
   /* ---------- Filters (shared by rows + explore grid) ---------- */
   const grid = document.getElementById('panoGrid');
-  const gridTodos = document.getElementById('panoGridTodos');
   let activeTab = 'recomendado';
   let activeFilter = 'todos';
   let activeCategory = 'todas';
   let activeDistance = 'todas';
   let activePrice = 'todos';
   let activeDay = 'todos';
+  let activeDias = 'todos';
   let activeSort = 'recomendado';
+  const filterDiasSelect = document.getElementById('filterDias');
 
   const categorySelect = document.getElementById('filterCategory');
   if (categorySelect) {
@@ -1527,12 +1541,30 @@
       });
   }
 
+  // Cada item ya trae un `day` fijo ('semana' o 'finde', según para qué día
+  // de la semana está pensado — ver parseDay() arriba). El filtro "Cuándo"
+  // traduce Hoy/Mañana a ese mismo bucket según la fecha real de hoy; "el
+  // fin de semana que sigue" siempre cae en 'finde', sea cual sea hoy.
+  function diaBucketDeFecha(fecha) {
+    const dow = fecha.getDay(); // 0 = domingo, 6 = sábado
+    return (dow === 0 || dow === 6) ? 'finde' : 'semana';
+  }
+
   function applyAdvFilters(list) {
     let filtered = list;
     if (activeCategory !== 'todas') filtered = filtered.filter((i) => i.category === activeCategory);
     if (activeDistance !== 'todas') filtered = filtered.filter((i) => distanceBucket(i.km) === activeDistance);
     if (activePrice !== 'todos') filtered = filtered.filter((i) => priceBucket(i.priceNum) === activePrice);
-    if (activeDay !== 'todos') filtered = filtered.filter((i) => i.day === activeDay);
+    if (activeDay === 'hoy') {
+      filtered = filtered.filter((i) => i.day === diaBucketDeFecha(new Date()));
+    } else if (activeDay === 'manana') {
+      const manana = new Date();
+      manana.setDate(manana.getDate() + 1);
+      filtered = filtered.filter((i) => i.day === diaBucketDeFecha(manana));
+    } else if (activeDay === 'finde_que_sigue') {
+      filtered = filtered.filter((i) => i.day === 'finde');
+    }
+    if (activeDias !== 'todos') filtered = filtered.filter((i) => i.dias === activeDias);
     return filtered;
   }
 
@@ -1554,9 +1586,17 @@
   }
 
   function renderExplore() {
-    const source = activeTab === 'recomendado' ? recommended : general;
-    const kindFiltered = activeFilter === 'todos' ? source : source.filter((i) => i.kind === activeFilter);
-    const filtered = applySort(applyAdvFilters(kindFiltered));
+    // Bug real reportado por el usuario: con el filtro "Todos" activo (el
+    // default de la página) y la pestaña "Recomendado para ti" activa, esta
+    // grilla mostraba solo el puñado de items de `recommended` (el mismo
+    // subconjunto personalizado/acotado que usan las filas Combos/Simples de
+    // arriba) en vez de TODO el catálogo — "Todos" debe significar todos,
+    // sin importar la pestaña. Con "Simples"/"Paquetes" sí se respeta la
+    // pestaña (Recomendado = personalizado, General = genérico).
+    const source = activeFilter === 'todos'
+      ? general
+      : (activeTab === 'recomendado' ? recommended : general).filter((i) => i.kind === activeFilter);
+    const filtered = applySort(applyAdvFilters(source));
     if (filtered.length === 0) {
       grid.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
       return;
@@ -1564,23 +1604,9 @@
     grid.innerHTML = filtered.map((item) => cardHTML(item)).join('');
   }
 
-  // Sección "Todos" al fondo de la página: instrucción explícita del
-  // usuario de bajarla y que ahí se muestre TODO el catálogo (general,
-  // sin personalizar, sin cap de 8 como la fila horizontal que tenía
-  // antes) — respeta igual la barra de filtros/orden de arriba.
-  function renderTodos() {
-    const filteredGeneral = applySort(applyAdvFilters(general));
-    if (filteredGeneral.length === 0) {
-      gridTodos.innerHTML = '<p class="pano-empty">Todavía no tenemos panoramas con esos filtros. Prueba ajustar alguno.</p>';
-      return;
-    }
-    gridTodos.innerHTML = filteredGeneral.map((item) => cardHTML(item)).join('');
-  }
-
   function renderAll() {
     renderRows();
     renderExplore();
-    renderTodos();
   }
 
   document.querySelectorAll('.pano-tab').forEach((btn) => {
@@ -1605,25 +1631,29 @@
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const filter = link.dataset.targetFilter;
-      // "Ver todo" de Combos/Simples sigue llevando a la pestaña
-      // personalizada (esas filas SÍ son 100% Darwin) — pero el de "Todos"
-      // debe caer en "General" (sin IA), para que el cliente pueda elegir
-      // algo distinto si no está en el mood de lo que Darwin recomendó.
-      const tabDestino = filter === 'todos' ? 'general' : 'recomendado';
+      // Bug real reportado por el usuario: "Ver todo" en Combos/Simples
+      // llevaba a la pestaña "Recomendado para ti", cuyo origen es
+      // `recommended` (el mismo subconjunto chico y personalizado que ya
+      // se ve en la fila) — filtrado además por tipo, podía terminar
+      // mostrando muy pocos o ningún resultado. "Ver todo" ahora siempre
+      // cae en "General" (catálogo completo, sin acotar), sea cual sea el
+      // filtro de destino (Todos/Simples/Paquetes).
       activeFilter = filter;
-      activeTab = tabDestino;
+      activeTab = 'general';
       activeCategory = 'todas';
       activeDistance = 'todas';
       activePrice = 'todos';
       activeDay = 'todos';
       activeSort = 'recomendado';
       document.querySelectorAll('.pano-filter').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === filter));
-      document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tabDestino));
+      document.querySelectorAll('.pano-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === 'general'));
       if (categorySelect) categorySelect.value = 'todas';
       document.getElementById('filterDistance').value = 'todas';
       document.getElementById('filterPrice').value = 'todos';
       document.getElementById('filterDay').value = 'todos';
       document.getElementById('filterSort').value = 'recomendado';
+      if (filterDiasSelect) filterDiasSelect.value = 'todos';
+      activeDias = 'todos';
       renderAll();
       document.getElementById('explorar').scrollIntoView({ behavior: 'smooth' });
     });
@@ -1634,16 +1664,19 @@
   document.getElementById('filterPrice').addEventListener('change', (e) => { activePrice = e.target.value; renderAll(); });
   document.getElementById('filterDay').addEventListener('change', (e) => { activeDay = e.target.value; renderAll(); });
   document.getElementById('filterSort').addEventListener('change', (e) => { activeSort = e.target.value; renderAll(); });
+  if (filterDiasSelect) filterDiasSelect.addEventListener('change', (e) => { activeDias = e.target.value; renderAll(); });
   document.getElementById('resetFilters').addEventListener('click', () => {
     activeCategory = 'todas';
     activeDistance = 'todas';
     activePrice = 'todos';
     activeDay = 'todos';
+    activeDias = 'todos';
     activeSort = 'recomendado';
     if (categorySelect) categorySelect.value = 'todas';
     document.getElementById('filterDistance').value = 'todas';
     document.getElementById('filterPrice').value = 'todos';
     document.getElementById('filterDay').value = 'todos';
+    if (filterDiasSelect) filterDiasSelect.value = 'todos';
     document.getElementById('filterSort').value = 'recomendado';
     renderAll();
   });

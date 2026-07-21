@@ -71,41 +71,24 @@ if ('serviceWorker' in navigator) {
       <p class="dash__sub">Esto es lo que PickMap armó para ti esta semana.</p>
     </div>
 
-    <div class="dash__grid">
-      <div class="dash__col-left">
-        <section class="dcard dash__darwin-backend" id="darwinBackendCard">
-          <p class="darwin-backend__empty">Buscando tu combinación perfecta…</p>
-        </section>
+    <div class="dash__teasers">
+      <a href="pickpoints.html" class="dcard dash__points-teaser">
+        <span class="dash__points-teaser-icon">⭐</span>
+        <div class="dash__points-teaser-body">
+          <p class="dash__points-teaser-total"><span class="count-up" data-target="1240">0</span> <small>Pick Points</small></p>
+          <p class="dash__points-teaser-tier">Nivel Fiel · hasta 4% cashback en tus reservas</p>
+        </div>
+        <span class="dash__points-teaser-arrow">→</span>
+      </a>
 
-        <a href="panoramas.html#explorar" class="dash__cta">
-          <span class="dash__cta-icon">🗺️</span>
-          <span class="dash__cta-text">
-            <strong>Ver mis panoramas</strong>
-            <small>Todo lo que Darwin armó especialmente para ti</small>
-          </span>
-          <span class="dash__cta-arrow">→</span>
-        </a>
-      </div>
-
-      <div class="dash__col-right">
-        <a href="pickpoints.html" class="dcard dash__points-teaser">
-          <span class="dash__points-teaser-icon">⭐</span>
-          <div class="dash__points-teaser-body">
-            <p class="dash__points-teaser-total"><span class="count-up" data-target="1240">0</span> <small>Pick Points</small></p>
-            <p class="dash__points-teaser-tier">Nivel Fiel · hasta 4% cashback en tus reservas</p>
-          </div>
-          <span class="dash__points-teaser-arrow">→</span>
-        </a>
-
-        <a href="onboarding.html" class="dcard dash__points-teaser">
-          <span class="dash__points-teaser-icon">🧭</span>
-          <div class="dash__points-teaser-body">
-            <p class="dash__points-teaser-total">Tus datos de viajero</p>
-            <p class="dash__points-teaser-tier">Tu edad, con quién viajas y tus gustos — edítalos cuando quieras</p>
-          </div>
-          <span class="dash__points-teaser-arrow">→</span>
-        </a>
-      </div>
+      <a href="onboarding.html" class="dcard dash__points-teaser">
+        <span class="dash__points-teaser-icon">🧭</span>
+        <div class="dash__points-teaser-body">
+          <p class="dash__points-teaser-total">Tus datos de viajero</p>
+          <p class="dash__points-teaser-tier">Tu edad, con quién viajas y tus gustos — edítalos cuando quieras</p>
+        </div>
+        <span class="dash__points-teaser-arrow">→</span>
+      </a>
     </div>
 
     <p class="eyebrow dash__section-label">Tu cuenta</p>
@@ -171,22 +154,5 @@ if ('serviceWorker' in navigator) {
 
 <script src="js/skyline.js"></script>
 <script src="js/dashboard.js"></script>
-<!-- Darwin backend: motor real de bot-darwin, silencioso (sin chat) —
-     ver js/darwin-backend.js. Perfil de preferencias + catálogo ahora
-     viven en Supabase (supabase/schema.sql); catalogo.real-sample.js
-     sigue cargado como fallback local mientras la tabla `businesses`
-     esté vacía (antes de correr scripts/importar_ghl_a_supabase.js). -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/supabase-client.js"></script>
-<script src="bot-darwin/data/catalogo.real-sample.js"></script>
-<script src="bot-darwin/data/taxonomia-categorias.js"></script>
-<script src="bot-darwin/js/algoritmos.js"></script>
-<script src="bot-darwin/js/tools.js"></script>
-<script src="bot-darwin/js/contexto.js"></script>
-<script src="bot-darwin/js/afluencia.js"></script>
-<script src="bot-darwin/js/plantillas.js"></script>
-<script src="bot-darwin/js/motor.js"></script>
-<script src="js/darwin-backend.js"></script>
 </body>
 </html>
