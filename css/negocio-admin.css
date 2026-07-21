@@ -88,3 +88,82 @@ body.admin-page { background: var(--bg); }
 
 .admin-page .biz-modal { background: rgba(0, 0, 0, 0.72); }
 .admin-page .biz-modal__panel { background: var(--white); border: 1px solid rgba(34, 197, 94, 0.14); }
+
+/* ---------- Pasada de elegancia (2026-07-21, instrucción explícita del
+   usuario: "haz más elegante el panel del control del super admin") ----------
+   Sin cambiar la estructura ni los datos: bordes/sombras más definidos,
+   una micro-interacción de elevación en hover para que las tarjetas se
+   sientan "vivas" (consistente con el punto pulsante del header de
+   panoramas.html), y una barra superior de acento en cada tarjeta clave —
+   mismo lenguaje visual de "sala de control" que ya describía el header de
+   este archivo, ahora llevado al resto de la página. */
+.admin-page .dcard,
+.admin-page .biz-stat {
+  position: relative;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.admin-page .dcard:hover,
+.admin-page .biz-stat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 197, 94, 0.28);
+  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.55);
+}
+.admin-page .biz-stat::before {
+  content: '';
+  position: absolute; top: 0; left: 18px; right: 18px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.55), transparent);
+  border-radius: 0 0 3px 3px;
+}
+.admin-page .biz__greeting { border-top: 2px solid rgba(34, 197, 94, 0.4); }
+
+.admin-page .dcard__title {
+  display: flex; align-items: center; gap: 9px;
+  letter-spacing: 0.01em;
+}
+.admin-page .dcard__title::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+  flex-shrink: 0;
+}
+
+/* Filas de listas (negocios, sin verificar, ver como) — hover más
+   perceptible sobre fondo casi negro que el `--mist` genérico heredado. */
+.admin-page .biz-res,
+.admin-page .biz-res--static { transition: background .15s ease, border-color .15s ease; }
+.admin-page .biz-res:hover,
+.admin-page .biz-res--static:hover {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.18);
+}
+.admin-page .admin-top:hover { background: rgba(34, 197, 94, 0.05); }
+
+/* "Ver como": el bloque más "operativo" de la página — se le da un
+   tratamiento propio (icono en badge redondo en vez de texto plano,
+   separación más clara entre las dos filas negocio/viajero) para que se
+   lea como un panel de control, no un formulario suelto. */
+.admin-page .admin-viewas { border-color: rgba(34, 197, 94, 0.18); }
+.admin-page .admin-viewas__row {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.035);
+  border: 1px solid rgba(34, 197, 94, 0.1);
+}
+.admin-page .admin-viewas__row + .admin-viewas__row { margin-top: 10px; }
+.admin-page .admin-viewas__field select {
+  background: var(--bg);
+  border-color: rgba(34, 197, 94, 0.22);
+  color: var(--navy);
+}
+.admin-page .admin-viewas__field select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+.admin-page .admin-viewas .btn--primary {
+  background: linear-gradient(135deg, #22C55E, #16A34A);
+  border: none;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.25);
+}
+.admin-page .admin-viewas .btn--primary:hover { box-shadow: 0 12px 30px rgba(34, 197, 94, 0.35); }

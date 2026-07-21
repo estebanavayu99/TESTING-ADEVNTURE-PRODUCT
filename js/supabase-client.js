@@ -136,14 +136,33 @@
     if (error) throw error;
   }
 
+  // Solo el admin (contacto@pickmap.cl) obtiene filas de estas dos
+  // consultas más allá de la propia — lo permite la policy "dueño o admin
+  // lee" de cada tabla (ver supabase/schema.sql). Usado por
+  // negocio-admin.js para poblar "Ver como" con cuentas reales de
+  // cualquier navegador, no solo las que hayan iniciado sesión en el
+  // mismo navegador del admin (limitación real del puente legacy en
+  // localStorage que el resto del sitio sigue usando).
+  async function listAllProfiles() {
+    const { data, error } = await requireClient().from('profiles').select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function listAllBusinessProfiles() {
+    const { data, error } = await requireClient().from('business_profiles').select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
   window.PickmapSupabase = {
     configured,
     client,
     auth: { signUp, signIn, signOut, getSession, resetPasswordForEmail, updatePassword },
-    profiles: { get: getProfile, upsert: upsertProfile },
+    profiles: { get: getProfile, upsert: upsertProfile, listAll: listAllProfiles },
     darwinPreferences: { get: getDarwinPreferences, upsert: upsertDarwinPreferences },
     preferenceSignals: { log: logPreferenceSignal },
     businesses: { listAll: listAllBusinesses },
-    businessProfiles: { get: getBusinessProfile, upsert: upsertBusinessProfile },
+    businessProfiles: { get: getBusinessProfile, upsert: upsertBusinessProfile, listAll: listAllBusinessProfiles },
   };
 })();

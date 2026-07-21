@@ -803,3 +803,84 @@ drop trigger if exists businesses_updated_at on public.businesses;
 create trigger businesses_updated_at
   before update on public.businesses
   for each row execute function public.tocar_updated_at();
+
+-- ============================================================
+-- 7. "Ver como" del super admin necesita el email real (2026-07-21)
+-- ============================================================
+-- `profiles`/`business_profiles` solo guardaban `user_id` (FK a
+-- auth.users) — sin email acá, el navegador no puede armar la lista de
+-- "viajeros/negocios reales registrados" para el picker de negocio-admin.html,
+-- porque el cliente de Supabase (anon/authenticated key) NUNCA puede leer
+-- `auth.users` directo, ni siquiera el admin (solo el Admin API con la
+-- service role key, que jamás vive en el navegador). Se duplica el email
+-- acá porque el trigger que llena esta fila SÍ corre con `security definer`
+-- sobre `auth.users` en el instante del signup y tiene acceso a `new.email`.
+alter table public.profiles add column if not exists email text;
+alter table public.business_profiles add column if not exists email text;
+
+-- Backfill de las cuentas creadas antes de este cambio — este UPDATE corre
+-- en el SQL Editor con el rol de owner del proyecto, que sí puede leer
+-- auth.users (a diferencia del cliente del navegador).
+update public.profiles p set email = u.email
+  from auth.users u where p.user_id = u.id and p.email is null;
+update public.business_profiles bp set email = u.email
+  from auth.users u where bp.user_id = u.id and bp.email is null;
+
+-- El dueño lee su propia fila; el admin (contacto@pickmap.cl) lee TODAS —
+-- mismo patrón ya usado en business_profiles, ahora espejado acá para que
+-- el picker de "ver como viajero" pueda listar cuentas reales. Ningún
+-- viajero normal puede leer el perfil de otro.
+drop policy if exists "profiles: el dueño lee su propio perfil" on public.profiles;
+drop policy if exists "profiles: dueño o admin lee" on public.profiles;
+create policy "profiles: dueño o admin lee"
+  on public.profiles for select
+  using (auth.uid() = user_id or auth.jwt() ->> 'email' = 'contacto@pickmap.cl');
+
+-- Los triggers de creación de fila también deben grabar el email desde
+-- ahora en adelante (el backfill de arriba solo cubre cuentas ya
+-- existentes).
+create or replace function public.crear_perfil_para_nuevo_usuario()
+returns trigger as $$
+begin
+  if coalesce(new.raw_user_meta_data->>'account_type', 'viajero') = 'viajero' then
+    insert into public.profiles (user_id, email, first_name, last_name, rut)
+    values (
+      new.id,
+      new.email,
+      new.raw_user_meta_data->>'first_name',
+      new.raw_user_meta_data->>'last_name',
+      new.raw_user_meta_data->>'rut'
+    )
+    on conflict (user_id) do nothing;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+create or replace function public.crear_perfil_empresa_para_nuevo_usuario()
+returns trigger as $$
+begin
+  if new.raw_user_meta_data->>'account_type' = 'empresa' then
+    insert into public.business_profiles (
+      user_id, email, rep_name, rep_rut, biz_name, legal_name, biz_rut,
+      region, comuna, street, availability, referral_code_used
+    )
+    values (
+      new.id,
+      new.email,
+      new.raw_user_meta_data->>'rep_name',
+      new.raw_user_meta_data->>'rep_rut',
+      new.raw_user_meta_data->>'biz_name',
+      new.raw_user_meta_data->>'legal_name',
+      new.raw_user_meta_data->>'biz_rut',
+      new.raw_user_meta_data->>'region',
+      new.raw_user_meta_data->>'comuna',
+      new.raw_user_meta_data->>'street',
+      new.raw_user_meta_data->>'availability',
+      new.raw_user_meta_data->>'referral_code_used'
+    )
+    on conflict (user_id) do nothing;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;

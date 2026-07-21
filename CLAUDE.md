@@ -1371,3 +1371,99 @@ toggle volviera a "Agregar nuevo" después de enviar una solicitud de
 edición. Fix: se agregó `.dash__field[hidden] { display: none; }` en
 `css/dashboard.css` — si se agrega otro campo con `hidden` sobre esta
 clase en el futuro, ya queda cubierto.
+
+## Bug real de auth: signUp() repetido con correo ya confirmado (2026-07-21)
+
+Bug reportado en vivo por el usuario probando `contacto@pickmap.cl` en
+producción: creó la cuenta admin el 20 de julio (quedó confirmada y con
+login exitoso ese mismo día, confirmado en Authentication → Users del
+dashboard de Supabase), pero al día siguiente volvió a intentar "Crear
+cuenta" con el mismo correo (creyendo que la cuenta no existía) y quedó
+esperando un correo de confirmación que nunca llegó. Causa: Supabase, por
+protección anti-enumeración, no lanza error cuando `signUp()` se llama con
+un correo que YA tiene una cuenta confirmada — devuelve un `user` con
+`identities: []` (sin sesión), indistinguible de un signup nuevo genuino
+para el código que no chequea ese campo. El formulario mostraba igual la
+pantalla "Verifica tu correo", prometiendo un envío que nunca iba a pasar
+(no hay nada que confirmar, ya está confirmado). Fix en `js/auth.js` y
+`js/auth-empresa.js`: justo después de `signUp()`, si
+`result.user.identities.length === 0`, se manda derecho al login con el
+correo precargado y un mensaje explícito ("Ya existe una cuenta con ese
+correo. Inicia sesión..."), en vez de mostrar la pantalla de espera falsa.
+**Workaround usado para desbloquear la cuenta real de ese momento** (queda
+documentado por si se repite con otra cuenta): en el SQL Editor de
+Supabase, `update auth.users set encrypted_password = crypt('nueva-clave',
+gen_salt('bf')), updated_at = now() where email = '...';` — fuerza una
+contraseña conocida sin depender de ningún correo, usable cuando el SMTP
+de confirmación/recuperación falla y la cuenta ya está confirmada pero se
+perdió la contraseña.
+
+## "Ver como" real: listar cuentas de Supabase, no solo del navegador del admin (2026-07-21)
+
+Bug de alcance descubierto por el usuario probando en producción real:
+`negocio-admin.html` mostraba "Negocios aliados: 0" y los selects de "Ver
+como" salían vacíos, aunque sí había negocios/viajeros reales registrados
+en Supabase. Causa: `js/negocio-admin.js` armaba esas listas leyendo
+`pickmap_business_users`/`pickmap_users` de `localStorage` — que solo se
+llenan cuando ESA cuenta específica inicia sesión en ESE MISMO navegador
+(puente legacy, ver secciones de arriba). En el navegador del admin, que
+nunca ha sido el navegador de ningún otro negocio/viajero, esas claves
+están casi vacías sin importar cuántas cuentas reales existan.
+
+Fix: `js/negocio-admin.js` ahora complementa esa lista local con una
+consulta real a Supabase (`business_profiles`/`profiles`, ambas con la
+policy "dueño o admin lee" ya definida en `schema.sql`) y las mezcla por
+email (`mergeByEmail`, remoto pisa a local en conflicto) — si Supabase no
+está configurado o la consulta falla, sigue funcionando solo con lo local,
+nunca se rompe la página por esto (confirmado con Playwright: sin acceso a
+internet en el sandbox, cae al fallback local sin errores de consola). El
+rollup completo (stats agregados, top negocios, tabla, ver-como) ahora usa
+esta lista mezclada — como `generateReservations(email)`/
+`generateReviewRatings(email)` son puramente determinísticos por email
+(sembrados con `seedRandom(20240711 + hashStr(email))`), cualquier negocio
+real (de cualquier navegador) obtiene el MISMO dataset demo que vería en
+su propio panel, sin necesitar reservas reales migradas a Supabase.
+
+**`profiles`/`business_profiles` no tenían columna `email`** (solo
+`user_id`, FK a `auth.users`) — necesaria para armar el picker sin poder
+leer `auth.users` desde el navegador (bloqueado siempre por RLS, incluso
+para el admin, salvo con la service role key que nunca vive en el
+navegador). Se agregó `email text` a ambas tablas + backfill vía `update
+... from auth.users` (corre una vez en el SQL Editor con el rol de owner,
+que sí puede leer `auth.users`) + los dos triggers de creación de fila
+(`crear_perfil_para_nuevo_usuario`/`crear_perfil_empresa_para_nuevo_usuario`)
+ahora graban `new.email` en cada signup nuevo. `profiles` no tenía policy
+de lectura para el admin (solo `business_profiles` la tenía) — se agregó
+el mismo patrón (`auth.jwt() ->> 'email' = 'contacto@pickmap.cl'`).
+**Pendiente para el usuario**: pegar el `schema.sql` completo de nuevo en
+el SQL Editor para aplicar estos cambios (columna nueva + backfill +
+policy + triggers actualizados) — es 100% idempotente/seguro de re-correr
+sobre el proyecto real, como el resto del archivo.
+
+Al hacer clic en "Ver como X", además de pisar el puntero de sesión, ahora
+se espeja el registro real (venga de este navegador o de Supabase) hacia
+`pickmap_business_users`/`pickmap_users` (`upsertLocalUser`) — sin este
+paso, `negocio.js`/`dashboard.js` (que leen ese localStorage directo, sin
+consultar Supabase) mostrarían "cuenta no encontrada" para cualquier
+negocio/viajero real que nunca haya iniciado sesión en el navegador del
+admin.
+
+**Limitación que sigue igual, documentada honestamente**: las reservas,
+reseñas y referidos de cada negocio siguen siendo 100% demo determinística
+por email (nunca datos reales migrados a Supabase — alcance explícito ya
+documentado arriba). Este fix soluciona que el admin pueda DESCUBRIR y
+entrar a la vista de cualquier cuenta real registrada; no inventa
+reservas/reseñas reales que no existen.
+
+## Elegancia visual del panel super-admin (2026-07-21)
+
+Instrucción explícita del usuario ("haz más elegante el panel del control
+del super admin"). `css/negocio-admin.css`: micro-elevación en hover para
+`.dcard`/`.biz-stat` (translateY + sombra más marcada), barra de acento
+superior sutil en `.biz-stat`, punto verde antes de cada `.dcard__title`
+(mismo lenguaje visual que el pulso de "sistema en vivo" ya usado en el
+header de `panoramas.html`), hover más perceptible en filas de listas
+(`.biz-res`, `.admin-top`), y un tratamiento propio para la tarjeta "Ver
+como" (filas con fondo/borde verde tenue separadas, selects con foco verde,
+botones con gradiente). Todo dentro de `.admin-page`, no afecta ninguna
+otra página.

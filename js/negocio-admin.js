@@ -151,8 +151,69 @@
     return generateReviewRatings(email);
   }
 
-  const bizUsers = JSON.parse(localStorage.getItem(BIZ_USERS_KEY) || '[]')
-    .filter((u) => u.email !== ADMIN_EMAIL);
+  // "Ver como" y los stats agregados necesitan la lista de TODAS las
+  // cuentas reales registradas, no solo las que hayan iniciado sesión en
+  // ESTE MISMO navegador del admin (limitación real de pickmap_business_users/
+  // pickmap_users, que son puramente locStorage-por-navegador). Se
+  // completan con una consulta a Supabase (business_profiles/profiles,
+  // ambas con policy "dueño o admin lee" — ver supabase/schema.sql) y se
+  // mezclan por email; si Supabase no está configurado o la consulta
+  // falla, se sigue igual solo con lo que haya en este navegador (nunca
+  // se rompe la página por esto).
+  async function fetchRealBizUsers() {
+    const S = window.PickmapSupabase;
+    if (!S || !S.configured) return [];
+    try {
+      const rows = await S.businessProfiles.listAll();
+      return rows.filter((r) => r.email).map((r) => ({
+        email: r.email,
+        bizName: r.biz_name,
+        repName: r.rep_name,
+        legalName: r.legal_name,
+        bizRut: r.biz_rut,
+        address: [r.street, r.comuna, r.region].filter(Boolean).join(', '),
+        availability: r.availability,
+        verified: !!r.verified,
+        createdAt: r.created_at,
+        supabase_user_id: r.user_id,
+      }));
+    } catch { return []; }
+  }
+  async function fetchRealTravelerUsers() {
+    const S = window.PickmapSupabase;
+    if (!S || !S.configured) return [];
+    try {
+      const rows = await S.profiles.listAll();
+      return rows.filter((r) => r.email).map((r) => ({
+        email: r.email,
+        name: `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.email.split('@')[0],
+        rut: r.rut,
+        onboarded: !!r.onboarded,
+        supabase_user_id: r.user_id,
+      }));
+    } catch { return []; }
+  }
+  function mergeByEmail(localList, remoteList) {
+    const map = new Map();
+    localList.forEach((u) => map.set(u.email, u));
+    remoteList.forEach((u) => map.set(u.email, { ...map.get(u.email), ...u }));
+    return [...map.values()];
+  }
+  function upsertLocalUser(key, email, fields) {
+    let list;
+    try { list = JSON.parse(localStorage.getItem(key)) || []; } catch { list = []; }
+    const idx = list.findIndex((u) => u.email === email);
+    if (idx === -1) list.push(fields);
+    else list[idx] = { ...list[idx], ...fields };
+    localStorage.setItem(key, JSON.stringify(list));
+  }
+
+  (async () => {
+  const localBizUsers = JSON.parse(localStorage.getItem(BIZ_USERS_KEY) || '[]');
+  const localTravelerUsers = JSON.parse(localStorage.getItem('pickmap_users') || '[]');
+  const [remoteBizUsers, remoteTravelerUsers] = await Promise.all([fetchRealBizUsers(), fetchRealTravelerUsers()]);
+  const bizUsers = mergeByEmail(localBizUsers, remoteBizUsers).filter((u) => u.email !== ADMIN_EMAIL);
+  const travelerUsers = mergeByEmail(localTravelerUsers, remoteTravelerUsers);
 
   const rows = bizUsers.map((biz) => {
     const reservations = getReservationsFor(biz.email);
@@ -365,7 +426,6 @@
    * mostrar el banner "volver a super admin". */
   const viewAsBizSelect = document.getElementById('adminViewAsBizSelect');
   const viewAsTravelerSelect = document.getElementById('adminViewAsTravelerSelect');
-  const travelerUsers = JSON.parse(localStorage.getItem('pickmap_users') || '[]');
 
   if (viewAsBizSelect) {
     bizUsers.forEach((u) => {
@@ -391,6 +451,13 @@
   document.getElementById('adminViewAsBizBtn').addEventListener('click', () => {
     const target = viewAsBizSelect.value;
     if (!target) return;
+    // Espeja el perfil real (venga de este navegador o de Supabase) a
+    // pickmap_business_users — negocio.js lee ese localStorage directo,
+    // sin consultar Supabase, así que sin este paso un negocio real que
+    // nunca inició sesión en ESTE navegador se vería como "cuenta no
+    // encontrada" al intentar verlo como.
+    const bizRecord = bizUsers.find((u) => u.email === target);
+    if (bizRecord) upsertLocalUser(BIZ_USERS_KEY, target, bizRecord);
     localStorage.setItem('pickmap_admin_viewing_as', JSON.stringify({ type: 'empresa', email: target }));
     localStorage.setItem(BIZ_SESSION_KEY, target);
     window.location.href = 'negocio.html';
@@ -398,8 +465,11 @@
   document.getElementById('adminViewAsTravelerBtn').addEventListener('click', () => {
     const target = viewAsTravelerSelect.value;
     if (!target) return;
+    const travelerRecord = travelerUsers.find((u) => u.email === target);
+    if (travelerRecord) upsertLocalUser('pickmap_users', target, travelerRecord);
     localStorage.setItem('pickmap_admin_viewing_as', JSON.stringify({ type: 'viajero', email: target }));
     localStorage.setItem('pickmap_current_user', target);
     window.location.href = 'dashboard.html';
   });
+  })();
 })();

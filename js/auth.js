@@ -201,6 +201,21 @@
       // hay sesión autenticada y RLS lo bloquearía.
       const result = await S.auth.signUp(email, password, { account_type: 'viajero', first_name: firstName, last_name: lastName, rut });
       const name = `${firstName} ${lastName}`.trim();
+      // Bug real reportado por el usuario (2026-07-21): Supabase, por
+      // seguridad, no lanza error cuando se llama signUp() con un correo
+      // que YA tiene una cuenta confirmada — devuelve un "éxito" falso
+      // (sin sesión, `result.user.identities` vacío) para no revelar que
+      // el correo existe. Sin este chequeo, el formulario mostraba la
+      // pantalla de "verifica tu correo" igual, prometiendo un correo que
+      // nunca se manda (no hay nada que confirmar) — dejaba a la persona
+      // esperando un email que jamás iba a llegar. Se detecta acá y se
+      // manda derecho al login con el correo precargado.
+      if (result.user && Array.isArray(result.user.identities) && result.user.identities.length === 0) {
+        showForm('login');
+        formLogin.querySelector('[name=email]').value = email;
+        showError('Ya existe una cuenta con ese correo. Inicia sesión con tu contraseña, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.');
+        return;
+      }
       if (result.session) {
         // Confirmación de correo desactivada en el proyecto Supabase: la
         // sesión queda activa de inmediato, igual que antes con el código
