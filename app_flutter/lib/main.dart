@@ -7,6 +7,7 @@ import 'core/supabase/supabase_bootstrap.dart';
 import 'core/theme/pickmap_theme.dart';
 import 'features/auth/data/auth_controller.dart';
 import 'features/auth/data/auth_repository.dart';
+import 'features/favoritos/data/favorites_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,12 +24,14 @@ class PickmapApp extends StatefulWidget {
 
 class _PickmapAppState extends State<PickmapApp> {
   late final AuthController _auth;
+  late final FavoritesController _favorites;
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     _auth = AuthController(AuthRepository(supabase));
+    _favorites = FavoritesController();
     // `buildRouter` se crea UNA sola vez con `refreshListenable: _auth` —
     // GoRouter ya se re-evalúa solo cuando _auth notifica, no hace falta
     // (ni conviene) reconstruirlo en cada rebuild del árbol.
@@ -38,13 +41,17 @@ class _PickmapAppState extends State<PickmapApp> {
   @override
   void dispose() {
     _auth.dispose();
+    _favorites.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthController>.value(
-      value: _auth,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthController>.value(value: _auth),
+        ChangeNotifierProvider<FavoritesController>.value(value: _favorites),
+      ],
       child: MaterialApp.router(
         title: 'PickMap',
         debugShowCheckedModeBanner: false,

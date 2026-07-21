@@ -26,6 +26,12 @@ GoRouter buildRouter(AuthController auth) {
         case AuthStatus.signedOut:
           return loc == '/auth' ? null : '/auth';
         case AuthStatus.signedIn:
+          // Prioridad al link de "recuperar contraseña" ANTES que el
+          // chequeo de onboarding, y solo al salir de /splash (arranque
+          // en frío) — si la app ya estaba abierta en /auth, el listener
+          // propio de AuthPage ya lo capturó, no hace falta redirigir de
+          // nuevo (evita devolver la misma ruta como redirect).
+          if (loc == '/splash' && auth.passwordRecovery) return '/auth';
           if (loc == '/splash' || loc == '/auth') {
             final onboarded = auth.profile?.onboarded ?? false;
             return onboarded ? '/home' : '/onboarding';

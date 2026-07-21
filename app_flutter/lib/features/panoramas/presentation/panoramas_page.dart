@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../favoritos/data/favorites_controller.dart';
 import '../data/panorama_item.dart';
 import '../data/sample_catalog.dart' as catalog;
 import 'panorama_card.dart';
@@ -197,10 +199,20 @@ class _PanoramasPageState extends State<PanoramasPage> {
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
             separatorBuilder: (context, i) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => SizedBox(
-              width: 112,
-              child: PanoramaCard(item: items[i], onTap: () => showPanoramaDetail(context, items[i]), compact: true),
-            ),
+            itemBuilder: (context, i) {
+              final favorites = context.watch<FavoritesController>();
+              final item = items[i];
+              return SizedBox(
+                width: 112,
+                child: PanoramaCard(
+                  item: item,
+                  onTap: () => showPanoramaDetail(context, item),
+                  compact: true,
+                  favorited: favorites.isFavorited(item.id),
+                  onFavoriteToggle: () => favorites.toggle(item.id),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -239,8 +251,15 @@ class _PanoramasPageState extends State<PanoramasPage> {
             childAspectRatio: 0.60,
           ),
           itemBuilder: (context, i) {
+            final favorites = context.watch<FavoritesController>();
             final item = _exploreList[i];
-            return PanoramaCard(item: item, onTap: () => showPanoramaDetail(context, item), compact: true);
+            return PanoramaCard(
+              item: item,
+              onTap: () => showPanoramaDetail(context, item),
+              compact: true,
+              favorited: favorites.isFavorited(item.id),
+              onFavoriteToggle: () => favorites.toggle(item.id),
+            );
           },
         ),
       ],

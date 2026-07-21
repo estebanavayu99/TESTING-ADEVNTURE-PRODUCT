@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/utils/rut.dart';
 import '../../../core/widgets/pm_card.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
 import '../../../core/widgets/pm_primary_button.dart';
@@ -32,6 +33,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _hydrate(AuthController auth) {
     if (_hydrated) return;
+    // Ojo: no marcar `_hydrated` hasta que el perfil realmente haya
+    // llegado — si el primer build ocurre antes de que termine el fetch
+    // async a Supabase, `auth.profile` todavía es null; marcar
+    // `_hydrated` en ese momento dejaba los campos vacíos para siempre,
+    // porque el rebuild posterior (cuando el perfil sí llega) quedaba
+    // bloqueado por este mismo guard (bug real).
+    if (auth.profile == null) return;
     _hydrated = true;
     _firstName.text = auth.profile?.firstName ?? '';
     _lastName.text = auth.profile?.lastName ?? '';
@@ -40,6 +48,18 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _save(AuthController auth) async {
+    // Mismos chequeos que `js/dashboard.js` en "Configura tu cuenta" —
+    // sin esto, nombre/apellido vacíos o un RUT inválido se guardaban
+    // igual sin avisar.
+    if (_firstName.text.trim().isEmpty || _lastName.text.trim().isEmpty) {
+      setState(() => _feedback = 'El nombre y el apellido no pueden estar vacíos.');
+      return;
+    }
+    final rut = formatRut(_rut.text);
+    if (!isValidRut(rut)) {
+      setState(() => _feedback = 'El RUT ingresado no es válido. Revísalo e intenta de nuevo.');
+      return;
+    }
     setState(() {
       _saving = true;
       _feedback = null;
@@ -48,7 +68,7 @@ class _DashboardPageState extends State<DashboardPage> {
       await auth.repo.upsertProfile(auth.user!.id, {
         'first_name': _firstName.text.trim(),
         'last_name': _lastName.text.trim(),
-        'rut': _rut.text.trim(),
+        'rut': rut,
         'phone': _phone.text.trim(),
       });
       await auth.refreshProfile();

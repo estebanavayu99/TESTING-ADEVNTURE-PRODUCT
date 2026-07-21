@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/utils/rut.dart';
 import '../../../core/widgets/pm_logo.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../data/auth_controller.dart';
@@ -51,14 +52,21 @@ class _AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-    // Si el link de "recuperar contraseña" abre la app, Supabase dispara
-    // este evento — saltamos directo al formulario de nueva contraseña,
-    // igual que `onAuthStateChange` hace en js/auth.js.
+    // Caso "app ya estaba abierta en esta pantalla": el link de recuperar
+    // contraseña dispara el evento mientras seguimos con vida, este
+    // listener lo agarra en caliente.
     _recoverySub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (state.event == AuthChangeEvent.passwordRecovery && mounted) {
         setState(() => _view = _AuthView.forgotReset);
       }
     });
+    // Caso "arranque en frío desde el link": el evento ya se disparó y se
+    // perdió antes de que este widget existiera — `AuthController` lo
+    // dejó marcado (ver `passwordRecovery` ahí) y el router ya nos trajo
+    // acá a propósito por eso. Lo consumimos una sola vez al montar.
+    if (context.read<AuthController>().consumePasswordRecovery()) {
+      _view = _AuthView.forgotReset;
+    }
   }
 
   @override
@@ -104,19 +112,29 @@ class _AuthPageState extends State<AuthPage> {
         // solo a onboarding/home cuando el perfil termine de cargar.
       });
 
-  Future<void> _submitSignup() => _run(() async {
-        await _auth.repo.signUp(
-          email: _signupEmail.text.trim(),
-          password: _signupPassword.text,
-          firstName: _signupFirstName.text.trim(),
-          lastName: _signupLastName.text.trim(),
-          rut: _signupRut.text.trim(),
-        );
-        setState(() {
-          _pendingVerifyEmail = _signupEmail.text.trim();
-          _view = _AuthView.verifyPending;
-        });
+  Future<void> _submitSignup() {
+    // Mismo chequeo que `js/auth.js` antes de crear la cuenta — sin esto,
+    // cualquier texto en el campo RUT pasaba directo a Supabase sin
+    // validar el dígito verificador.
+    final rut = formatRut(_signupRut.text);
+    if (!isValidRut(rut)) {
+      setState(() => _error = 'El RUT ingresado no es válido. Revísalo e intenta de nuevo.');
+      return Future.value();
+    }
+    return _run(() async {
+      await _auth.repo.signUp(
+        email: _signupEmail.text.trim(),
+        password: _signupPassword.text,
+        firstName: _signupFirstName.text.trim(),
+        lastName: _signupLastName.text.trim(),
+        rut: rut,
+      );
+      setState(() {
+        _pendingVerifyEmail = _signupEmail.text.trim();
+        _view = _AuthView.verifyPending;
       });
+    });
+  }
 
   Future<void> _resend() => _run(() async {
         await _auth.repo.resendSignupEmail(_pendingVerifyEmail);

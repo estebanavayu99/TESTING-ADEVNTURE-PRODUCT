@@ -26,8 +26,25 @@ class AuthController extends ChangeNotifier {
   TravelerProfile? profile;
   String? lastError;
 
+  /// `true` cuando el último cambio de sesión vino del link de "recuperar
+  /// contraseña" (Supabase entrega una sesión temporal real, no
+  /// distinguible de un login normal salvo por el `event`). Sin esto, el
+  /// router trataba ese evento igual que cualquier login y mandaba a
+  /// `/home`/`/onboarding` en vez de al formulario de nueva contraseña —
+  /// bug real si el link abre la app en frío (`AuthPage` ni siquiera
+  /// llega a montarse para que su propio listener lo capture).
+  bool passwordRecovery = false;
+
   AuthRepository get repo => _repo;
   User? get user => _repo.currentUser;
+
+  /// Lee y apaga el flag en un solo paso — se consume una sola vez, apenas
+  /// la pantalla que lo necesita (`AuthPage`) decide qué hacer con él.
+  bool consumePasswordRecovery() {
+    final value = passwordRecovery;
+    passwordRecovery = false;
+    return value;
+  }
 
   Future<void> _bootstrap() async {
     final session = _repo.currentSession;
@@ -45,6 +62,9 @@ class AuthController extends ChangeNotifier {
       profile = null;
       notifyListeners();
       return;
+    }
+    if (state.event == AuthChangeEvent.passwordRecovery) {
+      passwordRecovery = true;
     }
     await _loadProfile();
   }

@@ -87,6 +87,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Precargar respuestas ya guardadas — sin esto, entrar a editar
+    // desde "Tus datos de viajero" (dashboard) siempre arrancaba en
+    // blanco y perdía las selecciones anteriores del viajero, a
+    // diferencia de `onboarding.html` (que sí precarga `user.city`, etc.
+    // — ver `js/onboarding.js`). Seguro leer el perfil ya cargado acá: la
+    // única otra forma de llegar a esta pantalla es vía el router, que
+    // solo redirige después de que `AuthController` ya resolvió el
+    // perfil real.
+    final profile = context.read<AuthController>().profile;
+    if (profile != null) {
+      if (profile.age != null) _ageController.text = profile.age.toString();
+      _company.addAll(profile.company);
+      _tastes.addAll(profile.tastes);
+      _difficulty.addAll(profile.difficulty);
+      _budget.addAll(profile.budget);
+      _distance.addAll(profile.travelDistance);
+      _day.addAll(profile.preferredDay);
+      // Solo si calza con una comuna real de la lista — un valor vacío,
+      // null o desactualizado haría que `DropdownButtonFormField` tire
+      // una excepción real por no encontrar ese `value` entre sus items.
+      if (profile.city != null && todasLasComunas.contains(profile.city)) {
+        _city = profile.city;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _ageController.dispose();
     _pageController.dispose();

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../panoramas/data/sample_catalog.dart' as catalog;
 import '../../panoramas/presentation/panorama_card.dart';
 import '../../panoramas/presentation/panorama_detail_sheet.dart';
+import '../data/favorites_controller.dart';
 
-/// Mirror de `favoritos.html`. Esta primera etapa no persiste favoritos
-/// reales todavía (eso viaja junto con el catálogo real de `businesses`)
-/// — se muestra una selección de muestra para diseñar la grilla y el
-/// estado vacío, ambos ya reales en su layout.
+/// Mirror de `favoritos.html`. El catálogo real de `businesses` (y por lo
+/// tanto los IDs de item) sigue siendo data de muestra (ver
+/// `sample_catalog.dart`), pero el favorito en sí ya es una interacción
+/// real dentro de la sesión — se guarda en `FavoritesController`
+/// (compartido con Explorar vía Provider), no una lista fija hardcodeada.
 class FavoritosPage extends StatelessWidget {
   const FavoritosPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final favoritos = catalog.recomendados;
+    final favorites = context.watch<FavoritesController>();
+    final favoritos = catalog.todoElCatalogo.where((i) => favorites.isFavorited(i.id)).toList();
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -43,7 +47,12 @@ class FavoritosPage extends StatelessWidget {
               ),
               itemBuilder: (context, i) {
                 final item = favoritos[i];
-                return PanoramaCard(item: item, onTap: () => showPanoramaDetail(context, item));
+                return PanoramaCard(
+                  item: item,
+                  onTap: () => showPanoramaDetail(context, item),
+                  favorited: true,
+                  onFavoriteToggle: () => favorites.toggle(item.id),
+                );
               },
             ),
         ],

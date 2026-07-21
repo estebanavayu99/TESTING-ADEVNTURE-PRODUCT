@@ -1504,3 +1504,77 @@ visitada) en dos cosas concretas, dejando el resto de pantallas sin tocar:
   `maxCrossAxisExtent: 234/childAspectRatio: 0.76` a `130/0.60` — ambos
   ajustados para que quepan exactamente 3 columnas en ~390px de ancho en
   vez de 2.
+
+## Sesión de bugs reales + primeros tests automatizados (mismo día)
+
+A pedido explícito del usuario ("busca bugs y prueba funciones"), revisión
+de código enfocada en encontrar bugs reales (no solo visuales) en
+`app_flutter/`. Los cinco encontrados y arreglados:
+
+1. **Recuperar contraseña rota si el link abre la app en frío**:
+   `AuthController._onAuthStateChange` trataba el evento
+   `AuthChangeEvent.passwordRecovery` igual que un login normal, así que
+   el `redirect` de `go_router` mandaba directo a `/home`/`/onboarding`
+   antes de que `AuthPage` (que tiene su propio listener para saltar al
+   formulario de nueva contraseña) llegara siquiera a montarse — el
+   listener de `AuthPage` nunca alcanzaba a ver el evento porque un
+   `Stream` broadcast no reproduce eventos pasados a suscriptores
+   tardíos. Fix: `AuthController` ahora expone `passwordRecovery`
+   (booleano) + `consumePasswordRecovery()`; el router revisa ese flag
+   ANTES del chequeo de onboarding y fuerza `/auth` al salir de
+   `/splash`; `AuthPage.initState` lo consume para arrancar directo en
+   la vista `forgotReset`. El listener local de `AuthPage` se mantiene
+   intacto para el caso "la app ya estaba abierta" (ahí sí llega a
+   tiempo).
+2. **"Mi cuenta" quedaba con los campos vacíos para siempre**:
+   `_hydrate()` en `dashboard_page.dart` marcaba `_hydrated = true` en el
+   primer build aunque `auth.profile` todavía fuera `null` (fetch async
+   a Supabase todavía en curso) — cuando el perfil real llegaba y
+   disparaba un rebuild, el guard ya bloqueaba para siempre el llenado
+   de Nombre/Apellido/RUT/Teléfono. Fix: no marcar `_hydrated` hasta que
+   `auth.profile` sea realmente no-null.
+3. **Onboarding no precargaba respuestas ya guardadas**: entrar a editar
+   desde "Tus datos de viajero" siempre arrancaba el wizard en blanco,
+   perdiendo silenciosamente edad/company/tastes/etc. ya guardados (a
+   diferencia de `onboarding.html`, que sí precarga `user.city` y el
+   resto — ver `js/onboarding.js`). Fix: `initState` ahora lee
+   `AuthController.profile` (seguro: solo se llega acá vía el router
+   después de que el perfil ya se resolvió, o empujado desde Mi Cuenta
+   con el perfil ya cargado) y precarga los `Set`/controladores — con un
+   guard extra para `city`: solo se asigna si el valor calza con
+   `todasLasComunas`, porque `DropdownButtonFormField` tira una
+   excepción real si el `value` no está entre sus `items` (un
+   `profile.city` vacío/desactualizado habría roto la pantalla).
+4. **El corazón de favorito no hacía nada**: `PanoramaCard` exponía
+   `favorited`/`onFavoriteToggle` pero ningún caller los pasaba —
+   tocarlo no tenía ningún efecto en ninguna pantalla. Fix:
+   `features/favoritos/data/favorites_controller.dart` (nuevo,
+   `ChangeNotifier` simple con un `Set<String>` en memoria, provisto en
+   `main.dart` junto a `AuthController`) conectado en Panoramas
+   (filas y grilla) y en Favoritos, que ahora filtra
+   `catalog.todoElCatalogo` por lo realmente marcado en vez de mostrar
+   una muestra fija — el estado vacío ("Todavía no tienes favoritos")
+   pasa a ser alcanzable de verdad. Efímero a propósito (no persiste
+   entre reinicios) mientras el catálogo siga siendo data de muestra.
+5. **Signup/edición de cuenta no validaban el RUT**: `js/auth.js` y
+   `js/dashboard.js` validan el RUT con dígito verificador real
+   (`isValidRut`) antes de guardar; la app dejaba pasar cualquier texto.
+   Fix: `core/utils/rut.dart` (nuevo) porta el mismo algoritmo
+   (`cleanRut`/`formatRut`/`isValidRut`) literal, usado ahora en
+   `auth_page.dart` (signup) y `dashboard_page.dart` ("Configura tu
+   cuenta", que de paso también gana el chequeo de nombre/apellido no
+   vacíos que tenía el sitio y a la app le faltaba).
+
+**Primeros tests automatizados del proyecto** (`app_flutter/test/`,
+carpeta que no existía — se había borrado el test de ejemplo del `flutter
+create` en la sesión inicial por quedar obsoleto): en vez de seguir
+verificando solo con capturas de Playwright (útil para diseño, pero
+fresco y no repetible), se agregaron tests reales con `flutter_test`:
+`rut_test.dart` (los 3 casos del algoritmo con RUTs reales verificados a
+mano), `favorites_controller_test.dart`, y `panorama_card_test.dart` —
+este último fue el que efectivamente detectó que el toggle de favorito
+SÍ funciona bien aislado del tap general de la tarjeta (se había
+intentado verificar por Playwright primero con clicks manuales por
+coordenadas, que fallaron por imprecisión de un ícono de 24px, no por un
+bug real — el test de widget lo confirmó de forma determinística). Correr
+con `flutter test` desde `app_flutter/`.
