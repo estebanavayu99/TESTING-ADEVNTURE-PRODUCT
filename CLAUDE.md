@@ -1330,3 +1330,79 @@ etapa futura), conectado al **mismo proyecto Supabase real** que ya usa
   Points/referidos persistidos de verdad, y pulir con capturas en un
   dispositivo/emulador real (esta sesión no tuvo emulador Android/iOS
   disponible, solo `flutter build web` para verificar diseño).
+
+### Rediseño "más de fondo" (mismo día, a pedido explícito del usuario)
+
+El usuario pidió explícitamente "mejorar el diseño" con un alcance más
+profundo que un simple pulido — repensar composición, no solo ajustar
+detalles. Se le preguntó primero si tenía un proyecto propio en
+claude.ai/design (Claude Design) del que tomar referencia; respondió que
+no, que mejorara el diseño directamente. Cambios reales de estructura
+(no solo estilo):
+
+- **`core/widgets/pm_bottom_nav.dart`** (nuevo): reemplaza el
+  `BottomNavigationBar` de Material stock por una barra flotante
+  (tarjeta redondeada con margen y sombra, no de borde a borde) con el
+  ítem activo resuelto como una píldora de fondo coral + ícono relleno —
+  más cercano al lenguaje visual de apps nativas modernas (Airbnb/
+  Instagram) que el nav plano por defecto. `home_shell.dart` ya no trae
+  `AppBar` propio (antes solo repetía el logo, redundante con el
+  encabezado de cada página) — el contenido arranca directo desde
+  arriba. Las etiquetas del nav se abreviaron respecto al
+  `.nav__links` del sitio (Explorar/Favoritos/Points/Invita/Cuenta en
+  vez de los nombres completos) porque a 5 tabs en ~390px de ancho el
+  texto completo se cortaba — el título completo de cada sección sigue
+  viviendo en el encabezado de su propia página.
+- **`panorama_card.dart` rediseñada** (patrón tipo Airbnb): la foto pasa
+  a esquinas redondeadas completas (antes solo las de arriba) con dos
+  badges flotantes — "🧠 Darwin" arriba-izquierda (reemplaza el hint de
+  texto plano que iba debajo) y un ícono de favorito (corazón, con
+  estado `favorited`/`onFavoriteToggle` ya expuesto para cuando se
+  conecten favoritos reales) arriba-derecha. Título/meta/precio pasan a
+  vivir DEBAJO de la foto en texto normal (no superpuestos), más legible
+  que el overlay que traía antes. Como la tarjeta ya no se
+  autodimensiona (antes tenía `width: 210` fijo), las filas horizontales
+  de Combos/Simples en `panoramas_page.dart` ahora envuelven cada
+  tarjeta en un `SizedBox(width: 168)` explícito, y el `childAspectRatio`
+  de las grillas (`panoramas_page.dart`/`favoritos_page.dart`) bajó de
+  0.82 a 0.76 para darle más alto a la nueva composición foto+texto.
+- **Onboarding convertido a wizard paso a paso** (`onboarding_page.dart`
+  reescrito completo): en vez del formulario scrolleable único que traía
+  `onboarding.html`, ahora es un `PageView` de 6 pasos (edad+compañía,
+  gustos, exigencia física, presupuesto, distancia, día+comuna) con
+  barra de progreso segmentada arriba, botón de volver (`←`) que aparece
+  desde el paso 2, y "Saltar" siempre visible — cada paso valida solo
+  sus propios campos antes de dejar avanzar (mismos campos obligatorios
+  que el sitio: edad/company/difficulty/budget/distance/day/city; tastes
+  sigue sin mínimo real pese al hint, mismo criterio que antes). El
+  guardado real en Supabase (`upsertProfile`/`upsertDarwinPreferences`)
+  solo se dispara al confirmar el último paso, igual que antes.
+- **Auth rediseñado a patrón "hero + bottom sheet"** (`auth_page.dart`):
+  en vez de una tarjeta blanca flotando centrada sobre el degradado,
+  ahora es un layout de dos zonas — hero superior (degradado crema→sun,
+  logo + tagline "Tu próximo panorama, sin buscar tanto") y un sheet
+  blanco con esquinas superiores redondeadas que ocupa el resto de la
+  pantalla y contiene el form activo (login/signup/verificación/
+  recuperar contraseña, misma lógica interna de antes, solo cambió el
+  contenedor). Patrón común en apps nativas (Duolingo/Airbnb-style) en
+  vez de la tarjeta centrada que se sentía más "formulario web".
+- **`core/widgets/pm_icon_circle.dart`** (nuevo): insignia circular
+  reutilizable para emoji/ícono sobre fondo suave — reemplaza el patrón
+  repetido "Container redondo + Text(emoji)" que estaba duplicado en Mi
+  Cuenta y Pick Points.
+- **Mi Cuenta** (`dashboard_page.dart`): se agregó un avatar circular con
+  iniciales junto al saludo (mismo patrón ya usado en negocio-admin del
+  sitio web) — muestra `🙂` si el perfil todavía no tiene nombre. Los
+  teasers de Pick Points/datos de viajero pasan a usar `PmIconCircle`.
+- **Pick Points** (`pickpoints_page.dart`): la barra de progreso lineal
+  se reemplazó por un anillo de progreso circular (`CircularProgressIndicator`
+  con el total de puntos centrado adentro) junto al nombre del nivel y
+  cuánto falta para el próximo premio — más legible como "stat" que una
+  barra angosta, patrón común en apps de rewards/fitness.
+- **Verificación visual repetida con el mismo método** que la sesión
+  anterior (Flutter SDK ya clonado en `/tmp`, entrypoint temporal
+  `lib/dev_preview_main.dart` + fuente de prueba, ambos borrados/
+  revertidos antes de terminar) — confirmado con capturas que el wizard
+  de onboarding avanza de paso, valida y muestra error correctamente, que
+  la tarjeta nueva y el nav flotante se ven bien, y que ninguna etiqueta
+  del nav se corta.

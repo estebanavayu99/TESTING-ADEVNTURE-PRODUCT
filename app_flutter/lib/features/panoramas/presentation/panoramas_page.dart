@@ -164,12 +164,15 @@ class _PanoramasPageState extends State<PanoramasPage> {
           ],
         ),
         SizedBox(
-          height: 240,
+          height: 236,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
-            separatorBuilder: (context, i) => const SizedBox(width: 12),
-            itemBuilder: (context, i) => PanoramaCard(item: items[i], onTap: () => showPanoramaDetail(context, items[i])),
+            separatorBuilder: (context, i) => const SizedBox(width: 14),
+            itemBuilder: (context, i) => SizedBox(
+              width: 168,
+              child: PanoramaCard(item: items[i], onTap: () => showPanoramaDetail(context, items[i])),
+            ),
           ),
         ),
       ],
@@ -205,7 +208,7 @@ class _PanoramasPageState extends State<PanoramasPage> {
             maxCrossAxisExtent: 234,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 0.82,
+            childAspectRatio: 0.76,
           ),
           itemBuilder: (context, i) {
             final item = _exploreList[i];

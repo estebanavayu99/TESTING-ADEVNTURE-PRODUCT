@@ -39,7 +39,7 @@ class FavoritosPage extends StatelessWidget {
                 maxCrossAxisExtent: 234,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.82,
+                childAspectRatio: 0.76,
               ),
               itemBuilder: (context, i) {
                 final item = favoritos[i];

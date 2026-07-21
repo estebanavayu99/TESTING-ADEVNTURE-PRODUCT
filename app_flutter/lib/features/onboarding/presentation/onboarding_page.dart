@@ -8,11 +8,13 @@ import '../../../core/widgets/pm_primary_button.dart';
 import '../../auth/data/auth_controller.dart';
 import '../data/chile_regiones.dart';
 
-/// Mirror de `onboarding.html`/`js/onboarding.js`: un solo formulario
-/// scrolleable (no wizard por pasos), escribe en `profiles` +
-/// `darwin_preferences` al confirmar. La validación real del sitio no
-/// exige mínimo de gustos pese al hint visual ("elige al menos 5") — se
-/// respeta ese comportamiento real acá también.
+/// Mirror de `onboarding.html`/`js/onboarding.js`, pero como wizard paso a
+/// paso (`PageView`) en vez del formulario scrolleable único del sitio
+/// web — una pregunta (o un par corto) por pantalla, con barra de
+/// progreso y Atrás/Continuar, patrón mucho más cómodo en mobile que un
+/// scroll larguísimo. La validación real sigue siendo la misma que el
+/// sitio (edad, company, difficulty, budget, distance, day y city
+/// obligatorios; tastes queda sin mínimo pese al hint visual).
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
@@ -21,6 +23,10 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
+  final _pageController = PageController();
+  int _step = 0;
+  static const _stepCount = 6;
+
   final _ageController = TextEditingController();
   final Set<String> _company = {};
   final Set<String> _tastes = {};
@@ -83,21 +89,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   void dispose() {
     _ageController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final age = int.tryParse(_ageController.text.trim());
-    if (age == null ||
-        _company.isEmpty ||
-        _difficulty.isEmpty ||
-        _budget.isEmpty ||
-        _distance.isEmpty ||
-        _day.isEmpty ||
-        _city == null) {
-      setState(() => _error = 'Completa todos los campos para continuar.');
+  bool _validateStep(int step) {
+    switch (step) {
+      case 0:
+        return int.tryParse(_ageController.text.trim()) != null && _company.isNotEmpty;
+      case 1:
+        return true; // tastes: sin mínimo real (ver nota arriba)
+      case 2:
+        return _difficulty.isNotEmpty;
+      case 3:
+        return _budget.isNotEmpty;
+      case 4:
+        return _distance.isNotEmpty;
+      case 5:
+        return _day.isNotEmpty && _city != null;
+      default:
+        return true;
+    }
+  }
+
+  Future<void> _next() async {
+    if (!_validateStep(_step)) {
+      setState(() => _error = 'Completa esta sección para continuar.');
       return;
     }
+    setState(() => _error = null);
+    if (_step == _stepCount - 1) {
+      await _submit();
+      return;
+    }
+    _pageController.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+  }
+
+  void _back() {
+    if (_step == 0) return;
+    setState(() => _error = null);
+    _pageController.previousPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+  }
+
+  Future<void> _submit() async {
     setState(() {
       _loading = true;
       _error = null;
@@ -105,6 +139,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     try {
       final auth = context.read<AuthController>();
       final userId = auth.user!.id;
+      final age = int.parse(_ageController.text.trim());
       await auth.repo.upsertProfile(userId, {
         'age': age,
         'city': _city,
@@ -129,8 +164,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Future<void> _skip() async {
-    // "Prefiero hacerlo después" — el sitio deja `onboarded` en false y
-    // avanza igual al dashboard; acá se replica sin escribir nada.
     final auth = context.read<AuthController>();
     await auth.refreshProfile();
   }
@@ -138,132 +171,218 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isLast = _step == _stepCount - 1;
+
     return Scaffold(
       body: PmBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: const [
-                      BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.14), blurRadius: 34, offset: Offset(0, 16)),
-                    ],
-                  ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                child: Row(
+                  children: [
+                    if (_step > 0)
+                      IconButton(
+                        onPressed: _loading ? null : _back,
+                        icon: const Icon(Icons.arrow_back, color: PickmapColors.navy),
+                      )
+                    else
+                      const SizedBox(width: 48),
+                    Expanded(
+                      child: Row(
+                        children: List.generate(_stepCount, (i) {
+                          final active = i <= _step;
+                          return Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: active ? PickmapColors.coral : PickmapColors.mist.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _loading ? null : _skip,
+                      child: const Text('Saltar', style: TextStyle(color: PickmapColors.slate)),
+                    ),
+                  ],
+                ),
+              ),
+              if (_step == 0) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Antes de empezar',
-                          style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
+                      const Text('Antes de empezar', style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
                       Text('¡Bienvenida! Cuéntanos un poco de ti', style: textTheme.headlineSmall),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Con esto armamos panoramas pensados de verdad para ti — mientras más nos cuentes, más precisas son las recomendaciones.',
-                        style: TextStyle(color: PickmapColors.slate),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 6),
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: PickmapColors.sun.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
-                          '🤖 Este es el punto de partida de Darwin, nuestra IA, para empezar a conocerte. A partir de aquí sigue aprendiendo con cada reserva, reseña y panorama que exploras.',
-                          style: TextStyle(color: PickmapColors.navy),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _fieldLabel('¿Qué edad tienes?', 'Darwin ajusta el ritmo y el tipo de actividad según tu etapa de vida.'),
-                      TextField(
-                        controller: _ageController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(hintText: 'Ej: 28'),
-                      ),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Con quién sueles ir a tus panoramas?',
-                          'Puedes elegir más de una — Darwin arma combos pensados para ese tipo de compañía.'),
-                      PmChipGroup(options: _companyOptions, selected: _company, onToggle: (v) => setState(() => _toggle(_company, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Qué tipo de panoramas te gustan más?', 'Elige al menos 5 — esta es la base de todas tus recomendaciones.'),
-                      PmChipGroup(options: _tastesOptions, selected: _tastes, onToggle: (v) => setState(() => _toggle(_tastes, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Qué nivel de exigencia física prefieres?',
-                          'Así evitamos ofrecerte un trekking extremo si buscas algo tranquilo, o algo muy suave si buscas adrenalina.'),
-                      PmChipGroup(options: _difficultyOptions, selected: _difficulty, onToggle: (v) => setState(() => _toggle(_difficulty, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Cuánto sueles gastar en un panorama?', 'Para no mostrarte opciones muy por fuera de tu rango habitual.'),
-                      PmChipGroup(options: _budgetOptions, selected: _budget, onToggle: (v) => setState(() => _toggle(_budget, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Qué tan lejos estás dispuesto/a a moverte?', 'Priorizamos panoramas a la distancia con la que te sientes cómodo/a.'),
-                      PmChipGroup(options: _distanceOptions, selected: _distance, onToggle: (v) => setState(() => _toggle(_distance, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Cuándo prefieres salir?', 'Para sugerirte planes que calcen con tu semana.'),
-                      PmChipGroup(options: _dayOptions, selected: _day, onToggle: (v) => setState(() => _toggle(_day, v))),
-                      const SizedBox(height: 22),
-                      _fieldLabel('¿Desde dónde te mueves?', 'Nos ayuda a calcular distancias y tiempos de traslado más reales.'),
-                      DropdownButtonFormField<String>(
-                        initialValue: _city,
-                        isExpanded: true,
-                        decoration: const InputDecoration(hintText: 'Selecciona tu comuna'),
-                        items: [
-                          for (final r in chileRegiones) ...[
-                            DropdownMenuItem<String>(
-                              enabled: false,
-                              value: '__region_${r.region}',
-                              child: Text(r.region, style: const TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.slate)),
-                            ),
-                            for (final c in r.comunas) DropdownMenuItem<String>(value: c, child: Text('  $c')),
-                          ],
-                        ],
-                        onChanged: (v) {
-                          if (v != null && !v.startsWith('__region_')) setState(() => _city = v);
-                        },
-                      ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 16),
-                        Text(_error!, style: const TextStyle(color: PickmapColors.deepRed, fontWeight: FontWeight.w600)),
-                      ],
-                      const SizedBox(height: 24),
-                      PmPrimaryButton(label: 'Continuar', loading: _loading, onPressed: _submit),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: TextButton(
-                          onPressed: _loading ? null : _skip,
-                          child: const Text('Prefiero hacerlo después'),
+                          '🤖 Este es el punto de partida de Darwin, nuestra IA, para empezar a conocerte.',
+                          style: TextStyle(color: PickmapColors.navy, fontSize: 12.5),
                         ),
                       ),
                     ],
                   ),
                 ),
+              ],
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (i) => setState(() => _step = i),
+                  children: [
+                    _stepScaffold(_ageAndCompanyStep()),
+                    _stepScaffold(_tastesStep()),
+                    _stepScaffold(_singleChoiceStep(
+                      title: '¿Qué nivel de exigencia física prefieres?',
+                      hint: 'Así evitamos ofrecerte un trekking extremo si buscas algo tranquilo, o algo muy suave si buscas adrenalina.',
+                      options: _difficultyOptions,
+                      selected: _difficulty,
+                    )),
+                    _stepScaffold(_singleChoiceStep(
+                      title: '¿Cuánto sueles gastar en un panorama?',
+                      hint: 'Para no mostrarte opciones muy por fuera de tu rango habitual.',
+                      options: _budgetOptions,
+                      selected: _budget,
+                    )),
+                    _stepScaffold(_singleChoiceStep(
+                      title: '¿Qué tan lejos estás dispuesto/a a moverte?',
+                      hint: 'Priorizamos panoramas a la distancia con la que te sientes cómodo/a.',
+                      options: _distanceOptions,
+                      selected: _distance,
+                    )),
+                    _stepScaffold(_dayAndCityStep()),
+                  ],
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                child: Column(
+                  children: [
+                    if (_error != null) ...[
+                      Text(_error!, style: const TextStyle(color: PickmapColors.deepRed, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 10),
+                    ],
+                    PmPrimaryButton(label: isLast ? 'Finalizar' : 'Continuar', loading: _loading, onPressed: _next),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
+  Widget _stepScaffold(Widget child) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+      child: child,
+    );
+  }
+
+  Widget _questionHeader(String title, String hint) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+          const SizedBox(height: 6),
+          Text(hint, style: const TextStyle(color: PickmapColors.slate, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Widget _singleChoiceStep({
+    required String title,
+    required String hint,
+    required List<PmChipOption> options,
+    required Set<String> selected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _questionHeader(title, hint),
+        PmChipGroup(options: options, selected: selected, onToggle: (v) => setState(() => _toggle(selected, v))),
+      ],
+    );
+  }
+
+  Widget _ageAndCompanyStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _questionHeader('¿Qué edad tienes?', 'Darwin ajusta el ritmo y el tipo de actividad según tu etapa de vida.'),
+        TextField(
+          controller: _ageController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: 'Ej: 28'),
+        ),
+        const SizedBox(height: 28),
+        _questionHeader('¿Con quién sueles ir a tus panoramas?',
+            'Puedes elegir más de una — Darwin arma combos pensados para ese tipo de compañía.'),
+        PmChipGroup(options: _companyOptions, selected: _company, onToggle: (v) => setState(() => _toggle(_company, v))),
+      ],
+    );
+  }
+
+  Widget _tastesStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _questionHeader('¿Qué tipo de panoramas te gustan más?', 'Elige al menos 5 — esta es la base de todas tus recomendaciones.'),
+        PmChipGroup(options: _tastesOptions, selected: _tastes, onToggle: (v) => setState(() => _toggle(_tastes, v))),
+      ],
+    );
+  }
+
+  Widget _dayAndCityStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _questionHeader('¿Cuándo prefieres salir?', 'Para sugerirte planes que calcen con tu semana.'),
+        PmChipGroup(options: _dayOptions, selected: _day, onToggle: (v) => setState(() => _toggle(_day, v))),
+        const SizedBox(height: 28),
+        _questionHeader('¿Desde dónde te mueves?', 'Nos ayuda a calcular distancias y tiempos de traslado más reales.'),
+        DropdownButtonFormField<String>(
+          initialValue: _city,
+          isExpanded: true,
+          decoration: const InputDecoration(hintText: 'Selecciona tu comuna'),
+          items: [
+            for (final r in chileRegiones) ...[
+              DropdownMenuItem<String>(
+                enabled: false,
+                value: '__region_${r.region}',
+                child: Text(r.region, style: const TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.slate)),
+              ),
+              for (final c in r.comunas) DropdownMenuItem<String>(value: c, child: Text('  $c')),
+            ],
+          ],
+          onChanged: (v) {
+            if (v != null && !v.startsWith('__region_')) setState(() => _city = v);
+          },
+        ),
+      ],
+    );
+  }
+
   void _toggle(Set<String> set, String value) {
     if (!set.add(value)) set.remove(value);
   }
-
-  Widget _fieldLabel(String label, String hint) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-            const SizedBox(height: 3),
-            Text(hint, style: const TextStyle(color: PickmapColors.slate, fontSize: 12.5)),
-            const SizedBox(height: 8),
-          ],
-        ),
-      );
 }

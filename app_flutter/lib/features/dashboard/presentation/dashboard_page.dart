@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
+import '../../../core/widgets/pm_icon_circle.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../../auth/data/auth_controller.dart';
+import '../../auth/data/traveler_profile.dart';
 import '../../pickpoints/presentation/pickpoints_page.dart';
 import '../../onboarding/presentation/onboarding_page.dart';
 
@@ -77,10 +79,23 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          const Text('Tu cuenta', style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text('Hola ${auth.profile?.greetingFirstName ?? ''} 👋', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
+          Row(
+            children: [
+              _Avatar(profile: auth.profile),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Tu cuenta', style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text('Hola ${auth.profile?.greetingFirstName ?? ''} 👋', style: Theme.of(context).textTheme.headlineSmall),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           const Text('Esto es lo que PickMap armó para ti esta semana.', style: TextStyle(color: PickmapColors.slate)),
           const SizedBox(height: 18),
           Row(
@@ -225,8 +240,8 @@ class _Teaser extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 26)),
-        const SizedBox(width: 10),
+        PmIconCircle(icon: icon, size: 42),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,6 +253,34 @@ class _Teaser extends StatelessWidget {
         ),
         const Icon(Icons.chevron_right, color: PickmapColors.slate),
       ],
+    );
+  }
+}
+
+/// Avatar circular con iniciales — mismo patrón ya usado en el panel de
+/// negocio del sitio web (avatar coral con iniciales) aplicado acá al
+/// saludo del viajero.
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.profile});
+  final TravelerProfile? profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = profile?.firstName?.trim();
+    final last = profile?.lastName?.trim();
+    final initials = [
+      if (first != null && first.isNotEmpty) first[0],
+      if (last != null && last.isNotEmpty) last[0],
+    ].join().toUpperCase();
+    return Container(
+      width: 52,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(color: PickmapColors.coral, shape: BoxShape.circle),
+      child: Text(
+        initials.isEmpty ? '🙂' : initials,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
+      ),
     );
   }
 }

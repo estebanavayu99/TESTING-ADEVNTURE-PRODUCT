@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
-import '../../../core/widgets/pm_background.dart';
 import '../../../core/widgets/pm_logo.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../data/auth_controller.dart';
@@ -134,37 +133,68 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Layout tipo "hero + bottom sheet" (Duolingo/Airbnb-style) en vez de
+    // una tarjeta blanca flotando sobre el degradado — el hero superior
+    // lleva la marca/tagline, el sheet blanco con esquinas redondeadas
+    // ocupa el resto y contiene el form activo.
     return Scaffold(
-      body: PmBackground(
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const PmLogo(size: 36, textSize: 24),
-                    const SizedBox(height: 28),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: const [
-                          BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.14), blurRadius: 34, offset: Offset(0, 16)),
-                        ],
-                      ),
-                      child: _buildCardContent(context),
+      backgroundColor: PickmapColors.sun,
+      body: Column(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFF3DA), PickmapColors.sun],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const PmLogo(size: 42, textSize: 27),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Tu próximo panorama, sin buscar tanto',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: PickmapColors.navy, fontWeight: FontWeight.w600, fontSize: 14.5),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          Expanded(
+            flex: 7,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: _buildCardContent(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

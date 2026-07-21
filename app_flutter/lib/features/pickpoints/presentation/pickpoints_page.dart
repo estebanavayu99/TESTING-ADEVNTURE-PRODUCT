@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
+import '../../../core/widgets/pm_icon_circle.dart';
 
 /// Mirror de `pickpoints.html` — tarjeta de Darwin con progreso +
 /// escalera de cashback + historial de actividad, tarjeta de nivel +
@@ -57,13 +58,7 @@ class PickpointsPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(color: PickmapColors.bg, borderRadius: BorderRadius.circular(999)),
-                      child: const Text('🤖', style: TextStyle(fontSize: 20)),
-                    ),
+                    const PmIconCircle(icon: '🤖', size: 40),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Column(
@@ -76,25 +71,51 @@ class PickpointsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: 0.83,
-                    minHeight: 10,
-                    backgroundColor: PickmapColors.mist.withValues(alpha: 0.3),
-                    valueColor: const AlwaysStoppedAnimation(PickmapColors.coral),
-                  ),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('1.240 Pick Points', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 92,
+                      height: 92,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 92,
+                            height: 92,
+                            child: CircularProgressIndicator(
+                              value: 0.83,
+                              strokeWidth: 8,
+                              backgroundColor: PickmapColors.mist.withValues(alpha: 0.25),
+                              valueColor: const AlwaysStoppedAnimation(PickmapColors.coral),
+                            ),
+                          ),
+                          const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('1.240', style: TextStyle(fontWeight: FontWeight.w800, color: PickmapColors.navy, fontSize: 17)),
+                              Text('puntos', style: TextStyle(color: PickmapColors.slate, fontSize: 10)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 18),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Nivel Fiel', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy, fontSize: 15)),
+                          SizedBox(height: 4),
+                          Text('Te faltan 260 Pick Points para tu próximo premio 🎁',
+                              style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const Text('Te faltan 260 Pick Points para tu próximo premio 🎁', style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 _cashbackLadder(),
                 const SizedBox(height: 8),
                 const Text(
@@ -115,13 +136,7 @@ class PickpointsPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(color: PickmapColors.bg, borderRadius: BorderRadius.circular(999)),
-                      child: const Text('🙂', style: TextStyle(fontSize: 20)),
-                    ),
+                    const PmIconCircle(icon: '🙂', size: 40),
                     const SizedBox(width: 10),
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
