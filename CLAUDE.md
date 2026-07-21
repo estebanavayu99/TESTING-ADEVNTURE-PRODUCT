@@ -1242,3 +1242,91 @@ schema, la recomendación concreta:
   gotcha nuevo, o cambie el flujo de trabajo, debe reflejarlo en este
   archivo (`CLAUDE.md`) como parte del mismo commit, no como tarea aparte.
   Este archivo es la memoria persistente del proyecto entre sesiones.
+
+## App Flutter nativa de viajero (`/app_flutter/`, iniciada 2026-07-21)
+
+Instrucción explícita del usuario: empezar el diseño de una app **nativa**
+(Android/iOS vía Flutter) — explícitamente aclaró "pero aplicación, no
+PWA" para que no se confunda con la PWA ya instalable del sitio web (ver
+sección de arriba, `manifest.json`/`sw.js`). Es un proyecto Flutter
+autocontenido en `app_flutter/` dentro de este mismo repo (no un repo
+aparte). Alcance de esta primera etapa, confirmado por el usuario vía
+`AskUserQuestion`: **solo viajero** (el panel de negocio queda para una
+etapa futura), conectado al **mismo proyecto Supabase real** que ya usa
+`js/auth.js` (no mocks), con **identidad visual fiel al sitio web**
+(mismos colores/tipografía que `css/styles.css`, adaptados a Material 3).
+
+- **Paridad de marca**: `lib/core/theme/pickmap_colors.dart` copia 1:1 las
+  variables `:root` de `css/styles.css` (navy/coral/sun/mist/etc.);
+  `pickmap_theme.dart` usa `google_fonts` con Fredoka (`--font-display`)
+  para títulos y Nunito Sans (`--font-body`) para el resto — mismo par
+  tipográfico que el sitio, cargado ahí vía Google Fonts CDN también, así
+  que igual requiere red la primera vez (se cachea localmente después).
+- **Backend compartido, no duplicado**: `lib/core/supabase/
+  supabase_config.dart` apunta al mismo proyecto/anon key que
+  `js/supabase-config.js`. `lib/features/auth/data/auth_repository.dart`
+  lee/escribe directo en `profiles`/`darwin_preferences` (mismas tablas de
+  `supabase/schema.sql`) — un usuario que se registra desde la app puede
+  loguearse en el sitio web y viceversa, ambos comparten identidad real.
+  `AuthController` (ChangeNotifier) + `go_router` con `redirect`
+  replican el mismo criterio de `js/auth.js`: `profile.onboarded` solo se
+  chequea al aterrizar en `/splash` o `/auth` (login/signup/restauración
+  de sesión), no como guardia permanente — mismo comportamiento que el
+  botón "Prefiero hacerlo después" de `onboarding.html`, que navega
+  directo sin bloquear.
+- **Deep link de auth**: Supabase Auth en Flutter usa PKCE por defecto
+  (a diferencia del sitio web, que tuvo que forzar flujo implícito por el
+  bug de confirmar desde otro navegador — acá no aplica, el
+  code_verifier vive en el mismo dispositivo/app que abre el link).
+  Scheme `pickmap://login-callback` registrado en
+  `AndroidManifest.xml`/`Info.plist` — falta agregarlo a Authentication →
+  URL Configuration → Redirect URLs en el dashboard de Supabase (mismo
+  lugar que ya tiene `https://*.vercel.app/**` para el sitio) antes de
+  que la confirmación de correo funcione en producción.
+- **Catálogo de panoramas = data de muestra, todavía no `businesses`
+  real**: `lib/features/panoramas/data/sample_catalog.dart` reutiliza
+  literalmente el copy de `TASTE_POOL`/`DEFAULT_POOL` en `js/panoramas.js`
+  (mismos títulos/razones "por qué Darwin te lo recomienda"), pero es
+  data hardcodeada — portar el motor de ranking (`bot-darwin/js/motor.js`)
+  y conectar la tabla `businesses` (25.875 negocios reales) es trabajo
+  aparte, documentado como siguiente paso en `app_flutter/README.md`.
+  Mismo criterio para Favoritos/Pick Points/Invita: layouts reales, datos
+  de muestra, sin ledger de puntos ni favoritos persistidos todavía.
+- **Bug real encontrado y arreglado durante la verificación visual**:
+  `ElevatedButtonThemeData` tenía un `textStyle: TextStyle(fontWeight,
+  fontSize)` sin `fontFamily` explícito — en Flutter, un `textStyle` de
+  tema que no es null **reemplaza por completo** (no se mergea campo a
+  campo) el `textStyle` default, así que el botón perdía la tipografía de
+  marca y cae al fallback "Roboto" del engine. En Flutter Web ese
+  fallback se descarga por red (CanvasKit); sin esa fuente disponible el
+  texto del botón queda invisible — se detectó exactamente así con
+  Playwright (botones "Entrar"/"Continuar"/"Copiar código" se veían como
+  píldoras de color sin texto). Fix: sacar ese `textStyle` de
+  `ElevatedButton.styleFrom(...)` en `pickmap_theme.dart` y dejar que
+  herede `fontWeight`/tamaño desde `textTheme.labelLarge` (ya con la
+  fuente de marca aplicada), manteniendo solo `foregroundColor` para el
+  color. Si se vuelve a tocar el theme, no reintroducir un `textStyle`
+  suelto sin `fontFamily` en ningún `*ButtonThemeData`.
+- **Verificación visual sin internet real (mismo criterio que el sitio,
+  ver sección de abajo, adaptado a Flutter)**: se clonó el Flutter SDK
+  (stable) vía `git clone` (github.com sí pasa por el proxy del sandbox;
+  `storage.googleapis.com`/`pub.dev` no, hay que exportar
+  `PUB_HOSTED_URL=https://pub.dartlang.org` para que `flutter pub get`
+  funcione), se corrió `flutter build web` apuntando a un entrypoint de
+  debug aparte (`lib/dev_preview_main.dart`, **borrado tras verificar** —
+  no debe volver a commitearse) que muestra cada pantalla directo por
+  query param (`?screen=auth`, evita tener que loguearse de verdad), y se
+  parcheó `canvasKitBaseUrl` en `flutter_bootstrap.js` para servir
+  CanvasKit desde el build local en vez del CDN de Google (bloqueado acá).
+  Las fuentes Fredoka/Nunito Sans tampoco cargan sin red — se sustituyeron
+  temporalmente por una fuente local cualquiera solo para poder leer el
+  texto en las capturas, revertido antes de terminar. Capturas vía
+  Playwright con `/opt/pw-browsers/chromium`, igual que el resto del
+  repo, con esperas largas (~15s): CanvasKit tarda en pintar el primer
+  frame en este entorno software-rendered y las capturas tomadas
+  demasiado pronto salen en blanco (no es un bug de la app).
+- **Pendiente, a propósito, para una próxima sesión**: panel de negocio en
+  Flutter, conectar catálogo/motor de recomendación real, favoritos/Pick
+  Points/referidos persistidos de verdad, y pulir con capturas en un
+  dispositivo/emulador real (esta sesión no tuvo emulador Android/iOS
+  disponible, solo `flutter build web` para verificar diseño).
