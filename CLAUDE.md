@@ -1839,3 +1839,19 @@ cuadrado con fondo tenue" ya establecido en el hero
   (incluida la oculta en modo viajero, "Más reservas..." solo visible en
   modo empresa) y en mobile (390px): sin overflow horizontal ni errores
   de consola en ninguna combinación.
+- **Segunda pasada, a pedido explícito ("con ambos" — FAQ + revisar
+  footer/alianzas)**: el `+`/`×` del acordeón de preguntas frecuentes
+  (`.faq__question::after`) pasó de un carácter suelto flotando a la
+  derecha a un chip circular (26px, mismo tinte coral tenue) que gira a
+  "×" al abrir la pregunta — mismo lenguaje de ícono-en-chip ya aplicado
+  en el hero y en `.card__icon`. Se amplió el `padding-right` de
+  `.faq__question` (28px→38px, 26px→34px en mobile) para darle
+  respiración al chip nuevo. Las tarjetas de `#alianzas` (sección
+  empresa) ya habían quedado cubiertas por el override
+  `.card--inv .card__icon` del commit anterior — no necesitaron cambios
+  extra. El footer se revisó y se decidió NO tocarlo: ya es minimalista
+  a propósito (fondo sólido navy, links de texto plano con hover de
+  opacidad) y agregarle más adornos visuales lo recargaría en vez de
+  mejorarlo — criterio de diseño, no un pendiente. Verificado con
+  Playwright: acordeón abre/cierra bien, chip gira, sin overflow ni
+  errores de consola.
