@@ -1701,3 +1701,17 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   proporcionado junto a la sidebar. Verificado con Playwright a 1280px,
   1024px, 900px y 390px en ambos modos: sin overflow ni texto cortado en
   ninguna combinación.
+- **Tercera vuelta: "cuadrar" la sidebar para que no quede descuadrada
+  respecto al texto**. La sidebar (3 tarjetas + gaps) medía ~240px de
+  alto mientras la columna de texto (eyebrow+h1+sub+botones) medía
+  ~415px — dejaba un bloque vacío abajo a la izquierda, desalineado con
+  el resto de la tarjeta. Fix: `.hero__copy-row` pasó de `align-items:
+  flex-start` a `align-items: stretch` (la sidebar ahora ocupa el 100%
+  del alto de la fila) y `.hero__copy-row .hero__stats` pasó de
+  `max-width` a `width: 230px` fijo + `justify-content: space-between` —
+  las 3 tarjetas se separan para llenar ese alto parejo en vez de
+  quedarse apretadas arriba. Resultado: el borde superior E inferior de
+  la sidebar coincide exactamente con el de la columna de texto en
+  cualquier alto de contenido (viajero con h1 de 3 líneas o empresa con
+  h1 de 5). El breakpoint mobile (`max-width:980px`) ya fijaba
+  `width:100%` para la sidebar apilada, así que no necesitó cambios.
