@@ -1659,3 +1659,23 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   de alguno a algo más largo que "+1.352.112", repetir esa misma
   verificación (no confiar solo en la captura de pantalla, un overflow de
   ~1 palabra puede no saltar a la vista en una sola resolución).
+- **Vueltos verticales a pedido explícito del usuario** ("y si los pones
+  vertical? estas 3 mini tarjetas"), en vez de la fila de 3 columnas de
+  la iteración anterior. `.hero__stats` pasó de `display: grid;
+  grid-template-columns: repeat(3,1fr)` a `display: flex; flex-direction:
+  column; max-width: 320px` — quedan apiladas del lado izquierdo, debajo
+  de los botones, en vez de una fila ancha. Con más ancho disponible por
+  tarjeta (ya no compiten entre sí por espacio horizontal) se pudieron
+  agrandar de nuevo el ícono (32px, antes 28px) y la tipografía del
+  número (1.1rem, antes 0.96rem) respecto a la versión en fila, sin
+  reintroducir el bug de overflow (reverificado con el mismo chequeo de
+  `scrollWidth`/`clientWidth`). En el breakpoint donde `.hero__inner`
+  colapsa a una columna centrada (`@media max-width: 980px`, mismo punto
+  donde ya se centraban `h1`/`.hero__sub`/`.hero__ctas`), se agregó
+  `align-items: center; margin: 0 auto` a `.hero__stats` — antes tenía
+  `justify-content: center` heredado de cuando era un grid en fila (con
+  columna flex eso solo afecta el eje vertical, no centra horizontalmente,
+  así que quedaba pegado al borde izquierdo mientras el resto del hero ya
+  se veía centrado). Verificado con Playwright a 1280px (2 columnas,
+  stats a la izquierda), 900px y 390px (columna centrada) en ambos modos
+  (viajero/empresa): sin overflow horizontal ni texto cortado.
