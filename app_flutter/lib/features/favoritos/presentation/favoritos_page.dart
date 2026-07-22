@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/widgets/pm_fade_in.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
 import '../../panoramas/data/sample_catalog.dart' as catalog;
 import '../../panoramas/presentation/panorama_card.dart';
@@ -34,7 +35,7 @@ class FavoritosPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (favoritos.isEmpty)
-            _emptyState()
+            PmFadeIn(child: _emptyState())
           else
             GridView.builder(
               shrinkWrap: true,
@@ -48,11 +49,17 @@ class FavoritosPage extends StatelessWidget {
               ),
               itemBuilder: (context, i) {
                 final item = favoritos[i];
-                return PanoramaCard(
-                  item: item,
-                  onTap: () => showPanoramaDetail(context, item),
-                  favorited: true,
-                  onFavoriteToggle: () => favorites.toggle(item.id),
+                // Cascada suave, tope de 6 items escalonados — con más
+                // favoritos que eso el delay sigue siendo el mismo (no
+                // tiene sentido hacer esperar la tarjeta #30).
+                return PmFadeIn(
+                  delay: Duration(milliseconds: 40 * (i > 6 ? 6 : i)),
+                  child: PanoramaCard(
+                    item: item,
+                    onTap: () => showPanoramaDetail(context, item),
+                    favorited: true,
+                    onFavoriteToggle: () => favorites.toggle(item.id),
+                  ),
                 );
               },
             ),

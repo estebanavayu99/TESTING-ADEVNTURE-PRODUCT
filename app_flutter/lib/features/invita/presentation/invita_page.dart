@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
 import '../../../core/widgets/pm_cta_link.dart';
+import '../../../core/widgets/pm_fade_in.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../../pickpoints/presentation/pickpoints_page.dart';
@@ -40,7 +41,8 @@ class InvitaPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          PmCard(
+          PmFadeIn(
+            child: PmCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -75,44 +77,54 @@ class InvitaPage extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          PmCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Tus referidos', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    _StatBlock(value: '3', label: 'amig@s invitados', color: PickmapColors.coral),
-                    _StatBlock(value: '2', label: 'ya viven su primer panorama', color: PickmapColors.green),
-                    _StatBlock(value: '300', label: 'Pick Points ganados invitando', color: _statGold),
-                  ],
-                ),
-              ],
             ),
           ),
           const SizedBox(height: 14),
-          PmCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Cómo funciona', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-                const SizedBox(height: 12),
-                _step('📤', 'Comparte tu código', 'Envíaselo a un amigo por WhatsApp, redes o donde quieras.', PickmapColors.coral),
-                _step('✍️', 'Se registra con tu código', 'Tu amigo crea su cuenta en PickMap e ingresa tu código al onboarding.', PickmapColors.green),
-                _step('🎁', 'Ambos ganan Pick Points', 'Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.', PickmapColors.sun),
-              ],
+          PmFadeIn(
+            delay: const Duration(milliseconds: 80),
+            child: PmCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Tus referidos', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      _StatBlock(value: '3', label: 'amig@s invitados', color: PickmapColors.coral),
+                      _StatBlock(value: '2', label: 'ya viven su primer panorama', color: PickmapColors.green),
+                      _StatBlock(value: '300', label: 'Pick Points ganados invitando', color: _statGold),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
-          PmCtaLink(
-            icon: '⭐',
-            title: 'Ver mis Pick Points',
-            subtitle: 'Revisa tu actividad y tus premios por logros',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PickpointsPage()))),
+          PmFadeIn(
+            delay: const Duration(milliseconds: 160),
+            child: PmCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Cómo funciona', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+                  const SizedBox(height: 12),
+                  _step('📤', 'Comparte tu código', 'Envíaselo a un amigo por WhatsApp, redes o donde quieras.', PickmapColors.coral),
+                  _step('✍️', 'Se registra con tu código', 'Tu amigo crea su cuenta en PickMap e ingresa tu código al onboarding.', PickmapColors.green),
+                  _step('🎁', 'Ambos ganan Pick Points', 'Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.', PickmapColors.sun),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          PmFadeIn(
+            delay: const Duration(milliseconds: 240),
+            child: PmCtaLink(
+              icon: '⭐',
+              title: 'Ver mis Pick Points',
+              subtitle: 'Revisa tu actividad y tus premios por logros',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PickpointsPage()))),
+            ),
           ),
         ],
       ),

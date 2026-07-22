@@ -1878,3 +1878,46 @@ puntuales). Panoramas no se tocó (ya tenía el visto bueno explícito).
   — se ven notoriamente más vivas sin perder la limpieza del diseño
   (nada de fondos saturados de página completa, el color vive en
   acentos puntuales: íconos, badges, la escalera, el código).
+
+## Fluidez: transiciones, entrada en cascada y contador animado
+
+A pedido explícito del usuario ("perfecciona más, debe ser una app
+entretenida, fluida y elegante"), pase de pulido enfocado en animación e
+interacción (no en más color, ya cubierto arriba):
+
+- **`core/widgets/pm_fade_in.dart`** (nuevo): fade + leve deslizamiento
+  hacia arriba, con un `delay` opcional para escalonar varias tarjetas en
+  cascada. Envuelve las tarjetas principales de Dashboard, Pick Points e
+  Invita (delay creciente por tarjeta, ~60-80ms de diferencia) y cada
+  tarjeta de la grilla de Favoritos (delay por índice, tope de 6 para no
+  hacer esperar a los últimos items si hay muchos favoritos).
+- **Transición entre tabs de `HomeShell`**: antes el `IndexedStack`
+  cambiaba de página de golpe, sin transición. Se agregó un
+  `AnimationController` + `FadeTransition` por ENCIMA del mismo
+  `IndexedStack` (nunca se recrea el widget) — la opacidad baja a 0 y
+  vuelve a 1 en 200ms al tocar un tab distinto, sin perder el estado de
+  las páginas (los controllers de "Mi cuenta" siguen vivos). Ojo si se
+  vuelve a tocar `home_shell.dart`: no reemplazar el `IndexedStack` por
+  un `AnimatedSwitcher`/widget keyeado por índice — eso sí recrearía el
+  árbol y perdería el estado.
+- **Anillo de progreso + contador de Pick Points animados**: antes
+  `value: 0.83` y `'1.240'` eran estáticos. Ahora un
+  `TweenAnimationBuilder<double>` anima el anillo de 0 al valor real en
+  900ms (`Curves.easeOutCubic`) apenas se entra a la pantalla — anima
+  solo, sin convertir la página a `StatefulWidget`, porque
+  `TweenAnimationBuilder` ya trata la primera inserción como un cambio
+  implícito de `begin` a `end`. El contador de puntos se deriva del mismo
+  `progress` (`progress / 0.83 * 1240`) en vez de animarse por separado,
+  para que ambos terminen exactos al mismo tiempo.
+- **`PmCtaLink`** pasa a `StatefulWidget` con el mismo "press-scale" que
+  `PmPrimaryButton` (`Listener` + `AnimatedScale`, nunca `GestureDetector`
+  por la misma razón de gesture arena ya documentada) — antes era el
+  único elemento tocable de la app sin ningún feedback de presión.
+- Panoramas no se tocó en esta pasada (ya tenía el visto bueno explícito
+  del usuario) — el foco fue exclusivamente Dashboard/Pick Points/Invita/
+  Favoritos y la navegación entre tabs.
+- Verificado con Playwright: el anillo/contador quedan en el valor final
+  correcto tras la animación, el cambio de tab (`Explorar` → `Cuenta`)
+  se ve fluido y sin artefactos visuales, y las tarjetas en cascada no
+  rompen el layout de ninguna pantalla. `flutter analyze`/`flutter test`
+  siguen en verde (27 tests).

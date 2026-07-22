@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
 import '../../../core/widgets/pm_cta_link.dart';
+import '../../../core/widgets/pm_fade_in.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
 import '../../panoramas/presentation/panoramas_page.dart';
 
@@ -11,6 +12,17 @@ import '../../panoramas/presentation/panoramas_page.dart';
 /// formas de ganar puntos + premios por logros. Datos de muestra
 /// (mismos textos/valores del sitio) mientras no hay un ledger real de
 /// puntos conectado a Supabase.
+/// Mismo formato de miles (punto, no coma) que el resto de la app.
+String _formatPoints(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}
+
 class PickpointsPage extends StatelessWidget {
   const PickpointsPage({super.key});
 
@@ -64,7 +76,8 @@ class PickpointsPage extends StatelessWidget {
           const SizedBox(height: 4),
           const Text('Tu nivel, tu cashback y todo tu historial de puntos, en un solo lugar.', style: TextStyle(color: PickmapColors.slate)),
           const SizedBox(height: 18),
-          PmCard(
+          PmFadeIn(
+            child: PmCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -90,27 +103,38 @@ class PickpointsPage extends StatelessWidget {
                     SizedBox(
                       width: 92,
                       height: 92,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 92,
-                            height: 92,
-                            child: CircularProgressIndicator(
-                              value: 0.83,
-                              strokeWidth: 8,
-                              backgroundColor: PickmapColors.mist.withValues(alpha: 0.25),
-                              valueColor: const AlwaysStoppedAnimation(PickmapColors.coral),
+                      // Anillo + contador animados de 0 al valor real al
+                      // entrar a la pantalla (`TweenAnimationBuilder` anima
+                      // la primera vez que se inserta, sin necesitar
+                      // convertir la página a StatefulWidget) — más
+                      // "entretenido" que un número/anillo estáticos.
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 0.83),
+                        duration: const Duration(milliseconds: 900),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, progress, child) => Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 92,
+                              height: 92,
+                              child: CircularProgressIndicator(
+                                value: progress,
+                                strokeWidth: 8,
+                                backgroundColor: PickmapColors.mist.withValues(alpha: 0.25),
+                                valueColor: const AlwaysStoppedAnimation(PickmapColors.coral),
+                              ),
                             ),
-                          ),
-                          const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('1.240', style: TextStyle(fontWeight: FontWeight.w800, color: PickmapColors.navy, fontSize: 17)),
-                              Text('puntos', style: TextStyle(color: PickmapColors.slate, fontSize: 10)),
-                            ],
-                          ),
-                        ],
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(_formatPoints((progress / 0.83 * 1240).round()),
+                                    style: const TextStyle(fontWeight: FontWeight.w800, color: PickmapColors.navy, fontSize: 17)),
+                                const Text('puntos', style: TextStyle(color: PickmapColors.slate, fontSize: 10)),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 18),
@@ -140,9 +164,12 @@ class PickpointsPage extends StatelessWidget {
                 for (final h in _history) _historyRow(h.$1, h.$2, h.$3, h.$4, h.$5),
               ],
             ),
+            ),
           ),
           const SizedBox(height: 16),
-          PmCard(
+          PmFadeIn(
+            delay: const Duration(milliseconds: 80),
+            child: PmCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -171,13 +198,17 @@ class PickpointsPage extends StatelessWidget {
                   _rewardRow(_rewards[i].$1, _rewards[i].$2, _rewards[i].$3, _rewards[i].$4, _rewardColors[i % _rewardColors.length]),
               ],
             ),
+            ),
           ),
           const SizedBox(height: 16),
-          PmCtaLink(
-            icon: '🗺️',
-            title: 'Ver mis panoramas',
-            subtitle: 'Todo lo que Darwin armó especialmente para ti',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PanoramasPage()))),
+          PmFadeIn(
+            delay: const Duration(milliseconds: 160),
+            child: PmCtaLink(
+              icon: '🗺️',
+              title: 'Ver mis panoramas',
+              subtitle: 'Todo lo que Darwin armó especialmente para ti',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PanoramasPage()))),
+            ),
           ),
         ],
       ),

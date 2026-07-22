@@ -20,8 +20,28 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMixin {
   int _index = 0;
+
+  // Fade suave al cambiar de tab — se anima por encima del mismo
+  // `IndexedStack` (nunca se recrea), así que el estado de cada página
+  // (ej. los controllers de Mi Cuenta) sigue intacto; solo cambia la
+  // opacidad, no el árbol de widgets.
+  late final AnimationController _fade = AnimationController(vsync: this, duration: const Duration(milliseconds: 200), value: 1);
+
+  void _onTap(int i) {
+    if (i == _index) return;
+    setState(() => _index = i);
+    _fade
+      ..value = 0
+      ..forward();
+  }
+
+  @override
+  void dispose() {
+    _fade.dispose();
+    super.dispose();
+  }
 
   static const _pages = [
     PanoramasPage(),
@@ -48,11 +68,14 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pages),
+      body: FadeTransition(
+        opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
+        child: IndexedStack(index: _index, children: _pages),
+      ),
       bottomNavigationBar: PmBottomNav(
         items: _items,
         currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+        onTap: _onTap,
       ),
     );
   }

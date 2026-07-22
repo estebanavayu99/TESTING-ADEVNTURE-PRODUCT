@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/utils/rut.dart';
 import '../../../core/widgets/pm_card.dart';
+import '../../../core/widgets/pm_fade_in.dart';
 import '../../../core/widgets/pm_icon_circle.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../../auth/data/auth_controller.dart';
@@ -118,75 +119,86 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 8),
           const Text('Esto es lo que PickMap armó para ti esta semana.', style: TextStyle(color: PickmapColors.slate)),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: PmCard(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PickpointsPage())),
-                  padding: const EdgeInsets.all(14),
-                  child: _Teaser(
-                    icon: '⭐',
-                    title: '1.240 Pick Points',
-                    subtitle: 'Nivel Fiel · hasta 4% cashback',
-                    iconBackground: PickmapColors.sun.withValues(alpha: 0.22),
+          PmFadeIn(
+            child: Row(
+              children: [
+                Expanded(
+                  child: PmCard(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PickpointsPage())),
+                    padding: const EdgeInsets.all(14),
+                    child: _Teaser(
+                      icon: '⭐',
+                      title: '1.240 Pick Points',
+                      subtitle: 'Nivel Fiel · hasta 4% cashback',
+                      iconBackground: PickmapColors.sun.withValues(alpha: 0.22),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          PmCard(
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingPage())),
-            padding: const EdgeInsets.all(14),
-            child: _Teaser(
-              icon: '🧭',
-              title: 'Tus datos de viajero',
-              subtitle: 'Tu edad, con quién viajas y tus gustos',
-              iconBackground: PickmapColors.green.withValues(alpha: 0.18),
+          PmFadeIn(
+            delay: const Duration(milliseconds: 60),
+            child: PmCard(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingPage())),
+              padding: const EdgeInsets.all(14),
+              child: _Teaser(
+                icon: '🧭',
+                title: 'Tus datos de viajero',
+                subtitle: 'Tu edad, con quién viajas y tus gustos',
+                iconBackground: PickmapColors.green.withValues(alpha: 0.18),
+              ),
             ),
           ),
           const SizedBox(height: 24),
           const Text('Tu cuenta', style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 10),
-          PmCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Configura tu cuenta', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: PickmapColors.navy)),
-                const SizedBox(height: 14),
-                _labeledField('Nombre', _firstName),
-                _labeledField('Apellido', _lastName),
-                _labeledField('RUT', _rut, hint: '12.345.678-9'),
-                _readOnlyField('Correo electrónico', email),
-                _labeledField('Teléfono', _phone, hint: '+56 9 1234 5678'),
-                const SizedBox(height: 4),
-                PmPrimaryButton(label: 'Solicitar cambio de datos', loading: _saving, onPressed: () => _save(auth)),
-                if (_feedback != null) ...[
-                  const SizedBox(height: 8),
-                  Text(_feedback!, style: const TextStyle(color: PickmapColors.slate)),
+          PmFadeIn(
+            delay: const Duration(milliseconds: 120),
+            child: PmCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Configura tu cuenta', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: PickmapColors.navy)),
+                  const SizedBox(height: 14),
+                  _labeledField('Nombre', _firstName),
+                  _labeledField('Apellido', _lastName),
+                  _labeledField('RUT', _rut, hint: '12.345.678-9'),
+                  _readOnlyField('Correo electrónico', email),
+                  _labeledField('Teléfono', _phone, hint: '+56 9 1234 5678'),
+                  const SizedBox(height: 4),
+                  PmPrimaryButton(label: 'Solicitar cambio de datos', loading: _saving, onPressed: () => _save(auth)),
+                  if (_feedback != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_feedback!, style: const TextStyle(color: PickmapColors.slate)),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          PmCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Métodos de pago', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: PickmapColors.navy)),
-                    TextButton(onPressed: () {}, child: const Text('+ Agregar')),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _payCard(_visaLogo(), '•••• •••• •••• 4231', 'Vence 08/28', tag: 'Principal'),
-                const SizedBox(height: 10),
-                _payCard(_mastercardLogo(), '•••• •••• •••• 8890', 'Vence 03/27'),
-                const SizedBox(height: 10),
-                const Text('🔒 Tus datos de pago están cifrados y protegidos.', style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
-              ],
+          PmFadeIn(
+            delay: const Duration(milliseconds: 180),
+            child: PmCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Métodos de pago', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: PickmapColors.navy)),
+                      TextButton(onPressed: () {}, child: const Text('+ Agregar')),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _payCard(_visaLogo(), '•••• •••• •••• 4231', 'Vence 08/28', tag: 'Principal'),
+                  const SizedBox(height: 10),
+                  _payCard(_mastercardLogo(), '•••• •••• •••• 8890', 'Vence 03/27'),
+                  const SizedBox(height: 10),
+                  const Text('🔒 Tus datos de pago están cifrados y protegidos.', style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
