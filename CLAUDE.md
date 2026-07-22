@@ -1781,3 +1781,24 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   disponible) + `text-align: center` en `.hero__stat-body` (centra las
   líneas de texto que envuelven, como "combinaciones de panoramas").
   Aplica igual en la versión apilada de mobile.
+- **Octava vuelta: count-up animado en los dos stats numéricos del hero**
+  ("sorpréndeme", instrucción abierta tras preguntar qué más agregar para
+  verse más profesional). `+1.352.112` y `100%` ahora animan desde 0 al
+  cargar la página en vez de aparecer estáticos — mismo patrón ya
+  establecido en el widget de Pick Points (`js/main.js`: ease-out cúbico,
+  1400ms, `IntersectionObserver` que se dispara una sola vez,
+  `toLocaleString('es-CL')`), replicado para no inventar un mecanismo
+  nuevo. Como estas dos tarjetas ya no usan `data-client`/`data-business`
+  (ese atributo dispara el swap de texto genérico en `setMode()`, que
+  pisaría el número a mitad de la animación), ahora usan
+  `class="count-up-hero"` + `data-target-client`/`data-target-business`
+  + `data-prefix`/`data-suffix` — `setMode()` se actualizó para, en cada
+  cambio de modo POSTERIOR a la animación inicial, actualizar el valor al
+  instante sin re-animar (mismo criterio que el widgetCounter existente).
+  Respeta `prefers-reduced-motion`: si está activo, no se ejecuta nada y
+  se queda el valor final ya escrito en el HTML como fallback estático.
+  "Pick Points"/"Referidos" (el tercer stat, no numérico) no se tocó.
+  Verificado con Playwright: la animación corre y se asienta exacto en
+  el valor final (`+1.352.112`/`100%`), el cambio a modo empresa lo pisa
+  a `+0`/`0%` al instante, y volver a viajero restaura el valor final sin
+  re-animar — sin errores de consola.

@@ -4,6 +4,11 @@
   /* ---------- Cliente / Empresa toggle ---------- */
   const modeToggle = document.getElementById('modeToggle');
   const modeElements = document.querySelectorAll('[data-client]');
+  /* Stats del hero (+1.352.112 / 100%) no usan data-client/data-business
+     (ese loop genérico solo hace un swap de texto instantáneo) porque
+     además corren un count-up animado al cargar la página — ver más
+     abajo, después de declarar `reduceMotion`. */
+  const heroCountUps = document.querySelectorAll('.hero__stats .count-up-hero');
 
   /* ---------- Business hero mock: animated earnings chart ---------- */
   const BIZ_TOAST_MESSAGES = [
@@ -88,6 +93,17 @@
       widgetCounter.dataset.target = target;
       widgetCounter.textContent = prefix + Number(target).toLocaleString('es-CL');
     }
+
+    // Los stats del hero ya corrieron su count-up animado al cargar la
+    // página (ver abajo, cerca de `reduceMotion`) — un cambio de modo
+    // posterior solo actualiza el valor mostrado al instante, sin
+    // reanimar, mismo criterio que el widgetCounter de arriba.
+    heroCountUps.forEach(el => {
+      const target = Number(isBusiness ? el.dataset.targetBusiness : el.dataset.targetClient);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      el.textContent = prefix + target.toLocaleString('es-CL') + suffix;
+    });
 
     if (isBusiness) {
       animateBizChart();
@@ -236,9 +252,40 @@
     widgetIo.observe(widget);
   }
 
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Hero stats: count-up animado al cargar la página ----------
+     Mismo patrón que el widget de Pick Points de arriba (ease-out cúbico,
+     1400ms, IntersectionObserver que se dispara una sola vez) — como el
+     hero está arriba del fold, dispara casi de inmediato al cargar. Si
+     `prefers-reduced-motion`, se deja el valor final estático (ya viene
+     así en el HTML) sin animar nada. */
+  if (heroCountUps.length && !reduceMotion) {
+    const heroIo = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const duration = 1400;
+        const start = performance.now();
+        function tick(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const isBiz = body.classList.contains('mode-business');
+          const target = Number(isBiz ? el.dataset.targetBusiness : el.dataset.targetClient);
+          const prefix = el.dataset.prefix || '';
+          const suffix = el.dataset.suffix || '';
+          el.textContent = prefix + Math.round(eased * target).toLocaleString('es-CL') + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        heroIo.unobserve(el);
+      });
+    }, { threshold: 0.3 });
+    heroCountUps.forEach(el => heroIo.observe(el));
+  }
+
   /* ---------- Rain: real drops on canvas ---------- */
   const rainCanvas = document.getElementById('rainCanvas');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (rainCanvas && !reduceMotion) {
     const ctx = rainCanvas.getContext('2d');
     const skyline = document.querySelector('.skyline');
