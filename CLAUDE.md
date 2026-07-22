@@ -1855,3 +1855,11 @@ cuadrado con fondo tenue" ya establecido en el hero
   mejorarlo — criterio de diseño, no un pendiente. Verificado con
   Playwright: acordeón abre/cierra bien, chip gira, sin overflow ni
   errores de consola.
+- **Tercera pasada**: `.example` (las 3 tarjetas de cita/testimonio
+  dentro de la sección de Darwin — "Pareja/Empresa/Familia") eran las
+  únicas que quedaban completamente planas (fondo navy sólido, sin
+  sombra, sin hover) mientras `.step`/`.card` ya tenían elevación al
+  pasar el mouse. Se agregó `box-shadow: var(--shadow)` +
+  `transform: translateY(-6px)` en hover, mismo patrón. Verificado que
+  el `transform` computado cambia al hacer hover (Playwright), sin
+  overflow ni errores de consola.
