@@ -1624,3 +1624,38 @@ propósito.
   consola" capturados (`ERR_CONNECTION_RESET` al cargar Google Fonts) son
   el bloqueo de red esperado del sandbox (ver sección "Verificación
   visual" arriba), no un problema real de las páginas.
+
+## Rediseño de `.hero__stats`/`.hero__ctas` en el hero de `index.html` (2026-07-22)
+
+Instrucción explícita del usuario sobre la fila de 3 stats + los 2
+botones del hero viajero ("hazla más atractiva o elegante, cuidado con
+que moleste visualmente"). Cambios en `css/styles.css`:
+- Cada `.hero__stat` pasó de columna de texto plano a fila con un chip de
+  ícono a la izquierda (mismo lenguaje visual ya establecido en
+  `.pano-toolbar__label-icon`/`.pano-advfilter__badge` de
+  `panoramas.html` — chip cuadrado con fondo coral tenue), fondo con
+  gradiente sutil + sombra suave, y micro-elevación en hover
+  (`translateY(-2px)` + borde coral). Íconos elegidos genéricos a
+  propósito (🧭/🎯/⭐) para que sigan leyéndose bien tanto en modo
+  viajero como en modo empresa (mismo `<strong data-client>/data-business`
+  de siempre, el ícono es puramente decorativo y no cambia por modo).
+  `.btn--primary` pasó de color plano a un gradiente sutil; `.btn--ghost`
+  ahora tiene el mismo hover de elevación + sombra que el primario (antes
+  solo invertía colores, sin movimiento) para que ambos botones se sientan
+  igual de "vivos".
+- **Bug real encontrado y arreglado en la misma pasada** (detectado con un
+  chequeo de `scrollWidth` vs `clientWidth` en Playwright, no a simple
+  vista): el primer stat (`+1.352.112`) es el texto más largo de los tres
+  y, con el tamaño de fuente inicial del rediseño (1.3rem) más el ancho
+  que le quitaba el ícono nuevo a la columna de texto, no cabía en una
+  sola línea dentro de la card de ~159px (a 1280px de viewport) y el
+  navegador lo cortaba a la mitad de un número ("+1.352.1" / "12"),
+  viéndose roto. Fix: se ajustó el balance completo del componente —
+  ícono 28px (antes 34px), padding horizontal 10px (antes 16px), gap 9px
+  (antes 12px), fuente del número 0.96rem (antes 1.3rem) — hasta
+  que `strong.scrollWidth === strong.clientWidth` para el texto más largo
+  de los tres, confirmado con un script de Playwright antes de dar el
+  cambio por terminado. Si se agrega un cuarto stat o se cambia el texto
+  de alguno a algo más largo que "+1.352.112", repetir esa misma
+  verificación (no confiar solo en la captura de pantalla, un overflow de
+  ~1 palabra puede no saltar a la vista en una sola resolución).
