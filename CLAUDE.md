@@ -1734,3 +1734,28 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   la columna de texto, sin importar cuánto se estire — se ve como un
   panel de verdad, no como 3 tarjetas descuadradas. Aplica igual en
   mobile/tablet apilado (mismo panel, ahora a ancho completo).
+- **Quinta vuelta: reordenar todo — vuelta al orden de lectura clásico**
+  ("todo lo que es stat, titulo y phone, quiero que lo reordenes"). Las
+  4 vueltas anteriores probaron distintas variantes de "stats como
+  sidebar junto al título" y ninguna convenció del todo. Se eliminó por
+  completo `.hero__copy-row`/`.hero__copy-main` (el wrapper de fila que
+  ponía la sidebar al lado del texto) — `.hero__copy` vuelve a ser una
+  columna simple con el orden de lectura de toda la vida: eyebrow → h1 →
+  subtítulo → botones → **stats al final, como fila horizontal** (antes
+  vivían arriba/al lado). `.hero__stats` pasa de columna a
+  `flex-direction: row` (mismo panel unificado con líneas divisorias,
+  ahora verticales entre columnas en vez de horizontales entre filas);
+  por debajo de 720px vuelve a apilarse en columna (mismo breakpoint que
+  ya achicaba tipografía del hero), con la única línea divisoria pasando
+  de `border-left` a `border-top`. El celular (`.hero__mock`) no se tocó
+  — sigue en la columna derecha del grid `.hero__inner`, sin cambios.
+  **Ajuste real necesario**: en fila horizontal de 3 columnas dentro de
+  los ~536px de ancho de `.hero__copy` en desktop (1024-1280px), el
+  número más largo (`+1.352.112`) volvía a cortarse — mismo tipo de bug
+  que en la primera vuelta de este rediseño, esta vez detectado ANTES de
+  pushear (con el mismo chequeo `scrollWidth`/`clientWidth` en Playwright
+  en 5 anchos distintos) en vez de después. Se ajustó el balance del
+  componente hasta que cupiera en todos los anchos probados: ícono 24px
+  (antes 32px), padding 8px (antes 14-18px), gap 7px (antes 10-12px),
+  fuente 0.88rem (antes 1-1.1rem). Verificado sin overflow en 1280, 1024,
+  900, 600 y 390px, en ambos modos.
