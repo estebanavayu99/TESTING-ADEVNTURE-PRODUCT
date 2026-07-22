@@ -1654,3 +1654,45 @@ distinto: un badge `.pano-card__kind`/`.pano-modal__kind` visible SIEMPRE
   de un paquete abierto con su desglose de componentes — capturas
   descartadas tras verificar (no se commitea nada del entrypoint
   temporal, mismo criterio que las rondas anteriores de este mismo día).
+
+## Bug real: el wizard de onboarding no navegaba a ningún lado al terminar
+
+A pedido explícito del usuario ("busca bugs y arreglalos"), auditoría de
+`app_flutter/lib/` completa buscando bugs funcionales (no solo visuales).
+El más serio: **ni "Finalizar" ni "Saltar" en `onboarding_page.dart`
+navegaban a ninguna parte** — un `grep -rn "context.go\|Navigator.push"`
+sobre todo `lib/` mostró que la ÚNICA navegación imperativa de toda la app
+es el `Navigator.push` que abre `OnboardingPage` desde "Tus datos de
+viajero" en Mi Cuenta; todo lo demás depende 100% del `redirect`
+declarativo de `app_router.dart`. Ese `redirect` solo decide destino
+cuando `state.matchedLocation` es `/splash` o `/auth` (a propósito, ver
+comentario ahí) — nunca cuando ya se está en `/onboarding`. Resultado: un
+viajero nuevo que termina el signup, completa el wizard y presiona
+"Finalizar" (o lo salta con "Saltar") se queda mirando la misma pantalla
+para siempre, aunque `profile.onboarded` ya haya quedado en `true` en
+Supabase — el único perfil que alguna vez pudo salir de ahí era
+reiniciando la app en frío (el router sí redirige correctamente al pasar
+por `/splash`).
+
+- **Fix**: `onboarding_page.dart` agrega `_leaveOnboarding()`, llamado al
+  final de `_submit()` (tras guardar) y de `_skip()`. Como la pantalla
+  vive en dos contextos reales distintos — ruta raíz del router (signup
+  fresco, sin nada debajo en el stack) vs. empujada con `Navigator.push`
+  desde Mi Cuenta (con `HomeShell` debajo) — `Navigator.of(context).canPop()`
+  distingue ambos sin necesitar un parámetro nuevo: si hay algo debajo,
+  hace `pop()` (vuelve a Mi Cuenta); si no, `context.go('/home')` (mismo
+  criterio que el resto del router). De paso quedó al descubierto que
+  editar el perfil desde Mi Cuenta tampoco tenía forma de cerrarse sin el
+  gesto nativo de "atrás" del sistema — el mismo fix cubre las dos rutas.
+- **Test nuevo** (`test/onboarding_navigation_test.dart`, 2 casos): monta
+  `OnboardingPage` con un `AuthController` real (no un mock — construido
+  con un `SupabaseClient` apuntando a una URL inválida y
+  `autoRefreshToken: false` para no dejar un timer pendiente que rompa el
+  test) en los dos contextos (empujado sobre un `Navigator` vs. como ruta
+  raíz de un `GoRouter` de prueba) y confirma que "Saltar" efectivamente
+  saca al usuario de la pantalla en ambos casos. Viable sin mockear
+  Supabase porque `AuthController._loadProfile()` ya atrapa internamente
+  cualquier error de `_repo.currentUser` nulo y nunca lo relanza — por
+  eso `_skip()`/`refreshProfile()` completan igual sin sesión real.
+- 17 tests en total ahora (`flutter test`), todos verdes; `flutter
+  analyze` sin issues.

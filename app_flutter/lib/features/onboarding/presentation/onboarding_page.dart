@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
@@ -185,6 +186,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         'presupuesto': {'banda': _budget.isNotEmpty ? _budget.first : null},
       });
       await auth.refreshProfile();
+      _leaveOnboarding();
     } catch (e) {
       setState(() => _error = 'No pudimos guardar tu perfil: $e');
     } finally {
@@ -195,6 +197,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Future<void> _skip() async {
     final auth = context.read<AuthController>();
     await auth.refreshProfile();
+    _leaveOnboarding();
+  }
+
+  /// Bug real: ni "Finalizar" ni "Saltar" navegaban a ningún lado — no hay
+  /// una sola llamada a `context.go`/`Navigator.push` en todo el flujo de
+  /// auth (el router solo redirige al salir de `/splash` o `/auth`, nunca
+  /// desde `/onboarding`), así que un viajero nuevo terminaba atrapado en
+  /// este mismo wizard para siempre. Esta pantalla vive en dos contextos
+  /// distintos: como ruta raíz del router (signup fresco, sin nada que
+  /// hacer `pop`) y empujada con `Navigator.push` desde "Tus datos de
+  /// viajero" en Mi Cuenta (editar, con Dashboard debajo en el stack) —
+  /// `canPop()` distingue ambos casos sin necesitar un parámetro extra.
+  void _leaveOnboarding() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/home');
+    }
   }
 
   @override
