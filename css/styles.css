@@ -497,6 +497,7 @@ body.mode-business #beto-empresa { display: block; }
 .hero__stat {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 16px 8px;
   min-width: 0;
@@ -516,7 +517,7 @@ body.mode-business #beto-empresa { display: block; }
   background: rgba(245, 94, 97, 0.12);
   font-size: 0.8rem;
 }
-.hero__stat-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.hero__stat-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; text-align: center; }
 .hero__stats strong {
   font-family: var(--font-display);
   font-size: 0.88rem;

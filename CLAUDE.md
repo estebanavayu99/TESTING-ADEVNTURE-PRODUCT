@@ -1772,3 +1772,12 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   "Descargar PickMap") siguen coral sin tocar, el pedido fue puntual
   sobre este botón. Verificado con Playwright en ambos modos
   (viajero/empresa) y que el CTA final no se vio afectado.
+- **Séptima vuelta: centrar el texto dentro de cada tarjeta de stat**
+  ("centra cada texto en su tarjeta"). El ícono+texto quedaba pegado al
+  borde izquierdo de cada columna, con espacio vacío a la derecha ya que
+  cada `.hero__stat` (flex: 1) reparte el ancho parejo pero el contenido
+  es más angosto que la columna. Fix: `justify-content: center` en
+  `.hero__stat` (centra el grupo ícono+texto dentro del ancho
+  disponible) + `text-align: center` en `.hero__stat-body` (centra las
+  líneas de texto que envuelven, como "combinaciones de panoramas").
+  Aplica igual en la versión apilada de mobile.
