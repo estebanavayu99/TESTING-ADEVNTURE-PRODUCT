@@ -1696,3 +1696,79 @@ por `/splash`).
   eso `_skip()`/`refreshProfile()` completan igual sin sesión real.
 - 17 tests en total ahora (`flutter test`), todos verdes; `flutter
   analyze` sin issues.
+
+## Onboarding: confirmada paridad 1:1 con la web + filtros de Panoramas mucho más completos
+
+El usuario pidió, en dos mensajes seguidos: (1) que las preguntas de "cuéntanos
+sobre ti" (onboarding) fueran "muy completas, igual o más que en la web"; (2)
+que los filtros de Panoramas fueran "más elegantes" y permitieran "apretar y
+desglosar muchos filtros, igual o más que en la web".
+
+- **Onboarding: ya eran 1:1** — se releyó `onboarding.html` completo contra
+  el wizard de `onboarding_page.dart` y son exactamente las mismas 7
+  preguntas con las mismas opciones (edad, con quién, gustos, exigencia
+  física, presupuesto, distancia, cuándo+comuna) — nada se había recortado
+  al convertir el formulario scrolleable del sitio en wizard paso a paso.
+  No se agregó ninguna pregunta nueva sin antes confirmarlo con el usuario
+  (inventar categorías de perfil nuevas sería un dato fabricado sin
+  respaldo en ningún spec).
+- **Filtros de Panoramas: sí había un gap real**. `panoramas.html` tiene 6
+  filtros en su toolbar (`js/panoramas.js`): Ordenar por (incl. "Mejor
+  valorados"), Tipo de experiencia, Distancia, Precio, Cuándo (Hoy/Mañana/
+  El fin de semana que sigue/Cualquiera) y Duración del paquete — la app
+  Flutter solo tenía Ordenar (3 opciones, sin "Mejor valorados") y Precio.
+  Para poder implementar los 4 filtros que faltaban había que portar
+  primero los datos que la web deriva por hash de cada item
+  (`enrich()`/`parseKm()`/`parseDay()`/`parseDias()`/`distanceBucket()` en
+  `js/panoramas.js`):
+  - **`PanoramaItem` (panorama_item.dart)** gana `category` (campo real,
+    asignado a mano en `sample_catalog.dart` según el contenido real de
+    cada item — nunca fabricado al azar) + getters computados idénticos a
+    la web: `rating`/`reviews` (hash de `title`, mismo rango 4.3-5.0),
+    `km`/`distanceBucket` (parseado de `meta` con el mismo fallback por
+    hash), `dayBucket` (`'semana'`/`'finde'`, mismo `parseDay()`),
+    `packageDuration` (mismo `parseDias()`, incluido el fallback a `'1'`
+    para paquetes sin mención explícita de días — mismo bug ya corregido
+    en la web, portado corregido desde el día uno). Cubierto por 8 tests
+    nuevos en `panorama_item_test.dart`.
+  - **`categoryLabels`** (mismo mapa `CATEGORY_LABELS` de la web) vive
+    junto a `PanoramaItem` para reusarlo en el filtro "Tipo de
+    experiencia", cuyas opciones se arman dinámicamente desde las
+    categorías realmente presentes en el catálogo (no una lista fija).
+  - **Toolbar rediseñada, "apretar y desglosar"**: en vez de 6 selects
+    sueltos (lo que se ve poco elegante y ocupa media pantalla), la
+    toolbar quedó compacta — un botón "Filtros" con contador de filtros
+    activos (`Filtros (2)`, se pinta coral si hay algo aplicado) que abre
+    una hoja modal (`_FiltersSheet`, `DraggableScrollableSheet`) con las 6
+    categorías completas, cada una como un grupo de chips de selección
+    única (no dropdowns nativos, más táctil). La hoja edita un "borrador"
+    local que solo se aplica al tocar "Aplicar filtros" (patrón estándar
+    de apps de reservas tipo Airbnb/Booking — evita que la grilla salte
+    con cada tap individual). Debajo de la toolbar compacta, cada filtro
+    ya aplicado queda como un chip removible con su propia ✕, sin tener
+    que volver a abrir la hoja para sacar uno solo.
+  - **`_applyAdvFilters()`/`_applySort()`** en `panoramas_page.dart`
+    (mismo nombre y misma lógica que `applyAdvFilters()`/`applySort()` en
+    `js/panoramas.js`) se aplican tanto a las filas Combos/Simples como a
+    la grilla de Explorar — igual que en la web, donde `renderRows()`
+    también respeta los filtros avanzados, no solo `renderExplore()`.
+  - **Bug real encontrado en la verificación** (no relacionado a los
+    filtros en sí): un widget test detectó un overflow real de 0.667px en
+    las tarjetas compactas de las filas Combos/Simples — la fuente de
+    prueba de Flutter (Ahem-like, sin la Nunito Sans/Fredoka real) mide
+    ligeramente distinto y el alto fijo de la fila (182px) se quedaba
+    corto por una fracción de píxel. Fix: 182 → 186px de alto de fila
+    (margen invisible en producción, pero corrige el overflow real).
+  - **Test nuevo** (`test/panoramas_filters_test.dart`, 3 casos): abrir la
+    hoja, elegir una opción y aplicar deja el chip correcto; el chip se
+    puede quitar directo con su ✕ sin reabrir la hoja; "Limpiar todo"
+    resetea todo. Usa `pump()` explícito (no `pumpAndSettle()`), mismo
+    motivo que `panorama_detail_sheet_test.dart` (el shimmer de fotos en
+    carga anima en loop infinito sin red real en el test).
+  - Verificado con Playwright (mismo método de siempre): la hoja de
+    filtros abre con los 6 grupos completos, aplicar "Mejor valorados" +
+    "Cultura" deja los dos chips activos y filtra correctamente el
+    catálogo (la fila "Simples" incluso desaparece sola cuando queda
+    vacía, ya contemplado por `_rowSection`).
+- 27 tests en total ahora (`flutter test`), todos verdes; `flutter
+  analyze` sin issues.

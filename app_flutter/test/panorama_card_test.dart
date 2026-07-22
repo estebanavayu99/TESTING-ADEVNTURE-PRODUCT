@@ -11,6 +11,7 @@ const _item = PanoramaItem(
   kind: PanoramaKind.simple,
   priceClp: 10000,
   photo: 'https://example.invalid/foto.jpg',
+  category: 'naturaleza',
 );
 
 /// `PanoramaCard` siempre vive dentro de un ancho acotado en la app real

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/widgets/pm_primary_button.dart';
 import '../../favoritos/data/favorites_controller.dart';
 import '../data/panorama_item.dart';
 import '../data/sample_catalog.dart' as catalog;
@@ -11,6 +12,41 @@ import 'panorama_detail_sheet.dart';
 enum _ExploreTab { recomendado, general }
 
 enum _PillFilter { todos, simple, paquete }
+
+const _sortLabels = {
+  'recomendado': 'Recomendado para ti',
+  'rating': 'Mejor valorados',
+  'price_asc': 'Precio: menor a mayor',
+  'price_desc': 'Precio: mayor a menor',
+};
+
+const _priceLabels = {
+  'todos': 'Cualquier precio',
+  'bajo': 'Hasta \$15.000',
+  'medio': '\$15.000 - \$30.000',
+  'alto': 'Más de \$30.000',
+};
+
+const _distanceLabels = {
+  'todas': 'Cualquier distancia',
+  'cerca': 'Cerca · hasta 20 km',
+  'media': 'Media · 20-45 km',
+  'lejos': 'Lejos · 45+ km',
+};
+
+const _dayLabels = {
+  'hoy': 'Hoy',
+  'manana': 'Mañana',
+  'finde_que_sigue': 'El fin de semana que sigue',
+  'todos': 'Cualquiera',
+};
+
+const _diasLabels = {
+  'todos': 'Cualquiera',
+  '1': '1 día',
+  '2': '2 días',
+  'finde': 'Fin de semana',
+};
 
 /// Mirror de `panoramas.html`: filas "Combos"/"Simples" + sección
 /// "Explorar" con tabs (Recomendado/General) y pills (Todos/Simples/
@@ -27,8 +63,36 @@ class PanoramasPage extends StatefulWidget {
 class _PanoramasPageState extends State<PanoramasPage> {
   _ExploreTab _tab = _ExploreTab.recomendado;
   _PillFilter _pill = _PillFilter.todos;
-  String _priceFilter = 'todos';
+
+  // Mismos 6 filtros que la toolbar de `panoramas.html` (Ordenar/Tipo de
+  // experiencia/Distancia/Precio/Cuándo/Duración del paquete) — antes esta
+  // pantalla solo tenía Ordenar (con menos opciones) y Precio, bien por
+  // detrás de la web. Viven detrás de una hoja modal ("apretar y
+  // desglosar") en vez de 6 selects sueltos ocupando media pantalla.
   String _sort = 'recomendado';
+  String _category = 'todas';
+  String _distance = 'todas';
+  String _priceFilter = 'todos';
+  String _day = 'todos';
+  String _dias = 'todos';
+
+  bool get _hasActiveFilters =>
+      _sort != 'recomendado' || _category != 'todas' || _distance != 'todas' || _priceFilter != 'todos' || _day != 'todos' || _dias != 'todos';
+
+  int get _activeFilterCount => [
+        _sort != 'recomendado',
+        _category != 'todas',
+        _distance != 'todas',
+        _priceFilter != 'todos',
+        _day != 'todos',
+        _dias != 'todos',
+      ].where((v) => v).length;
+
+  List<String> get _availableCategories {
+    final cats = catalog.todoElCatalogo.map((i) => i.category).toSet().toList();
+    cats.sort((a, b) => (categoryLabels[a] ?? a).compareTo(categoryLabels[b] ?? b));
+    return cats;
+  }
 
   List<PanoramaItem> get _personalized => [
         ...catalog.recomendados,
@@ -36,17 +100,22 @@ class _PanoramasPageState extends State<PanoramasPage> {
         ...catalog.simples,
       ];
 
-  List<PanoramaItem> get _exploreList {
-    List<PanoramaItem> base;
-    if (_pill == _PillFilter.todos) {
-      base = catalog.todoElCatalogo;
-    } else {
-      base = _tab == _ExploreTab.recomendado ? _personalized : catalog.todoElCatalogo;
-      final kind = _pill == _PillFilter.simple ? PanoramaKind.simple : PanoramaKind.paquete;
-      base = base.where((i) => i.kind == kind).toList();
-    }
+  /// Mismo `diaBucketDeFecha()` de `js/panoramas.js`: cada item ya trae un
+  /// `dayBucket` fijo ('semana'/'finde'); "Hoy"/"Mañana" traducen la fecha
+  /// real a ese mismo bucket.
+  String _diaBucketDeFecha(DateTime fecha) {
+    final isWeekend = fecha.weekday == DateTime.saturday || fecha.weekday == DateTime.sunday;
+    return isWeekend ? 'finde' : 'semana';
+  }
+
+  /// Mismo `applyAdvFilters()` de `js/panoramas.js` — se aplica tanto a las
+  /// filas Combos/Simples como a la grilla de Explorar, igual que en la web.
+  List<PanoramaItem> _applyAdvFilters(List<PanoramaItem> base) {
+    var filtered = base;
+    if (_category != 'todas') filtered = filtered.where((i) => i.category == _category).toList();
+    if (_distance != 'todas') filtered = filtered.where((i) => i.distanceBucket == _distance).toList();
     if (_priceFilter != 'todos') {
-      base = base.where((i) {
+      filtered = filtered.where((i) {
         switch (_priceFilter) {
           case 'bajo':
             return i.priceClp <= 15000;
@@ -59,24 +128,81 @@ class _PanoramasPageState extends State<PanoramasPage> {
         }
       }).toList();
     }
+    if (_day == 'hoy') {
+      filtered = filtered.where((i) => i.dayBucket == _diaBucketDeFecha(DateTime.now())).toList();
+    } else if (_day == 'manana') {
+      final manana = DateTime.now().add(const Duration(days: 1));
+      filtered = filtered.where((i) => i.dayBucket == _diaBucketDeFecha(manana)).toList();
+    } else if (_day == 'finde_que_sigue') {
+      filtered = filtered.where((i) => i.dayBucket == 'finde').toList();
+    }
+    if (_dias != 'todos') filtered = filtered.where((i) => i.packageDuration == _dias).toList();
+    return filtered;
+  }
+
+  /// Mismo `applySort()` de `js/panoramas.js` — "Recomendado para ti" deja
+  /// intacto el orden de Darwin; el resto es elección explícita del
+  /// viajero.
+  List<PanoramaItem> _applySort(List<PanoramaItem> list) {
+    if (_sort == 'recomendado') return list;
+    final sorted = [...list];
+    switch (_sort) {
+      case 'rating':
+        sorted.sort((a, b) => b.rating.compareTo(a.rating));
+      case 'price_asc':
+        sorted.sort((a, b) => a.priceClp.compareTo(b.priceClp));
+      case 'price_desc':
+        sorted.sort((a, b) => b.priceClp.compareTo(a.priceClp));
+    }
+    return sorted;
+  }
+
+  List<PanoramaItem> get _exploreList {
+    List<PanoramaItem> base;
+    if (_pill == _PillFilter.todos) {
+      base = catalog.todoElCatalogo;
+    } else {
+      base = _tab == _ExploreTab.recomendado ? _personalized : catalog.todoElCatalogo;
+      final kind = _pill == _PillFilter.simple ? PanoramaKind.simple : PanoramaKind.paquete;
+      base = base.where((i) => i.kind == kind).toList();
+    }
+    base = _applyAdvFilters(base);
     // dedupe por id (mismo criterio que "Todos" en js/panoramas.js)
     final seen = <String>{};
     final deduped = base.where((i) => seen.add(i.id)).toList();
-    switch (_sort) {
-      case 'price_asc':
-        deduped.sort((a, b) => a.priceClp.compareTo(b.priceClp));
-      case 'price_desc':
-        deduped.sort((a, b) => b.priceClp.compareTo(a.priceClp));
-      default:
-        break; // 'recomendado': se respeta el orden del catálogo
-    }
-    return deduped;
+    return _applySort(deduped);
+  }
+
+  void _openFiltersSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FiltersSheet(
+        sort: _sort,
+        category: _category,
+        distance: _distance,
+        price: _priceFilter,
+        day: _day,
+        dias: _dias,
+        categories: _availableCategories,
+        onApply: (sort, category, distance, price, day, dias) => setState(() {
+          _sort = sort;
+          _category = category;
+          _distance = distance;
+          _priceFilter = price;
+          _day = day;
+          _dias = dias;
+        }),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final rowPaquete = _personalized.where((i) => i.kind == PanoramaKind.paquete).take(6).toList();
-    final rowSimple = _personalized.where((i) => i.kind == PanoramaKind.simple).take(6).toList();
+    final filteredPersonalized = _applySort(_applyAdvFilters(_personalized));
+    final rowPaquete = filteredPersonalized.where((i) => i.kind == PanoramaKind.paquete).take(6).toList();
+    final rowSimple = filteredPersonalized.where((i) => i.kind == PanoramaKind.simple).take(6).toList();
 
     return SafeArea(
       child: Column(
@@ -107,66 +233,104 @@ class _PanoramasPageState extends State<PanoramasPage> {
     );
   }
 
+  /// Toolbar compacta ("apretar y desglosar"): en vez de 6 selects sueltos
+  /// ocupando media pantalla (como una primera versión más plana), acá
+  /// solo vive un botón "Filtros" con contador de filtros activos que abre
+  /// una hoja modal con las mismas 6 categorías de `panoramas.html`
+  /// (Ordenar/Tipo de experiencia/Distancia/Precio/Cuándo/Duración del
+  /// paquete) — igual o más completo que la web, pero sin saturar la
+  /// pantalla principal. Los filtros ya aplicados quedan como chips
+  /// removibles debajo, cada uno con su propia ✕.
   Widget _toolbar() {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.06), blurRadius: 14, offset: Offset(0, 4))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🔍 Filtrar y ordenar', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
             children: [
-              _dropdown('↕️ Ordenar', _sort, const {
-                'recomendado': 'Recomendado para ti',
-                'price_asc': 'Precio: menor a mayor',
-                'price_desc': 'Precio: mayor a menor',
-              }, (v) => setState(() => _sort = v)),
-              _dropdown('💰 Precio', _priceFilter, const {
-                'todos': 'Cualquier precio',
-                'bajo': 'Hasta \$15.000',
-                'medio': '\$15.000 - \$30.000',
-                'alto': 'Más de \$30.000',
-              }, (v) => setState(() => _priceFilter = v)),
-              TextButton(
-                onPressed: () => setState(() {
-                  _priceFilter = 'todos';
-                  _sort = 'recomendado';
-                  _pill = _PillFilter.todos;
-                  _tab = _ExploreTab.recomendado;
-                }),
-                child: const Text('✕ Limpiar filtros'),
+              const Expanded(
+                child: Text('🔍 Filtrar y ordenar', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
               ),
+              _filtersButton(),
             ],
           ),
+          if (_hasActiveFilters) ...[
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: _activeFilterChips()),
+          ],
         ],
       ),
     );
   }
 
-  Widget _dropdown(String label, String value, Map<String, String> options, ValueChanged<String> onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: PickmapColors.bg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: PickmapColors.mist.withValues(alpha: 0.5)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isDense: true,
-          icon: const Icon(Icons.expand_more, size: 18),
-          items: options.entries
-              .map((e) => DropdownMenuItem(value: e.key, child: Text('$label: ${e.value}', style: const TextStyle(fontSize: 12.5))))
-              .toList(),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
+  Widget _filtersButton() {
+    return Material(
+      color: _hasActiveFilters ? PickmapColors.coral : PickmapColors.bg,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: _openFiltersSheet,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.tune_rounded, size: 16, color: _hasActiveFilters ? Colors.white : PickmapColors.navy),
+              const SizedBox(width: 6),
+              Text(
+                _activeFilterCount > 0 ? 'Filtros ($_activeFilterCount)' : 'Filtros',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: _hasActiveFilters ? Colors.white : PickmapColors.navy,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  List<Widget> _activeFilterChips() {
+    final chips = <Widget>[];
+    void addChip(String label, VoidCallback onClear) => chips.add(_filterChip(label, onClear));
+
+    if (_sort != 'recomendado') addChip(_sortLabels[_sort]!, () => setState(() => _sort = 'recomendado'));
+    if (_category != 'todas') {
+      addChip(categoryLabels[_category] ?? _category, () => setState(() => _category = 'todas'));
+    }
+    if (_distance != 'todas') addChip(_distanceLabels[_distance]!, () => setState(() => _distance = 'todas'));
+    if (_priceFilter != 'todos') addChip(_priceLabels[_priceFilter]!, () => setState(() => _priceFilter = 'todos'));
+    if (_day != 'todos') addChip(_dayLabels[_day]!, () => setState(() => _day = 'todos'));
+    if (_dias != 'todos') addChip(_diasLabels[_dias]!, () => setState(() => _dias = 'todos'));
+    return chips;
+  }
+
+  Widget _filterChip(String label, VoidCallback onClear) {
+    return Container(
+      padding: const EdgeInsets.only(left: 12, right: 6, top: 6, bottom: 6),
+      decoration: BoxDecoration(
+        color: PickmapColors.coral.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: PickmapColors.coral.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: PickmapColors.coral)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onClear,
+            child: const Icon(Icons.close_rounded, size: 14, color: PickmapColors.coral),
+          ),
+        ],
       ),
     );
   }
@@ -194,7 +358,12 @@ class _PanoramasPageState extends State<PanoramasPage> {
           ],
         ),
         SizedBox(
-          height: 182,
+          // 186, no 182: un widget test con la fuente de prueba de Flutter
+          // (no la Nunito Sans/Fredoka real) detectó un overflow real de
+          // 0.667px acá — el margen extra lo evita sin cambiar el look en
+          // producción (mismo criterio que otros ajustes por-pixel del
+          // repo: nunca ignorar un overflow real solo porque es chico).
+          height: 186,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
@@ -291,6 +460,172 @@ class _PanoramasPageState extends State<PanoramasPage> {
           border: Border.all(color: active ? PickmapColors.coral : PickmapColors.mist.withValues(alpha: 0.6)),
         ),
         child: Text(label, style: TextStyle(color: active ? PickmapColors.coral : PickmapColors.slate, fontWeight: FontWeight.w600, fontSize: 12.5)),
+      ),
+    );
+  }
+}
+
+/// Hoja modal con las 6 categorías de filtro de `panoramas.html` — se edita
+/// en un estado local ("borrador") y solo se aplica al tocar "Aplicar
+/// filtros", igual que el patrón estándar de filtros en apps de reservas
+/// (Airbnb/Booking): el usuario puede tocar varias opciones sin que la
+/// grilla de atrás salte con cada tap individual.
+class _FiltersSheet extends StatefulWidget {
+  const _FiltersSheet({
+    required this.sort,
+    required this.category,
+    required this.distance,
+    required this.price,
+    required this.day,
+    required this.dias,
+    required this.categories,
+    required this.onApply,
+  });
+
+  final String sort;
+  final String category;
+  final String distance;
+  final String price;
+  final String day;
+  final String dias;
+  final List<String> categories;
+  final void Function(String sort, String category, String distance, String price, String day, String dias) onApply;
+
+  @override
+  State<_FiltersSheet> createState() => _FiltersSheetState();
+}
+
+class _FiltersSheetState extends State<_FiltersSheet> {
+  late String _sort = widget.sort;
+  late String _category = widget.category;
+  late String _distance = widget.distance;
+  late String _price = widget.price;
+  late String _day = widget.day;
+  late String _dias = widget.dias;
+
+  void _clearAll() {
+    setState(() {
+      _sort = 'recomendado';
+      _category = 'todas';
+      _distance = 'todas';
+      _price = 'todos';
+      _day = 'todos';
+      _dias = 'todos';
+    });
+  }
+
+  void _apply() {
+    widget.onApply(_sort, _category, _distance, _price, _day, _dias);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.82,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Filtrar y ordenar', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: PickmapColors.navy)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded, color: PickmapColors.slate),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  children: [
+                    _section('↕️ Ordenar por', _sortLabels, _sort, (v) => setState(() => _sort = v)),
+                    _section(
+                      '🏷️ Tipo de experiencia',
+                      {'todas': 'Cualquiera', for (final c in widget.categories) c: categoryLabels[c] ?? c},
+                      _category,
+                      (v) => setState(() => _category = v),
+                    ),
+                    _section('📍 Distancia', _distanceLabels, _distance, (v) => setState(() => _distance = v)),
+                    _section('💰 Precio', _priceLabels, _price, (v) => setState(() => _price = v)),
+                    _section('📅 Cuándo', _dayLabels, _day, (v) => setState(() => _day = v)),
+                    _section('🧳 Duración del paquete', _diasLabels, _dias, (v) => setState(() => _dias = v)),
+                  ],
+                ),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(border: Border(top: BorderSide(color: PickmapColors.mist.withValues(alpha: 0.3)))),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                    child: Row(
+                      children: [
+                        TextButton(onPressed: _clearAll, child: const Text('Limpiar todo')),
+                        const SizedBox(width: 12),
+                        Expanded(child: PmPrimaryButton(label: 'Aplicar filtros', onPressed: _apply)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _section(String label, Map<String, String> options, String value, ValueChanged<String> onSelect) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy, fontSize: 13.5)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: options.entries.map((e) {
+              final active = e.key == value;
+              return GestureDetector(
+                onTap: () => onSelect(e.key),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: active ? PickmapColors.coral : PickmapColors.bg,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: active ? PickmapColors.coral : PickmapColors.mist.withValues(alpha: 0.6)),
+                  ),
+                  child: Text(
+                    e.value,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: active ? Colors.white : PickmapColors.navy,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
