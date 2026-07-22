@@ -412,6 +412,23 @@ body.mode-business #beto-empresa { display: block; }
   padding: 40px 44px;
   box-shadow: 0 24px 60px rgba(15, 20, 22, 0.1);
 }
+/* Stats como columna angosta a la izquierda, junto al título — a pedido
+   explícito del usuario ("ponerlos en el lado izquierdo de la tarjeta,
+   justo al lado de 'Déjanos organizarlo por ti'") en vez de debajo de los
+   botones. `.hero__copy-row` solo existe en index.html (no en
+   .cta-final, que reusa .hero__ctas suelto sin stats ni este wrapper). */
+.hero__copy-row { display: flex; align-items: flex-start; gap: 28px; }
+.hero__copy-main { flex: 1 1 auto; min-width: 0; }
+.hero__copy-row .hero__stats { flex: 0 0 auto; max-width: 230px; margin-top: 6px; }
+/* El h1 más largo del modo empresa ("Llena tus cupos. Nosotros ponemos la
+   gente.") envolvía en 6 líneas dentro de la columna angosta que le deja
+   la sidebar de stats — se ve desbalanceado al lado de una sidebar corta.
+   Achicado solo por encima de 980px (donde la sidebar realmente compite
+   por ancho); el breakpoint de 720px de abajo ya define su propio tamaño
+   de h1 y no se toca. */
+@media (min-width: 981px) {
+  .hero__copy-row .hero__copy-main h1 { font-size: clamp(2rem, 3vw, 3rem); }
+}
 .eyebrow {
   font-weight: 700;
   color: var(--deep-red);
@@ -1211,6 +1228,13 @@ body.mode-business #beto-empresa { display: block; }
   .hero__sub { margin-left: auto; margin-right: auto; }
   .hero__ctas { justify-content: center; }
   .hero__stats { align-items: center; margin: 0 auto; }
+  /* Sin ancho lateral disponible, la columna angosta de stats vuelve a
+     apilarse debajo del texto (orden de documento: stats, luego texto —
+     se invierte con `order` para que el texto quede primero, igual que
+     antes de este rediseño). */
+  .hero__copy-row { flex-direction: column; }
+  .hero__copy-row .hero__stats { order: 2; max-width: 320px; width: 100%; margin-top: 24px; }
+  .hero__copy-main { order: 1; width: 100%; }
   .hero__mock { order: -1; }
   .steps { grid-template-columns: repeat(2, 1fr); }
   .cards--4, .cards--3, .cards--5, .cards--6 { grid-template-columns: repeat(2, 1fr); }

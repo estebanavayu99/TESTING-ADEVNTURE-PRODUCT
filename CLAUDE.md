@@ -1679,3 +1679,25 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   se veía centrado). Verificado con Playwright a 1280px (2 columnas,
   stats a la izquierda), 900px y 390px (columna centrada) en ambos modos
   (viajero/empresa): sin overflow horizontal ni texto cortado.
+- **Segunda vuelta: stats como sidebar junto al título, no debajo de los
+  botones** ("me refería a ponerlos en el lado izquierdo de la tarjeta,
+  justo al lado de 'Déjanos organizarlo por ti'"). Se envolvió el
+  contenido de `.hero__copy` en `.hero__copy-row` (flex row) con dos
+  hijos: `.hero__stats` (ahora sidebar angosta, `max-width: 230px`, ya no
+  forzada a un ancho uniforme — cada tarjeta se ajusta a su propio
+  contenido) y `.hero__copy-main` (eyebrow + h1 + subtítulo + botones, el
+  orden de siempre). Por debajo de 980px (mismo breakpoint donde
+  `.hero__inner` ya colapsaba a una columna centrada) `.hero__copy-row`
+  vuelve a `flex-direction: column` con `order` invertido (texto primero,
+  stats después) para reproducir exactamente el layout apilado de la
+  iteración anterior — nada cambia en mobile/tablet.
+  **Ajuste encontrado en la propia verificación**: el h1 de modo empresa
+  ("Llena tus cupos. Nosotros ponemos la gente.", bastante más largo que
+  el de viajero) envolvía en 6 líneas dentro de la columna que le deja la
+  sidebar nueva, leyéndose desbalanceado. Se agregó
+  `.hero__copy-row .hero__copy-main h1 { font-size: clamp(2rem, 3vw,
+  3rem); }` dentro de `@media (min-width: 981px)` (para no tocar el
+  tamaño ya definido en el breakpoint de 720px) — bajó a 5 líneas, más
+  proporcionado junto a la sidebar. Verificado con Playwright a 1280px,
+  1024px, 900px y 390px en ambos modos: sin overflow ni texto cortado en
+  ninguna combinación.
