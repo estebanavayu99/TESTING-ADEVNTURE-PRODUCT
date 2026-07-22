@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
+import '../../../core/widgets/pm_icon_circle.dart';
 import '../../panoramas/data/sample_catalog.dart' as catalog;
 import '../../panoramas/presentation/panorama_card.dart';
 import '../../panoramas/presentation/panorama_detail_sheet.dart';
@@ -64,12 +65,12 @@ class FavoritosPage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
-        children: const [
-          Text('🤍', style: TextStyle(fontSize: 48)),
-          SizedBox(height: 12),
-          Text('Todavía no tienes favoritos', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
-          SizedBox(height: 4),
-          Text('Toca el corazón en cualquier panorama para guardarlo aquí.',
+        children: [
+          PmIconCircle(icon: '🤍', size: 72, background: PickmapColors.pink.withValues(alpha: 0.18)),
+          const SizedBox(height: 14),
+          const Text('Todavía no tienes favoritos', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
+          const SizedBox(height: 4),
+          const Text('Toca el corazón en cualquier panorama para guardarlo aquí.',
               textAlign: TextAlign.center, style: TextStyle(color: PickmapColors.slate)),
         ],
       ),

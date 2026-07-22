@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
 import '../../../core/widgets/pm_cta_link.dart';
+import '../../../core/widgets/pm_icon_circle.dart';
 import '../../../core/widgets/pm_primary_button.dart';
 import '../../pickpoints/presentation/pickpoints_page.dart';
+
+/// Mismo amarillo de marca (`PickmapColors.sun`) pero oscurecido para uso
+/// como texto — el amarillo original no da suficiente contraste sobre
+/// blanco para números grandes en negrita.
+const _statGold = Color(0xFFC98A1E);
 
 /// Mirror de `invita.html`. El código de invitación real (derivado del
 /// email del viajero, mismo `hashStr`/`computeReferralCode` que usa el
@@ -45,9 +51,11 @@ class InvitaPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: PickmapColors.bg,
+                    gradient: LinearGradient(
+                      colors: [PickmapColors.sun.withValues(alpha: 0.28), PickmapColors.coral.withValues(alpha: 0.16)],
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: PickmapColors.mist.withValues(alpha: 0.5)),
+                    border: Border.all(color: PickmapColors.coral.withValues(alpha: 0.35)),
                   ),
                   child: const Text('CAMI-4F2K', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: PickmapColors.navy, letterSpacing: 1.5)),
                 ),
@@ -78,9 +86,9 @@ class InvitaPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    _StatBlock(value: '3', label: 'amig@s invitados'),
-                    _StatBlock(value: '2', label: 'ya viven su primer panorama'),
-                    _StatBlock(value: '300', label: 'Pick Points ganados invitando'),
+                    _StatBlock(value: '3', label: 'amig@s invitados', color: PickmapColors.coral),
+                    _StatBlock(value: '2', label: 'ya viven su primer panorama', color: PickmapColors.green),
+                    _StatBlock(value: '300', label: 'Pick Points ganados invitando', color: _statGold),
                   ],
                 ),
               ],
@@ -93,9 +101,9 @@ class InvitaPage extends StatelessWidget {
               children: [
                 const Text('Cómo funciona', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
                 const SizedBox(height: 12),
-                _step('📤', 'Comparte tu código', 'Envíaselo a un amigo por WhatsApp, redes o donde quieras.'),
-                _step('✍️', 'Se registra con tu código', 'Tu amigo crea su cuenta en PickMap e ingresa tu código al onboarding.'),
-                _step('🎁', 'Ambos ganan Pick Points', 'Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.'),
+                _step('📤', 'Comparte tu código', 'Envíaselo a un amigo por WhatsApp, redes o donde quieras.', PickmapColors.coral),
+                _step('✍️', 'Se registra con tu código', 'Tu amigo crea su cuenta en PickMap e ingresa tu código al onboarding.', PickmapColors.green),
+                _step('🎁', 'Ambos ganan Pick Points', 'Apenas viva su primer panorama, ambos suman +100 Pick Points al tiro.', PickmapColors.sun),
               ],
             ),
           ),
@@ -111,13 +119,13 @@ class InvitaPage extends StatelessWidget {
     );
   }
 
-  Widget _step(String icon, String title, String desc) {
+  Widget _step(String icon, String title, String desc, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 22)),
+          PmIconCircle(icon: icon, size: 36, iconSize: 17, background: color.withValues(alpha: 0.16)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -135,16 +143,17 @@ class InvitaPage extends StatelessWidget {
 }
 
 class _StatBlock extends StatelessWidget {
-  const _StatBlock({required this.value, required this.label});
+  const _StatBlock({required this.value, required this.label, required this.color});
   final String value;
   final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: PickmapColors.coral)),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 2),
           Text(label, textAlign: TextAlign.center, style: const TextStyle(color: PickmapColors.slate, fontSize: 11)),
         ],

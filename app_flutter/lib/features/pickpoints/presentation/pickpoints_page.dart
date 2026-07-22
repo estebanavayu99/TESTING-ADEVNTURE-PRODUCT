@@ -42,6 +42,16 @@ class PickpointsPage extends StatelessWidget {
     ('👑', 'Escapada VIP de fin de semana, gratis', '50 reservas', false),
   ];
 
+  /// Un color distinto por premio (en vez de un solo tono opacado) — se
+  /// cicla por índice, mismo criterio "más entretenido" pedido por el
+  /// usuario para esta pantalla.
+  static const _rewardColors = [
+    PickmapColors.coral,
+    PickmapColors.sun,
+    PickmapColors.green,
+    PickmapColors.pink,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -138,7 +148,7 @@ class PickpointsPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const PmIconCircle(icon: '🙂', size: 40),
+                    PmIconCircle(icon: '🙂', size: 40, background: PickmapColors.sun.withValues(alpha: 0.22)),
                     const SizedBox(width: 10),
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +167,8 @@ class PickpointsPage extends StatelessWidget {
                 const Text('Premios por logros', style: TextStyle(fontWeight: FontWeight.w700, color: PickmapColors.navy)),
                 const Text('Mientras más reservas acumules, mejores son las sorpresas.', style: TextStyle(color: PickmapColors.slate, fontSize: 12)),
                 const SizedBox(height: 8),
-                for (final r in _rewards) _rewardRow(r.$1, r.$2, r.$3, r.$4),
+                for (var i = 0; i < _rewards.length; i++)
+                  _rewardRow(_rewards[i].$1, _rewards[i].$2, _rewards[i].$3, _rewards[i].$4, _rewardColors[i % _rewardColors.length]),
               ],
             ),
           ),
@@ -174,12 +185,17 @@ class PickpointsPage extends StatelessWidget {
   }
 
   Widget _cashbackLadder() {
-    Widget tier(String name, String pct, bool done, bool current) => Expanded(
+    // Cada tier con su propio color (no un solo coral desteñido) — de paso
+    // VIP se pinta ya en tono dorado, aunque todavía no esté alcanzado,
+    // para insinuar "el próximo nivel es el dorado" (patrón común en apps
+    // con gamificación: la escalera se ve a todo color, no solo el tramo ya
+    // ganado).
+    Widget tier(String name, String pct, Color color, bool current) => Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 3),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: current ? PickmapColors.coral : (done ? PickmapColors.coral.withValues(alpha: 0.12) : PickmapColors.bg),
+              color: current ? color : color.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -197,10 +213,10 @@ class PickpointsPage extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            tier('Nuevo', '2,5%', true, false),
-            tier('Recurrente', '3,5%', true, false),
-            tier('Fiel', '4%', true, true),
-            tier('VIP', '5%', false, false),
+            tier('Nuevo', '2,5%', PickmapColors.slate, false),
+            tier('Recurrente', '3,5%', PickmapColors.pink, false),
+            tier('Fiel', '4%', PickmapColors.coral, true),
+            tier('VIP', '5%', PickmapColors.sun, false),
           ],
         ),
       ],
@@ -243,16 +259,16 @@ class PickpointsPage extends StatelessWidget {
     );
   }
 
-  Widget _rewardRow(String icon, String label, String req, bool unlocked) {
+  Widget _rewardRow(String icon, String label, String req, bool unlocked, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
           Opacity(
             opacity: unlocked ? 1 : 0.4,
-            child: Text(icon, style: const TextStyle(fontSize: 14)),
+            child: PmIconCircle(icon: icon, size: 30, iconSize: 14, background: color.withValues(alpha: 0.16)),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(label, style: TextStyle(color: unlocked ? PickmapColors.navy : PickmapColors.slate, fontSize: 12.5)),
           ),

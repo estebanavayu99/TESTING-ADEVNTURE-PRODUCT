@@ -124,7 +124,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: PmCard(
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PickpointsPage())),
                   padding: const EdgeInsets.all(14),
-                  child: const _Teaser(icon: '⭐', title: '1.240 Pick Points', subtitle: 'Nivel Fiel · hasta 4% cashback'),
+                  child: _Teaser(
+                    icon: '⭐',
+                    title: '1.240 Pick Points',
+                    subtitle: 'Nivel Fiel · hasta 4% cashback',
+                    iconBackground: PickmapColors.sun.withValues(alpha: 0.22),
+                  ),
                 ),
               ),
             ],
@@ -133,7 +138,12 @@ class _DashboardPageState extends State<DashboardPage> {
           PmCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingPage())),
             padding: const EdgeInsets.all(14),
-            child: const _Teaser(icon: '🧭', title: 'Tus datos de viajero', subtitle: 'Tu edad, con quién viajas y tus gustos'),
+            child: _Teaser(
+              icon: '🧭',
+              title: 'Tus datos de viajero',
+              subtitle: 'Tu edad, con quién viajas y tus gustos',
+              iconBackground: PickmapColors.green.withValues(alpha: 0.18),
+            ),
           ),
           const SizedBox(height: 24),
           const Text('Tu cuenta', style: TextStyle(color: PickmapColors.coral, fontWeight: FontWeight.w700, fontSize: 13)),
@@ -282,16 +292,17 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class _Teaser extends StatelessWidget {
-  const _Teaser({required this.icon, required this.title, required this.subtitle});
+  const _Teaser({required this.icon, required this.title, required this.subtitle, this.iconBackground});
   final String icon;
   final String title;
   final String subtitle;
+  final Color? iconBackground;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        PmIconCircle(icon: icon, size: 42),
+        PmIconCircle(icon: icon, size: 42, background: iconBackground),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

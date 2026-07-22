@@ -1839,3 +1839,42 @@ en vez de estirarse todo el ancho del banner. Título bajado de 21 a 17px,
 eyebrow de 13 a 12px. Verificado con Playwright (build web + captura
 recortada/ampliada 2x): el blur difumina visiblemente las montañas/nubes
 detrás del panel y el texto blanco queda nítido y legible encima.
+
+## Más color en Favoritos/Pick Points/Invita/Mi Cuenta (Panoramas queda intacta)
+
+El usuario, tras ver capturas de toda la app: "la visual de panoramas
+está perfecta. pero lo otro es super fome" — pidió más colores en
+general en el resto de pantallas (todas construidas hasta ahora sobre
+tarjetas blancas + acento coral único, sin usar el resto de la paleta de
+marca — `sun`/`green`/`pink` casi no aparecían fuera de detalles
+puntuales). Panoramas no se tocó (ya tenía el visto bueno explícito).
+
+- **`PmIconCircle`** ya soportaba un `background` custom (parámetro
+  existente, poco usado) — se aprovechó para variar el color de cada
+  ícono según su significado en vez de dejar el tinte coral por defecto
+  en todos lados:
+  - Dashboard: teaser "Pick Points" → dorado (`sun`), teaser "Tus datos
+    de viajero" → verde (`green`).
+  - Pick Points: ícono de nivel 🙂 → dorado; cada premio de "Premios por
+    logros" pasa de un emoji suelto con opacidad a un círculo de color
+    (`_rewardColors`, cicla coral/dorado/verde/rosado por índice).
+  - Invita: los 3 pasos de "Cómo funciona" pasan de emoji suelto a
+    círculos de color (coral/verde/dorado).
+  - Favoritos: el estado vacío pasa del emoji 🤍 suelto a un círculo
+    rosado grande (72px), más invitante que antes.
+- **Escalera de cashback de Pick Points** (`_cashbackLadder`): antes los
+  4 tiers usaban todos el mismo coral desteñido en distintas opacidades;
+  ahora cada tier tiene su propio color (Nuevo=gris/slate, Recurrente=
+  rosado, Fiel=coral sólido/activo, VIP=dorado) — VIP ya se ve dorado
+  aunque todavía no esté alcanzado, insinuando "el próximo nivel es el
+  dorado" en vez de quedar en gris neutro.
+- **Invita**: el código de invitación pasa de una caja gris con borde a
+  un degradado dorado→coral suave; los 3 stats de "Tus referidos" pasan
+  de coral uniforme a coral/verde/dorado — se agregó `_statGold`
+  (`Color(0xFFC98A1E)`, una versión oscurecida de `sun`) porque el
+  amarillo de marca tal cual no da contraste suficiente para texto
+  grande en negrita sobre blanco.
+- Verificado con Playwright (mismo método de siempre) en las 4 pantallas
+  — se ven notoriamente más vivas sin perder la limpieza del diseño
+  (nada de fondos saturados de página completa, el color vive en
+  acentos puntuales: íconos, badges, la escalera, el código).
