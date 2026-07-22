@@ -1822,3 +1822,20 @@ una nube (mismo `Stack`, sin overlap intencional) y la nube chica pisaba
 la primera línea del título — se resolvió subiendo todo el conjunto
 (`top` entre 0 y 22px) para que quede por completo arriba de donde
 empieza el texto, en vez de mover el texto o achicarlo.
+
+### Texto del banner: más chico + fondo difuminado para legibilidad
+
+El usuario mandó una captura mostrando el título blanco ("Darwin armó
+estos planes especialmente para ti") mezclándose con los picos de las
+montañas de fondo, poco legible, y pidió achicarlo y "ponerle un fondo
+difuminado de color tal vez". Se envolvió el bloque de texto (eyebrow +
+título) en un panel `ClipRRect` + `BackdropFilter(ImageFilter.blur
+(sigmaX: 8, sigmaY: 8))` sobre un `Container` con `Colors.black.withValues
+(alpha: 0.22)` — mismo patrón `rgba(...) + backdrop-filter: blur()` que
+ya usa el sitio en `.hero__copy`/`.nav` para textos sobre fondos con
+movimiento. El panel usa `Align(alignment: centerLeft)` + `Column
+(mainAxisSize: MainAxisSize.min)` para achicarse al ancho real del texto
+en vez de estirarse todo el ancho del banner. Título bajado de 21 a 17px,
+eyebrow de 13 a 12px. Verificado con Playwright (build web + captura
+recortada/ampliada 2x): el blur difumina visiblemente las montañas/nubes
+detrás del panel y el texto blanco queda nítido y legible encima.

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -670,17 +672,39 @@ class _ForestBanner extends StatelessWidget {
             const Positioned(top: 2, right: 144, child: _Bird(size: 14)),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 42),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('🤖 Darwin · tu IA de panoramas',
-                      style: TextStyle(color: PickmapColors.sun, fontWeight: FontWeight.w700, fontSize: 13)),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Darwin armó estos planes especialmente para ti',
-                    style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w700, height: 1.25),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                // Fondo difuminado (mismo patrón `rgba(...) +
+                // backdrop-filter: blur()` que `.hero__copy`/`.nav` en el
+                // sitio) — sin esto el texto blanco quedaba poco legible
+                // encima de los picos de las montañas. Achicado de paso
+                // (21→17 el título, 13→12 el eyebrow) a pedido del usuario.
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('🤖 Darwin · tu IA de panoramas',
+                              style: TextStyle(color: PickmapColors.sun, fontWeight: FontWeight.w700, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Darwin armó estos planes especialmente para ti',
+                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700, height: 1.25),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ],
