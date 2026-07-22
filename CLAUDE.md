@@ -1759,3 +1759,16 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   (antes 32px), padding 8px (antes 14-18px), gap 7px (antes 10-12px),
   fuente 0.88rem (antes 1-1.1rem). Verificado sin overflow en 1280, 1024,
   900, 600 y 390px, en ambos modos.
+- **Sexta vuelta: botones del hero principal centrados + verde en vez de
+  coral** ("estos botones centralos y en vez de rojo usa verde, el mismo
+  que usas en otros lados"). `.hero__ctas` ahora lleva `justify-content:
+  center` en la regla base (antes solo se centraba en mobile/`.cta-final`)
+  — sin impacto visual en esos dos casos porque ya centraban por su
+  cuenta. El botón primario del hero (`#hero .hero__ctas .btn--primary`,
+  scoped solo a la sección `#hero` para no tocar el resto del sitio) pasa
+  a `var(--green)` (`#83D061`, el mismo verde ya usado en el "Map" del
+  logo y en el modo empresa) en vez del coral/rojo — el resto de botones
+  `.btn--primary` del sitio (login, dashboard, panoramas, el CTA final
+  "Descargar PickMap") siguen coral sin tocar, el pedido fue puntual
+  sobre este botón. Verificado con Playwright en ambos modos
+  (viajero/empresa) y que el CTA final no se vio afectado.

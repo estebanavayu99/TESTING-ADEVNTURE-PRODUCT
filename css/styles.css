@@ -433,7 +433,7 @@ body.mode-business #beto-empresa { display: block; }
   margin: 0 0 28px;
   line-height: 1.6;
 }
-.hero__ctas { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 34px; }
+.hero__ctas { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 34px; }
 .btn {
   display: inline-flex;
   align-items: center;
@@ -450,6 +450,17 @@ body.mode-business #beto-empresa { display: block; }
   box-shadow: 0 10px 24px rgba(245, 94, 97, 0.35);
 }
 .btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(245, 94, 97, 0.45); }
+/* Botón primario del hero principal — a pedido explícito del usuario
+   ("centralos y en vez de rojo usa verde, el mismo que usas en otros
+   lados") pasa a `--green` (el mismo verde de "Map" en el logo y del
+   modo empresa), en vez del coral/rojo que sigue siendo el color
+   primario del resto del sitio (login, dashboard, panoramas, etc. — no
+   tocados, el pedido fue puntual sobre este botón). */
+#hero .hero__ctas .btn--primary {
+  background: linear-gradient(135deg, #9ad97a, var(--green) 65%);
+  box-shadow: 0 10px 24px rgba(131, 208, 97, 0.35);
+}
+#hero .hero__ctas .btn--primary:hover { box-shadow: 0 14px 30px rgba(131, 208, 97, 0.45); }
 .btn--ghost {
   background: rgba(255, 255, 255, 0.5);
   border: 2px solid var(--navy);
