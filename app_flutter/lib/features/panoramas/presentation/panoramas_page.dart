@@ -631,12 +631,17 @@ class _FiltersSheetState extends State<_FiltersSheet> {
   }
 }
 
-/// Banner superior tipo "bosque" (degradado verde + silueta de árboles) —
-/// reemplaza el encabezado plano sobre fondo crema, pensado para que
-/// Panoramas (la pantalla más visitada) se sienta con más identidad
-/// propia, en la línea del `.skyline` ilustrado del sitio web. Los
-/// árboles son formas simples (círculo + tronco), sin depender de
-/// ninguna imagen/asset.
+/// Banner superior tipo "bosque" (degradado verde + montañas + siluetas de
+/// árboles) — reemplaza el encabezado plano sobre fondo crema, pensado
+/// para que Panoramas (la pantalla más visitada) se sienta con más
+/// identidad propia, en la línea del `.skyline` ilustrado del sitio web.
+/// Las montañas son el mismo recurso que `.mountains--back`/`--front` de
+/// `css/styles.css` (silueta dentada en capas, cada una más oscura y más
+/// baja que la anterior) pero implementado con `CustomPaint` en vez de
+/// `clip-path` (Flutter no tiene equivalente directo) y a escala mucho
+/// más chica, a pedido explícito del usuario — los árboles siguen siendo
+/// el elemento en primer plano, las montañas quedan detrás como telón de
+/// fondo. Ninguno de los dos depende de ninguna imagen/asset.
 class _ForestBanner extends StatelessWidget {
   const _ForestBanner();
 
@@ -656,6 +661,7 @@ class _ForestBanner extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
+            const Positioned(bottom: 0, left: 0, right: 0, child: _MountainRange(height: 92)),
             const Positioned(bottom: -14, left: -14, child: _Tree(size: 56, tone: 0)),
             const Positioned(bottom: -22, left: 30, child: _Tree(size: 76, tone: 1)),
             const Positioned(bottom: -8, left: 94, child: _Tree(size: 42, tone: 0)),
@@ -714,4 +720,76 @@ class _Tree extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Cordillera caricaturizada de fondo, a pedido explícito del usuario tras
+/// ver este mismo banner ("¿pueden ser montañas caricaturizadas? igual que
+/// en la web, pero más pequeño") — mismo recurso visual que
+/// `.mountains--back`/`.mountains--front` del sitio (silueta dentada en 2
+/// capas, cada una más oscura/opaca y más baja que la anterior, dando
+/// sensación de profundidad) pero pintado con `CustomPainter` en vez de
+/// `clip-path` (sin equivalente directo en Flutter) y a una escala mucho
+/// más chica, ya que acá es solo un detalle de fondo detrás de los
+/// árboles, no el elemento protagonista como en el skyline de la web.
+class _MountainRange extends StatelessWidget {
+  const _MountainRange({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: CustomPaint(painter: _MountainPainter(), size: Size.infinite),
+    );
+  }
+}
+
+class _MountainPainter extends CustomPainter {
+  Path _peaks(Size size, List<List<double>> fractions) {
+    final path = Path()..moveTo(0, size.height);
+    for (final f in fractions) {
+      path.lineTo(f[0] * size.width, f[1] * size.height);
+    }
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Capa de atrás: más alta, más translúcida, tono azulado-verde para
+    // leerse "más lejos" (mismo truco de perspectiva de color que un
+    // paisaje ilustrado real).
+    final back = _peaks(size, const [
+      [0.0, 0.72],
+      [0.11, 0.28],
+      [0.23, 0.60],
+      [0.35, 0.14],
+      [0.49, 0.52],
+      [0.63, 0.22],
+      [0.77, 0.58],
+      [0.90, 0.32],
+      [1.0, 0.55],
+    ]);
+    canvas.drawPath(back, Paint()..color = const Color(0xFF9FCBAE).withValues(alpha: 0.55));
+
+    // Capa de adelante: más baja, más sólida — hace de base justo antes
+    // de que empiecen los árboles.
+    final front = _peaks(size, const [
+      [0.0, 0.92],
+      [0.15, 0.42],
+      [0.29, 0.78],
+      [0.43, 0.34],
+      [0.57, 0.74],
+      [0.71, 0.38],
+      [0.85, 0.76],
+      [1.0, 0.48],
+    ]);
+    canvas.drawPath(front, Paint()..color = const Color(0xFF234639).withValues(alpha: 0.9));
+  }
+
+  @override
+  bool shouldRepaint(covariant _MountainPainter oldDelegate) => false;
 }

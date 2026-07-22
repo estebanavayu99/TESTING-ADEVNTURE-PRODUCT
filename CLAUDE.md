@@ -1772,3 +1772,30 @@ desglosar muchos filtros, igual o más que en la web".
     vacía, ya contemplado por `_rowSection`).
 - 27 tests en total ahora (`flutter test`), todos verdes; `flutter
   analyze` sin issues.
+
+### Montañas caricaturizadas en el banner de Panoramas
+
+A pedido explícito del usuario, tras ver el banner verde con árboles
+("me gustó ese diseño verde... ¿pueden ser montañas caricaturizadas?
+igual que en la web, pero más pequeño"). Se releyó `.mountains--back`/
+`.mountains--mid`/`.mountains--front` en `css/styles.css` — el sitio usa
+`clip-path: polygon(...)` para recortar 3 capas de silueta dentada, cada
+una más oscura/opaca y más baja que la anterior. Flutter no tiene
+equivalente directo a `clip-path` con porcentajes, así que se portó el
+mismo efecto con un `CustomPainter` (`_MountainRange`/`_MountainPainter`
+en `panoramas_page.dart`): 2 capas (no 3, dado el tamaño mucho más chico
+del banner) de picos dibujados a mano con `Path.lineTo` en coordenadas
+fraccionales del tamaño del canvas, una detrás de la otra — capa de atrás
+más clara/translúcida (verde-azulado, para leerse "más lejos", mismo
+truco de perspectiva de color que un ilustrador real usaría), capa de
+adelante más oscura/sólida justo antes de que empiecen los árboles.
+Posicionada detrás de los `_Tree` existentes en el mismo `Stack` (los
+árboles siguen siendo el primer plano). Ronda de ajuste real durante la
+verificación: la primera versión (58px de alto, tonos muy parecidos al
+verde de los árboles) quedaba casi invisible fusionada con el fondo —
+subida a 92px de alto y con mayor contraste de color (`0xFF9FCBAE`/
+`0xFF234639`, antes `0xFF5C8C74`/`0xFF3D6B52`) para que los picos se lean
+claramente como montañas sin taponar el texto del banner. Verificado con
+Playwright (build web + captura recortada/ampliada 2x del banner) en las
+dos rondas — la primera confirmó que se veía demasiado sutil, la segunda
+confirmó picos nítidos y bien contrastados.
