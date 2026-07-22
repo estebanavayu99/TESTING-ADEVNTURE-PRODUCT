@@ -1038,7 +1038,17 @@ body.mode-business #beto-empresa { display: block; }
 .puntos__lead { color: var(--navy-2); font-size: 1.05rem; line-height: 1.6; max-width: 480px; }
 .puntos__list { list-style: none; padding: 0; margin: 24px 0 0; display: flex; flex-direction: column; gap: 14px; }
 .puntos__list li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
-.puntos__list li > span:first-child { font-size: 1.3rem; }
+.puntos__list li > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(245, 94, 97, 0.1);
+  font-size: 1.15rem;
+}
 .widget {
   background: var(--navy);
   color: var(--white);
@@ -1073,8 +1083,14 @@ body.mode-business #beto-empresa { display: block; }
   0% { transform: translateX(-120%); }
   100% { transform: translateX(220%); }
 }
+/* Caption bajo la barra + label sobre las insignias — el widget (solo
+   decorativo, aria-hidden) mostraba una barra de progreso y 3 badges sin
+   ninguna explicación de qué representan ("no se entiende mucho",
+   feedback explícito del usuario). */
+.widget__bar-caption { margin: 8px 0 0; font-size: 0.78rem; opacity: 0.6; }
 .widget__count { margin-top: 16px; font-size: 1.85rem; font-family: var(--font-display); }
-.widget__badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.widget__badges-label { margin: 18px 0 8px; font-size: 0.78rem; opacity: 0.6; }
+.widget__badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0; }
 .widget__badges span {
   background: rgba(255,255,255,0.1);
   padding: 6px 10px;

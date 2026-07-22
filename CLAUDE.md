@@ -1863,3 +1863,19 @@ cuadrado con fondo tenue" ya establecido en el hero
   `transform: translateY(-6px)` en hover, mismo patrón. Verificado que
   el `transform` computado cambia al hacer hover (Playwright), sin
   overflow ni errores de consola.
+- **Cuarta pasada**: la lista de beneficios de Pick Points
+  (📍⭐🎁🔥 junto a "Cada panorama que vives, suma") también eran emojis
+  sueltos sin chip — mismo fix (`.puntos__list li > span:first-child`
+  pasa a chip cuadrado 36px, mismo tinte coral tenue).
+- **Bug de claridad real, reportado por el usuario con captura**: el
+  widget "Tu progreso" (`.puntos__widget`, decorativo/`aria-hidden`)
+  mostraba una barra de progreso y 3 badges sin ninguna explicación de
+  qué representaban — "esta parte no se entiende mucho". Se agregó
+  `.widget__bar-caption` ("72% para Nivel Aventurero" / "72% de tu meta
+  mensual" en modo empresa) debajo de la barra, y
+  `.widget__badges-label` ("Insignias recientes" / "Actividad reciente")
+  arriba de los 3 badges — mismo criterio de "todo es contenido
+  ilustrativo del mockup, no datos reales" que ya aplica al resto de
+  este widget (el nivel, el conteo, los badges mismos ya eran
+  inventados). Verificado en ambos modos con Playwright: sin overflow ni
+  errores de consola.
