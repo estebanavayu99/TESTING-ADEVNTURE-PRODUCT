@@ -1,0 +1,19 @@
+# PickMap — no había robots.txt (los rastreadores asumen "todo permitido"
+# por defecto, pero sin este archivo tampoco saben dónde está el sitemap,
+# ni queda explícito que las páginas que requieren sesión no deberían
+# indexarse). Las páginas privadas (panel de negocio, dashboard del
+# viajero, etc.) ya tienen su propia sesión gate del lado del cliente —
+# esto es solo una señal para buscadores, no un mecanismo de seguridad.
+User-agent: *
+Disallow: /dashboard.html
+Disallow: /onboarding.html
+Disallow: /panoramas.html
+Disallow: /favoritos.html
+Disallow: /pickpoints.html
+Disallow: /invita.html
+Disallow: /negocio.html
+Disallow: /negocio-*.html
+Disallow: /bot-darwin/
+Disallow: /notificaciones-preview.html
+
+Sitemap: https://pickmap.cl/sitemap.xml

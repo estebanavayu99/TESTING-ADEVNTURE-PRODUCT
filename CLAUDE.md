@@ -1549,3 +1549,78 @@ siendo la del admin — este fix soluciona el síntoma más molesto
 (onboarding en loop) pero no reescribe la arquitectura de impersonación
 para que las escrituras reales queden bien atribuidas al usuario
 impersonado.
+
+## Profesionalización técnica del sitio: SEO, favicon real, 404, meta tags (2026-07-22)
+
+Instrucción explícita del usuario ("profesionaliza o busca formas de
+hacer más pro la web"). Auditoría propia (solo lectura) encontró varios
+huecos técnicos estándar de "sitio profesional" que nunca se habían
+completado porque el foco de las sesiones anteriores fue siempre
+funcionalidad, no SEO/metadata. Se implementó lo que no requiere
+contenido inventado; dos ítems quedaron explícitamente fuera (ver abajo)
+porque requerían fabricar datos falsos, algo que este proyecto evita a
+propósito.
+
+- **Favicon real en las 19 páginas de la app** (antes: un círculo SVG
+  inline como placeholder, mismo en todas): reemplazado por
+  `<link rel="icon" type="image/png" href="assets/icon-192.png">`, el
+  ícono real de marca que ya existía (generado para la PWA, ver sección
+  de arriba) pero nunca se usaba como favicon de pestaña.
+  `notificaciones-preview.html` deliberadamente no se tocó (es
+  `noindex, nofollow`, página de referencia interna).
+- **`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`**
+  agregado junto al preconnect de `fonts.googleapis.com` que ya existía
+  en las 19 páginas — antes solo se precalentaba la conexión al primer
+  dominio (el que sirve el CSS de Google Fonts), no al segundo (el que
+  sirve los archivos de fuente reales), perdiendo la mitad del ahorro de
+  latencia que promete un preconnect de fuentes.
+  `<img src="assets/logo.png" alt="">` → `alt="PickMap"` en el logo del
+  nav de las mismas 19 páginas (antes vacío, invisible para lectores de
+  pantalla).
+- **`robots.txt` y `sitemap.xml`** (nuevos, raíz del repo): el sitio
+  nunca había tenido ninguno de los dos — `robots.txt` desalinea
+  explícitamente todas las páginas que requieren sesión (`dashboard`,
+  `onboarding`, `panoramas`, `favoritos`, `pickpoints`, `invita`,
+  `negocio*`) más `/bot-darwin/` y `/notificaciones-preview.html` (mismo
+  criterio `noindex` que ya llevaban en su `<meta>`), y apunta al
+  sitemap; `sitemap.xml` lista solo las 5 páginas genuinamente públicas
+  (`/`, `/login.html`, `/login-empresa.html`, `/terminos.html`,
+  `/privacidad.html`).
+- **`404.html`** (nuevo): antes cualquier URL rota en producción caía en
+  el 404 genérico y sin marca de Vercel. Página propia, reutilizando
+  `.skyline` + `.nav`/`.logo` + `css/legal.css` (mismo lenguaje visual
+  del resto del sitio) con un bloque `<style>` inline chico para el
+  mensaje 404 en sí; `<meta name="robots" content="noindex">` porque no
+  debe indexarse. Vercel sirve automáticamente cualquier `404.html` en la
+  raíz de un sitio estático como página de error — no requiere config
+  adicional en `vercel.json`.
+- **Open Graph + Twitter Card en `index.html`**: el sitio nunca tuvo meta
+  tags de preview social — compartir el link en WhatsApp/Twitter/Slack
+  mostraba solo el título crudo de la pestaña, sin imagen ni descripción.
+  Se agregó el bloque completo (`og:type/site_name/title/description/
+  image/url`, `twitter:card/title/description/image`) apuntando a
+  `https://pickmap.cl/` (dominio de producción documentado arriba) y
+  `assets/icon-512.png` como imagen — es el único asset de marca en
+  buena resolución que ya existe, aunque es cuadrado (1:1) y no el
+  formato panorámico ideal (1.91:1) que estas plataformas recortan mejor;
+  queda documentado con un comentario HTML en el propio `<head>` para
+  quien quiera reemplazarlo por un banner ancho real más adelante.
+- **Stat del hero actualizado a un número más creíble**: "+41.391.200
+  combinaciones de panoramas" (una cifra astronómica, poco creíble a
+  simple vista) se cambió a **"+1.352.112"** — mismo tipo de stat
+  (combinaciones posibles, no un conteo real medido), pero en un orden de
+  magnitud que se lee como plausible en vez de inflado. Instrucción
+  explícita del usuario tras ver la propuesta de la auditoría.
+- **Deliberadamente NO implementado** (flaggeado al usuario en vez de
+  fabricar datos falsos, mismo criterio de siempre en este repo):
+  reemplazar o agregar testimonios/reseñas reales en el hero (hoy solo
+  existe un badge fijo "❤️ 5 reseñas" ya en el sitio) — instrucción
+  explícita del usuario: "respecto a las reseñas aún no tengo reales,
+  déjalo así". Se deja tal cual hasta que el usuario tenga reseñas reales
+  que mostrar.
+- Verificado con Playwright local (`python3 -m http.server 8811` +
+  Chromium): `index.html` y `404.html` renderizan sin errores de layout,
+  el stat nuevo se ve correcto en el hero. Los únicos "errores de
+  consola" capturados (`ERR_CONNECTION_RESET` al cargar Google Fonts) son
+  el bloqueo de red esperado del sandbox (ver sección "Verificación
+  visual" arriba), no un problema real de las páginas.

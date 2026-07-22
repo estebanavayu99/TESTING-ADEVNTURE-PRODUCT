@@ -16,8 +16,24 @@ if ('serviceWorker' in navigator) {
 </script>
 <title>PickMap — Déjanos organizarlo por ti</title>
 <meta name="description" content="PickMap es la plataforma que arma panoramas personalizados según tu clima, tus gustos y tu grupo. Descúbrelo o súmate como aliado.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23F6CD4C%22/></svg>">
+<!-- Preview al compartir el link (WhatsApp, redes, etc.) — sin estos tags
+     el link comparte sin imagen ni descripción. og:image usa el ícono
+     cuadrado de la PWA (assets/icon-512.png, ya generado) porque no hay
+     un banner ancho (1200x630, el formato ideal de Open Graph) todavía;
+     reemplazar por uno real en cuanto exista. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PickMap">
+<meta property="og:title" content="PickMap — Déjanos organizarlo por ti">
+<meta property="og:description" content="PickMap es la plataforma que arma panoramas personalizados según tu clima, tus gustos y tu grupo. Descúbrelo o súmate como aliado.">
+<meta property="og:image" content="https://pickmap.cl/assets/icon-512.png">
+<meta property="og:url" content="https://pickmap.cl/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PickMap — Déjanos organizarlo por ti">
+<meta name="twitter:description" content="PickMap es la plataforma que arma panoramas personalizados según tu clima, tus gustos y tu grupo.">
+<meta name="twitter:image" content="https://pickmap.cl/assets/icon-512.png">
+<link rel="icon" type="image/png" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -46,7 +62,7 @@ if ('serviceWorker' in navigator) {
 <header class="nav" id="top">
   <div class="container nav__inner">
     <a href="#top" class="logo">
-      <img src="assets/logo.png" alt="" class="logo__mark">
+      <img src="assets/logo.png" alt="PickMap" class="logo__mark">
       Pick<span class="logo__map">Map</span>
     </a>
     <nav class="nav__links" id="navLinks">
@@ -103,7 +119,7 @@ if ('serviceWorker' in navigator) {
           <a href="#" class="btn btn--ghost" data-client="Descargar la app" data-business="Ver cómo funciona la alianza" data-target="#:#alianzas-como">Descargar la app</a>
         </div>
         <div class="hero__stats">
-          <div class="hero__stat"><strong data-client="+41.391.200" data-business="0">+41.391.200</strong><span data-client="combinaciones de panoramas" data-business="clientes que tienes que buscar tú">combinaciones de panoramas</span></div>
+          <div class="hero__stat"><strong data-client="+1.352.112" data-business="0">+1.352.112</strong><span data-client="combinaciones de panoramas" data-business="clientes que tienes que buscar tú">combinaciones de panoramas</span></div>
           <div class="hero__stat"><strong data-client="100%" data-business="0%">100%</strong><span data-client="personalizado" data-business="riesgo: pagas solo por reserva confirmada">personalizado</span></div>
           <div class="hero__stat"><strong data-client="Pick Points" data-business="Referidos">Pick Points</strong><span data-client="que se acumulan y canjean" data-business="gana trayendo otras empresas a PickMap">que se acumulan y canjean</span></div>
         </div>
