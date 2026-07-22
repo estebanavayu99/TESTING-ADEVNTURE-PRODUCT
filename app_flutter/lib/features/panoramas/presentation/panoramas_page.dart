@@ -639,9 +639,11 @@ class _FiltersSheetState extends State<_FiltersSheet> {
 /// `css/styles.css` (silueta dentada en capas, cada una más oscura y más
 /// baja que la anterior) pero implementado con `CustomPaint` en vez de
 /// `clip-path` (Flutter no tiene equivalente directo) y a escala mucho
-/// más chica, a pedido explícito del usuario — los árboles siguen siendo
-/// el elemento en primer plano, las montañas quedan detrás como telón de
-/// fondo. Ninguno de los dos depende de ninguna imagen/asset.
+/// más chica. Sin los árboles de la primera versión (el usuario pidió
+/// sacarlos) — en su lugar, un par de nubes y pájaros bien simples en el
+/// cielo, mismo espíritu minimalista que `.cloud`/`.bird` del skyline del
+/// sitio web (círculos superpuestos para la nube, una curva doble en "M"
+/// para el pájaro). Nada de esto depende de ninguna imagen/asset.
 class _ForestBanner extends StatelessWidget {
   const _ForestBanner();
 
@@ -662,12 +664,10 @@ class _ForestBanner extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             const Positioned(bottom: 0, left: 0, right: 0, child: _MountainRange(height: 92)),
-            const Positioned(bottom: -14, left: -14, child: _Tree(size: 56, tone: 0)),
-            const Positioned(bottom: -22, left: 30, child: _Tree(size: 76, tone: 1)),
-            const Positioned(bottom: -8, left: 94, child: _Tree(size: 42, tone: 0)),
-            const Positioned(bottom: -20, right: 66, child: _Tree(size: 62, tone: 1)),
-            const Positioned(bottom: -6, right: 22, child: _Tree(size: 40, tone: 0)),
-            const Positioned(bottom: -24, right: -16, child: _Tree(size: 72, tone: 1)),
+            const Positioned(top: 4, right: 20, child: _Cloud(width: 52)),
+            const Positioned(top: 0, right: 78, child: _Cloud(width: 26)),
+            const Positioned(top: 22, right: 104, child: _Bird(size: 20)),
+            const Positioned(top: 2, right: 144, child: _Bird(size: 14)),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 42),
               child: Column(
@@ -690,36 +690,66 @@ class _ForestBanner extends StatelessWidget {
   }
 }
 
-class _Tree extends StatelessWidget {
-  const _Tree({required this.size, required this.tone});
+/// Nube bien simple: 3 círculos blancos translúcidos superpuestos, mismo
+/// truco visual que `.cloud` del sitio (varios `border-radius: 50%`
+/// encimados) sin necesitar ningún asset.
+class _Cloud extends StatelessWidget {
+  const _Cloud({required this.width});
 
-  final double size;
-  /// Alterna 2 tonos de verde en el follaje para dar sensación de
-  /// profundidad entre árboles (no es más que eso — no representa nada).
-  final int tone;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
-    final canopy = tone == 0 ? const Color(0xFF6FA97C) : const Color(0xFF4F8F62);
+    final height = width * 0.55;
+    Widget puff(double d) => Container(
+          width: d,
+          height: d,
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.8), shape: BoxShape.circle),
+        );
     return SizedBox(
-      width: size,
-      height: size * 1.15,
+      width: width,
+      height: height,
       child: Stack(
-        alignment: Alignment.bottomCenter,
         children: [
-          Container(width: size * 0.16, height: size * 0.4, color: const Color(0xFF4A3323)),
-          Positioned(
-            bottom: size * 0.22,
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(color: canopy, shape: BoxShape.circle),
-            ),
-          ),
+          Positioned(left: 0, top: height * 0.35, child: puff(width * 0.5)),
+          Positioned(left: width * 0.3, top: 0, child: puff(width * 0.62)),
+          Positioned(right: 0, top: height * 0.3, child: puff(width * 0.46)),
         ],
       ),
     );
   }
+}
+
+/// Pájaro bien simple: una doble curva en "M", mismo trazo minimalista que
+/// el `<svg class="bird">` del sitio (`M0 10 Q10 0 20 10 Q30 0 40 10`).
+class _Bird extends StatelessWidget {
+  const _Bird({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: size, height: size * 0.5, child: CustomPaint(painter: _BirdPainter()));
+  }
+}
+
+class _BirdPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.22
+      ..strokeCap = StrokeCap.round;
+    final path = Path()
+      ..moveTo(0, size.height * 0.6)
+      ..quadraticBezierTo(size.width * 0.25, 0, size.width * 0.5, size.height * 0.6)
+      ..quadraticBezierTo(size.width * 0.75, 0, size.width, size.height * 0.6);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BirdPainter oldDelegate) => false;
 }
 
 /// Cordillera caricaturizada de fondo, a pedido explícito del usuario tras

@@ -1799,3 +1799,26 @@ claramente como montañas sin taponar el texto del banner. Verificado con
 Playwright (build web + captura recortada/ampliada 2x del banner) en las
 dos rondas — la primera confirmó que se veía demasiado sutil, la segunda
 confirmó picos nítidos y bien contrastados.
+
+### Sin los árboles, con nubes y pájaros simples
+
+Instrucción explícita del usuario en la misma sesión: "sin los círculos
+verdes. agrega un par de pájaros y nubes, algo muy sencillo". Se sacaron
+los 6 `_Tree` (círculo+tronco) del `_ForestBanner` y la clase `_Tree`
+completa (sin otros usos en el repo). En su lugar, dos widgets nuevos
+bien simples, mismo espíritu minimalista que `.cloud`/`.bird` del
+skyline del sitio:
+- **`_Cloud`**: 3 círculos blancos translúcidos superpuestos (mismo
+  truco que varios `border-radius: 50%` encimados en CSS).
+- **`_Bird`/`_BirdPainter`**: una sola curva doble en "M" dibujada con
+  `Path.quadraticBezierTo` + `Paint(style: stroke)`, calcada del
+  `<svg class="bird"><path d="M0 10 Q10 0 20 10 Q30 0 40 10">` real del
+  sitio.
+
+Las 2 nubes + 2 pájaros quedan agrupados en la esquina superior derecha
+del banner, encima de las montañas. Ronda de ajuste real durante la
+verificación: la primera posición dejaba un pájaro semi-tapado detrás de
+una nube (mismo `Stack`, sin overlap intencional) y la nube chica pisaba
+la primera línea del título — se resolvió subiendo todo el conjunto
+(`top` entre 0 y 22px) para que quede por completo arriba de donde
+empieza el texto, en vez de mover el texto o achicarlo.
