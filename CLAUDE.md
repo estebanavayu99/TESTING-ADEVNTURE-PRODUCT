@@ -1715,3 +1715,22 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   cualquier alto de contenido (viajero con h1 de 3 líneas o empresa con
   h1 de 5). El breakpoint mobile (`max-width:980px`) ya fijaba
   `width:100%` para la sidebar apilada, así que no necesitó cambios.
+- **Cuarta vuelta: de 3 tarjetas sueltas a un solo panel unificado**
+  ("no me convence, rediseña esta tarjeta que se vea muy profesional" /
+  luego "re ordena todo esto... proporciones profesionales"). Estirar la
+  sidebar con `justify-content: space-between` (vuelta anterior) dejaba 3
+  cajas flotantes con huecos vacíos grandes entre ellas — se leía como un
+  layout roto, no como "cuadrado y elegante". Rediseño real: `.hero__stats`
+  pasa a ser UN SOLO panel (borde + fondo + sombra propios, `overflow:
+  hidden` para que las esquinas redondeadas corten las líneas divisorias
+  internas), y cada `.hero__stat` es ahora una fila plana sin su propio
+  borde/fondo/sombra — las filas se separan con `border-top` fino
+  (`.hero__stat + .hero__stat`) y usan `flex: 1 1 0` para repartirse el
+  alto disponible como padding interno en vez de como espacio vacío entre
+  cajas. El hover pasó de "elevar la tarjeta" (`translateY`, ya no aplica
+  a una fila sin bordes propios) a un resaltado de fondo sutil
+  (`background: rgba(245,94,97,.06)`), mismo lenguaje que un hover de fila
+  de tabla. Resultado: un bloque sólido, con las mismas proporciones que
+  la columna de texto, sin importar cuánto se estire — se ve como un
+  panel de verdad, no como 3 tarjetas descuadradas. Aplica igual en
+  mobile/tablet apilado (mismo panel, ahora a ancho completo).

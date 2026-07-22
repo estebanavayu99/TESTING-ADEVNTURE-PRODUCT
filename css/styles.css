@@ -419,7 +419,7 @@ body.mode-business #beto-empresa { display: block; }
    .cta-final, que reusa .hero__ctas suelto sin stats ni este wrapper). */
 .hero__copy-row { display: flex; align-items: stretch; gap: 28px; }
 .hero__copy-main { flex: 1 1 auto; min-width: 0; }
-.hero__copy-row .hero__stats { flex: 0 0 auto; width: 230px; justify-content: space-between; }
+.hero__copy-row .hero__stats { flex: 0 0 auto; width: 230px; }
 /* El h1 más largo del modo empresa ("Llena tus cupos. Nosotros ponemos la
    gente.") envolvía en 6 líneas dentro de la columna angosta que le deja
    la sidebar de stats — se ve desbalanceado al lado de una sidebar corta.
@@ -480,33 +480,37 @@ body.mode-business #beto-empresa { display: block; }
 }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
 
-/* Hero stats — mismo lenguaje visual de "chip con ícono tenue" ya
-   establecido en panoramas.html (.pano-toolbar__label-icon) y el panel
-   admin, para que se sienta pulido y consistente en vez de solo texto
-   suelto en una caja. Mantenido sobrio a propósito (sin color fuerte, sin
-   animación) para que no compita visualmente con el mock del celular.
-   Apiladas en columna (antes en fila de 3) para que queden del lado
-   izquierdo, debajo de los botones, en vez de una fila ancha — con más
-   ancho disponible por tarjeta se pudo agrandar de nuevo ícono/tipografía
-   respecto a la versión en fila. */
-.hero__stats { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
+/* Hero stats — un solo panel "cuadrado" (borde + fondo + sombra propios en
+   .hero__stats) con las 3 filas separadas por líneas divisorias finas, en
+   vez de 3 tarjetas sueltas flotando con gaps entre ellas (versión
+   anterior: se veía descuadrado/con huecos vacíos al estirar la columna
+   para igualar el alto del texto — "no me convence, rediseña esta
+   tarjeta", instrucción explícita del usuario). Cada fila usa `flex: 1`
+   para repartirse el alto disponible como padding interno, no como
+   espacio vacío entre cajas — así el panel se ve como un solo bloque
+   sólido y profesional sin importar cuánto se estire. Mismo ícono-chip
+   ya establecido en panoramas.html (.pano-toolbar__label-icon). */
+.hero__stats {
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+  border: 1px solid rgba(30, 45, 49, 0.1);
+  border-radius: 18px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.34));
+  box-shadow: 0 10px 26px rgba(30, 45, 49, 0.06);
+  overflow: hidden;
+}
 .hero__stat {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border: 1px solid rgba(30, 45, 49, 0.1);
-  border-radius: 16px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.32));
-  box-shadow: 0 4px 14px rgba(30, 45, 49, 0.05);
+  padding: 16px 18px;
   min-width: 0;
-  transition: transform .2s, box-shadow .2s, border-color .2s;
+  flex: 1 1 0;
+  transition: background .2s;
 }
-.hero__stat:hover {
-  transform: translateY(-2px) translateX(2px);
-  box-shadow: 0 10px 22px rgba(30, 45, 49, 0.1);
-  border-color: rgba(245, 94, 97, 0.3);
-}
+.hero__stat + .hero__stat { border-top: 1px solid rgba(30, 45, 49, 0.08); }
+.hero__stat:hover { background: rgba(245, 94, 97, 0.06); }
 .hero__stat-icon {
   display: inline-flex;
   align-items: center;
@@ -1227,7 +1231,7 @@ body.mode-business #beto-empresa { display: block; }
   .hero__inner { grid-template-columns: 1fr; text-align: center; }
   .hero__sub { margin-left: auto; margin-right: auto; }
   .hero__ctas { justify-content: center; }
-  .hero__stats { align-items: center; margin: 0 auto; }
+  .hero__stats { margin: 0 auto; }
   /* Sin ancho lateral disponible, la columna angosta de stats vuelve a
      apilarse debajo del texto (orden de documento: stats, luego texto —
      se invierte con `order` para que el texto quede primero, igual que
