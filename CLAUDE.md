@@ -1802,3 +1802,40 @@ que moleste visualmente"). Cambios en `css/styles.css`:
   el valor final (`+1.352.112`/`100%`), el cambio a modo empresa lo pisa
   a `+0`/`0%` al instante, y volver a viajero restaura el valor final sin
   re-animar — sin errores de consola.
+
+## Extender el lenguaje visual del hero al resto de index.html (2026-07-22)
+
+Instrucción explícita del usuario: "hazlo sorpréndeme" tras preguntarle
+qué más pulir del **diseño** (aclaró explícitamente "no cambies
+estructura, hablo de diseño") — así que solo CSS, sin tocar HTML/layout
+de estas secciones. Auditoría propia encontró que `.step` (Cómo
+funciona) ya tenía un buen tratamiento (fondo con gradiente por color,
+ícono en chip con su propio degradé), pero `.card__icon` (usado en
+"¿Para quién es esto?", las 6 tarjetas de features de Darwin, y las 3
+tarjetas de venta de empresa) era solo un emoji suelto de 2rem sin
+ningún contenedor — no calzaba con el lenguaje de "ícono en chip
+cuadrado con fondo tenue" ya establecido en el hero
+(`.hero-stat-icon`) y en el toolbar de `panoramas.html`
+(`.pano-toolbar__label-icon`).
+
+- `.card__icon` pasó a chip cuadrado (52px, `border-radius:14px`,
+  `background: rgba(245,94,97,.1)`, `display:inline-flex` para que
+  respete el `text-align:center` que ya heredan `.cards--6`/
+  `.card--feature` sin necesitar `margin:auto` extra).
+- **`.card--inv .card__icon`** (la variante de fondo oscuro usada en
+  `.section--business`, las 3 tarjetas "Más reservas.../Comisión
+  solo.../Panel de gestión...") necesitó un override: el mismo tinte
+  coral tenue (`rgba(245,94,97,.1)`) sería casi invisible sobre el fondo
+  navy oscuro de esa sección — se usa `rgba(255,255,255,.12)` (tinte
+  blanco) en su lugar, para que el chip siga leyéndose como tal en
+  cualquiera de los dos fondos.
+- Reducido el breakpoint mobile (`.card__icon` a 44px/12px de radio) en
+  vez de solo cambiar el `font-size` como antes, ya que ahora es una caja
+  con dimensiones fijas, no texto suelto.
+- Alcance verificado: `.card`/`.card__icon` solo se usan en `index.html`
+  dentro de este repo (`notificaciones-preview.html` no carga
+  `css/styles.css`), así que el cambio no tocó ninguna otra página.
+- Verificado con Playwright en las 4 secciones que usan `.cards`
+  (incluida la oculta en modo viajero, "Más reservas..." solo visible en
+  modo empresa) y en mobile (390px): sin overflow horizontal ni errores
+  de consola en ninguna combinación.
