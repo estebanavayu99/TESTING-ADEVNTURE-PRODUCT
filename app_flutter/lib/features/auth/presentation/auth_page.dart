@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -310,7 +311,10 @@ class _AuthPageState extends State<AuthPage> {
     // `TextStyle` trae `inherit: true` por defecto.
     Widget tab(String label, bool active, VoidCallback onTap) => Expanded(
           child: GestureDetector(
-            onTap: onTap,
+            onTap: () {
+              if (!active) HapticFeedback.selectionClick();
+              onTap();
+            },
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),

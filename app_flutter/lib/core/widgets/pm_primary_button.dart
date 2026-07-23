@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Botón primario con estado de carga incorporado — evita repetir el
 /// mismo `if (loading) CircularProgressIndicator else Text(...)` en cada
@@ -34,7 +35,12 @@ class _PmPrimaryButtonState extends State<PmPrimaryButton> {
   @override
   Widget build(BuildContext context) {
     final button = ElevatedButton(
-      onPressed: widget.loading ? null : widget.onPressed,
+      onPressed: widget.loading || widget.onPressed == null
+          ? null
+          : () {
+              HapticFeedback.lightImpact();
+              widget.onPressed!();
+            },
       child: widget.loading
           ? const SizedBox(
               width: 20,

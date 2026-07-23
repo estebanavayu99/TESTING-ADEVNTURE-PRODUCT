@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -6,13 +8,120 @@ import '../../../core/widgets/pm_primary_button.dart';
 import '../../../core/widgets/pm_shimmer.dart';
 import '../data/panorama_item.dart';
 
-Future<void> showPanoramaDetail(BuildContext context, PanoramaItem item) {
+/// Fracción de alto de pantalla que ocupa el sheet (`initialChildSize` de
+/// `DraggableScrollableSheet` más abajo) y alto real de su foto — usados acá
+/// también para calcular a dónde "vuela" la foto de origen.
+const _kSheetInitialSize = 0.78;
+const _kSheetPhotoHeight = 230.0;
+
+/// `sourceRect`/`sourceRadius` (posición y radio de la foto de la tarjeta
+/// tocada, ya en coordenadas globales) activan un vuelo tipo "hero" de la
+/// foto hacia la posición real que ocupa en el sheet. Opcionales: si no se
+/// pasan (o el caller no pudo medir la tarjeta), el sheet se abre igual,
+/// solo que sin el vuelo.
+Future<void> showPanoramaDetail(
+  BuildContext context,
+  PanoramaItem item, {
+  Rect? sourceRect,
+  double sourceRadius = 18,
+}) {
+  if (sourceRect != null) {
+    _flyPhotoIntoSheet(context, imageUrl: item.photo, sourceRect: sourceRect, sourceRadius: sourceRadius);
+  }
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => _PanoramaDetailSheet(item: item),
   );
+}
+
+/// `showModalBottomSheet` no admite un `Hero` real entre la tarjeta y el
+/// sheet: su ruta es `ModalBottomSheetRoute` (un `PopupRoute`), y
+/// `HeroController` solo dispara la animación cuando AMBAS rutas
+/// (`fromRoute`/`toRoute`) son `PageRoute` — ver
+/// `packages/flutter/lib/src/widgets/heroes.dart`. En vez de eso, se
+/// simula el mismo efecto a mano: un `OverlayEntry` con la foto animando
+/// desde la tarjeta hasta la posición real de la foto del sheet, con la
+/// MISMA duración (250ms) que usa el bottom sheet nativo para entrar
+/// (`_kBottomSheetEnterDuration` en el framework) — al completarse, se
+/// retira el overlay; la foto real del sheet ya está ahí (mismo
+/// `imageUrl`, ya cacheada por `CachedNetworkImage`), así que no se nota
+/// el empalme.
+void _flyPhotoIntoSheet(BuildContext context, {required String imageUrl, required Rect sourceRect, required double sourceRadius}) {
+  final overlay = Overlay.of(context);
+  final screenSize = MediaQuery.sizeOf(context);
+  final targetRect = Rect.fromLTWH(0, screenSize.height * (1 - _kSheetInitialSize), screenSize.width, _kSheetPhotoHeight);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (context) => _PhotoFlight(
+      imageUrl: imageUrl,
+      sourceRect: sourceRect,
+      targetRect: targetRect,
+      sourceRadius: sourceRadius,
+      onEnd: () => entry.remove(),
+    ),
+  );
+  overlay.insert(entry);
+}
+
+class _PhotoFlight extends StatefulWidget {
+  const _PhotoFlight({
+    required this.imageUrl,
+    required this.sourceRect,
+    required this.targetRect,
+    required this.sourceRadius,
+    required this.onEnd,
+  });
+
+  final String imageUrl;
+  final Rect sourceRect;
+  final Rect targetRect;
+  final double sourceRadius;
+  final VoidCallback onEnd;
+
+  @override
+  State<_PhotoFlight> createState() => _PhotoFlightState();
+}
+
+class _PhotoFlightState extends State<_PhotoFlight> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curve;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 250))
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) widget.onEnd();
+      })
+      ..forward();
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _curve,
+      builder: (context, child) {
+        final rect = Rect.lerp(widget.sourceRect, widget.targetRect, _curve.value)!;
+        final radius = lerpDouble(widget.sourceRadius, 0, _curve.value)!;
+        return Positioned.fromRect(
+          rect: rect,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius),
+            child: CachedNetworkImage(imageUrl: widget.imageUrl, fit: BoxFit.cover),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// Diseño minimalista/profesional a propósito: foto sin overlay de

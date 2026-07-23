@@ -34,7 +34,7 @@ void main() {
 
     await tester.pumpWidget(_harness(PanoramaCard(
       item: _item,
-      onTap: () => tapCount++,
+      onTap: (_) => tapCount++,
       onFavoriteToggle: () => toggleCount++,
     )));
     await tester.pump();
@@ -52,7 +52,7 @@ void main() {
 
     await tester.pumpWidget(_harness(PanoramaCard(
       item: _item,
-      onTap: () => tapCount++,
+      onTap: (_) => tapCount++,
       onFavoriteToggle: () => toggleCount++,
     )));
     await tester.pump();
@@ -65,7 +65,7 @@ void main() {
   });
 
   testWidgets('favorited:true muestra el corazón relleno', (tester) async {
-    await tester.pumpWidget(_harness(PanoramaCard(item: _item, onTap: () {}, favorited: true)));
+    await tester.pumpWidget(_harness(PanoramaCard(item: _item, onTap: (_) {}, favorited: true)));
     await tester.pump();
 
     expect(find.byIcon(Icons.favorite), findsOneWidget);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/pickmap_colors.dart';
 
@@ -47,7 +48,10 @@ class PmBottomNav extends StatelessWidget {
             return Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => onTap(i),
+                onTap: () {
+                  if (!active) HapticFeedback.selectionClick();
+                  onTap(i);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOut,

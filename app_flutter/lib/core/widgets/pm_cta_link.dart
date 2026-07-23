@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/pickmap_colors.dart';
 import 'pm_icon_circle.dart';
@@ -44,7 +45,10 @@ class _PmCtaLinkState extends State<PmCtaLink> {
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: widget.onTap,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              widget.onTap();
+            },
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(

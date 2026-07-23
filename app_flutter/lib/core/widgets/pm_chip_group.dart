@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/pickmap_colors.dart';
 
@@ -69,6 +70,7 @@ class _PmChipState extends State<_PmChip> with SingleTickerProviderStateMixin {
   }
 
   void _handleTap() {
+    HapticFeedback.selectionClick();
     widget.onTap();
     _bounce.forward(from: 0.94);
   }

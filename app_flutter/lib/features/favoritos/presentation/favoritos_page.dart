@@ -56,7 +56,7 @@ class FavoritosPage extends StatelessWidget {
                   delay: Duration(milliseconds: 40 * (i > 6 ? 6 : i)),
                   child: PanoramaCard(
                     item: item,
-                    onTap: () => showPanoramaDetail(context, item),
+                    onTap: (photo) => showPanoramaDetail(context, item, sourceRect: photo?.rect, sourceRadius: photo?.radius ?? 18),
                     favorited: true,
                     onFavoriteToggle: () => favorites.toggle(item.id),
                   ),

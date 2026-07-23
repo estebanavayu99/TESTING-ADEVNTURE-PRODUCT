@@ -1,9 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_shimmer.dart';
 import '../data/panorama_item.dart';
+
+/// Rect + radio de la foto de una tarjeta en el momento del tap, en
+/// coordenadas globales — lo que necesita `showPanoramaDetail` para hacer
+/// "volar" la foto hasta el sheet (ver `panorama_detail_sheet.dart`).
+typedef PanoramaPhotoOrigin = ({Rect rect, double radius});
 
 /// Tarjeta de panorama, estilo "foto + info debajo" (patrón tipo
 /// Airbnb): la foto lleva esquinas redondeadas completas y dos badges
@@ -11,7 +17,7 @@ import '../data/panorama_item.dart';
 /// item trae `reason`) — reemplaza el hint de texto plano que antes iba
 /// debajo de la tarjeta, más compacto y más visual.
 class PanoramaCard extends StatelessWidget {
-  const PanoramaCard({
+  PanoramaCard({
     super.key,
     required this.item,
     required this.onTap,
@@ -21,7 +27,12 @@ class PanoramaCard extends StatelessWidget {
   });
 
   final PanoramaItem item;
-  final VoidCallback onTap;
+
+  /// Recibe el origen real de la foto tocada (`null` si por algún motivo
+  /// no se pudo medir) para que el caller pueda pasarlo a
+  /// `showPanoramaDetail(..., sourceRect: ..., sourceRadius: ...)` y
+  /// disparar el vuelo de la foto hacia el sheet de detalle.
+  final void Function(PanoramaPhotoOrigin? origin) onTap;
   final bool favorited;
   final VoidCallback? onFavoriteToggle;
 
@@ -29,6 +40,23 @@ class PanoramaCard extends StatelessWidget {
   /// grilla de `panoramas.html`, pensada para mostrar 3 tarjetas por
   /// fila en vez de 2 — Favoritos sigue usando el tamaño normal.
   final bool compact;
+
+  /// Instancia propia por tarjeta (no colisiona entre tarjetas montadas a
+  /// la vez porque cada una crea la suya) — identifica la foto para poder
+  /// medir su `Rect` real en el momento del tap.
+  final GlobalKey _photoKey = GlobalKey();
+
+  double get _radius => compact ? 14.0 : 18.0;
+
+  void _handleTap() {
+    HapticFeedback.selectionClick();
+    final box = _photoKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize && box.attached) {
+      onTap((rect: box.localToGlobal(Offset.zero) & box.size, radius: _radius));
+    } else {
+      onTap(null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,70 +67,76 @@ class PanoramaCard extends StatelessWidget {
     final priceSize = compact ? 12.0 : 13.5;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AspectRatio(
             aspectRatio: 1.05,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(compact ? 14 : 18),
-                boxShadow: const [
-                  BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.10), blurRadius: 14, offset: Offset(0, 6)),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(compact ? 14 : 18),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: item.photo,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 220),
-                      placeholder: (context, url) => const PmShimmer(),
-                      errorWidget: (context, url, error) => Container(
-                        color: PickmapColors.mist.withValues(alpha: 0.25),
-                        alignment: Alignment.center,
-                        child: Text(item.icon, style: TextStyle(fontSize: compact ? 22 : 34)),
-                      ),
-                    ),
-                    Positioned(
-                      top: compact ? 5 : 8,
-                      left: compact ? 5 : 8,
-                      right: badgeSize + (compact ? 10 : 16),
-                      child: Wrap(
-                        spacing: compact ? 4 : 6,
-                        runSpacing: compact ? 4 : 6,
-                        children: [
-                          _kindBadge(compact),
-                          if (item.reason != null) _badge(compact ? '🧠' : '🧠 Darwin', compact, color: PickmapColors.navy),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: compact ? 5 : 8,
-                      right: compact ? 5 : 8,
-                      child: GestureDetector(
-                        onTap: onFavoriteToggle,
-                        child: Container(
-                          width: badgeSize,
-                          height: badgeSize,
+            child: KeyedSubtree(
+              key: _photoKey,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(_radius),
+                  boxShadow: const [
+                    BoxShadow(color: Color.fromRGBO(30, 45, 49, 0.10), blurRadius: 14, offset: Offset(0, 6)),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_radius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: item.photo,
+                        fit: BoxFit.cover,
+                        fadeInDuration: const Duration(milliseconds: 220),
+                        placeholder: (context, url) => const PmShimmer(),
+                        errorWidget: (context, url, error) => Container(
+                          color: PickmapColors.mist.withValues(alpha: 0.25),
                           alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            favorited ? Icons.favorite : Icons.favorite_border,
-                            size: badgeIconSize,
-                            color: favorited ? PickmapColors.coral : PickmapColors.navy,
+                          child: Text(item.icon, style: TextStyle(fontSize: compact ? 22 : 34)),
+                        ),
+                      ),
+                      Positioned(
+                        top: compact ? 5 : 8,
+                        left: compact ? 5 : 8,
+                        right: badgeSize + (compact ? 10 : 16),
+                        child: Wrap(
+                          spacing: compact ? 4 : 6,
+                          runSpacing: compact ? 4 : 6,
+                          children: [
+                            _kindBadge(compact),
+                            if (item.reason != null) _badge(compact ? '🧠' : '🧠 Darwin', compact, color: PickmapColors.navy),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: compact ? 5 : 8,
+                        right: compact ? 5 : 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            onFavoriteToggle?.call();
+                          },
+                          child: Container(
+                            width: badgeSize,
+                            height: badgeSize,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              favorited ? Icons.favorite : Icons.favorite_border,
+                              size: badgeIconSize,
+                              color: favorited ? PickmapColors.coral : PickmapColors.navy,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

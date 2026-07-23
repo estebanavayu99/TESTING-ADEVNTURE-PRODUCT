@@ -1970,3 +1970,68 @@ y muy fluida") — Panoramas de nuevo sin tocar (visto bueno ya dado antes).
   `SupabaseClient` con URL inválida, mismo patrón ya usado en
   `test/onboarding_navigation_test.dart`. `flutter analyze`/`flutter
   test` siguen en verde (27 tests) tras el cambio.
+
+## Vuelo de foto tarjeta→sheet + haptic feedback
+
+A pedido explícito del usuario ("sigue mejorandola", y al preguntarle si
+seguía dos candidatos concretos — vuelo estilo Hero de la foto y haptic
+feedback — respondió "si ambos"). Panoramas de nuevo sin tocar en su
+diseño (solo se instrumentó la tarjeta/sheet para el vuelo, sin cambiar
+cómo se ven).
+
+- **Por qué no es un `Hero` real**: `showModalBottomSheet` abre una
+  `ModalBottomSheetRoute`, que es un `PopupRoute` — NO un `PageRoute`.
+  `HeroController._maybeStartHeroTransition` (`packages/flutter/lib/src/
+  widgets/heroes.dart` del propio SDK) exige que TANTO la ruta de origen
+  como la de destino sean `PageRoute` para disparar la animación; entre
+  una pantalla normal y un bottom sheet nunca se cumple, así que un
+  `Hero` widget puesto en la tarjeta y en el sheet simplemente no
+  animaría nada. Confirmado leyendo el código fuente del SDK clonado en
+  este sandbox (`/tmp/flutter-sdk`), no asumido de memoria.
+- **Vuelo manual con `OverlayEntry`** (`panorama_detail_sheet.dart`):
+  `showPanoramaDetail` ahora acepta `sourceRect`/`sourceRadius`
+  opcionales; si vienen, `_flyPhotoIntoSheet` inserta un `OverlayEntry`
+  con `_PhotoFlight` (`AnimationController` de 250ms —misma duración que
+  `_kBottomSheetEnterDuration`, la constante interna que usa el propio
+  bottom sheet para entrar, así el vuelo queda sincronizado con la
+  animación nativa del sheet) que interpola `Rect.lerp`/`lerpDouble` de
+  la posición+radio de la tarjeta a la posición real que ocupa la foto
+  dentro del sheet (calculada con `initialChildSize` 0.78 y el alto fijo
+  de 230 que ya usaba el sheet). Al completarse, se retira el overlay —
+  la foto real del sheet ya está ahí (mismo `imageUrl`, cacheada por
+  `CachedNetworkImage`), así que no se nota el empalme. Si no hay
+  `sourceRect` (caller no pudo medir la tarjeta), el sheet se abre igual,
+  solo que sin el vuelo — nunca rompe el flujo.
+- **`PanoramaCard` mide su propia foto**: gana un `GlobalKey` propio por
+  instancia (envuelve el `DecoratedBox` de la foto en un
+  `KeyedSubtree`), y el contrato de `onTap` pasó de `VoidCallback` a
+  `void Function(PanoramaPhotoOrigin? origin)` (`PanoramaPhotoOrigin` es
+  un record `({Rect rect, double radius})`) — en el tap, mide su propio
+  `RenderBox` (`localToGlobal` + `size`) y se lo pasa al caller, que lo
+  reenvía a `showPanoramaDetail`. Los 3 call sites (`panoramas_page.dart`
+  ×2, `favoritos_page.dart`) actualizados; `test/panorama_card_test.dart`
+  actualizado al nuevo tipo de callback (mismos 3 casos, sin cambios de
+  comportamiento).
+- **Haptic feedback liviano** (`flutter/services.dart`,
+  `HapticFeedback`) agregado en los puntos de interacción que ya existían
+  pero no daban ninguna vibración: `PmPrimaryButton` (todos los botones
+  primarios del sitio: login/signup/onboarding/reserva),
+  `PmChipGroup` (selección de gustos en onboarding), `PmBottomNav`
+  (cambio de tab, solo si el tab no era ya el activo), `PmCtaLink`
+  (puentes Pick Points↔Panoramas↔Invita), el toggle de favorito y el tap
+  general de `PanoramaCard`, y el segmented control de
+  login/signup en `AuthPage`. `HapticFeedback.selectionClick()` para
+  selección/navegación (más sutil), `HapticFeedback.lightImpact()` para
+  acciones de confirmación (botones primarios, CTAs) — sin efecto
+  visible en el entorno de test/web (Flutter degrada silenciosamente el
+  canal de plataforma), solo se nota en un dispositivo real.
+- Verificado con Playwright: sin excepciones de Dart en consola (solo los
+  `ERR_TUNNEL_CONNECTION_FAILED` esperados de Unsplash, bloqueado en este
+  sandbox) al tapear una tarjeta de Combos — el sheet abre con el item
+  correcto, contenido completo, y el overlay del vuelo se retira sin
+  dejar rastro. Las fotos reales no se pudieron ver completar el vuelo en
+  este sandbox (sin salida a internet, ninguna foto de Unsplash carga
+  nunca), pero la mecánica (medir el `Rect`, insertar/retirar el overlay,
+  timing) queda confirmada sin errores — el efecto visual real solo se
+  puede confirmar en producción o con capturas del usuario.
+  `flutter analyze`/`flutter test` en verde (27 tests) tras el cambio.

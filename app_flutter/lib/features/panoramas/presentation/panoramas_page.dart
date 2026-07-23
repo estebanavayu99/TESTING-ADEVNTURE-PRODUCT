@@ -377,7 +377,7 @@ class _PanoramasPageState extends State<PanoramasPage> {
                 width: 112,
                 child: PanoramaCard(
                   item: item,
-                  onTap: () => showPanoramaDetail(context, item),
+                  onTap: (photo) => showPanoramaDetail(context, item, sourceRect: photo?.rect, sourceRadius: photo?.radius ?? 18),
                   compact: true,
                   favorited: favorites.isFavorited(item.id),
                   onFavoriteToggle: () => favorites.toggle(item.id),
@@ -426,7 +426,7 @@ class _PanoramasPageState extends State<PanoramasPage> {
             final item = _exploreList[i];
             return PanoramaCard(
               item: item,
-              onTap: () => showPanoramaDetail(context, item),
+              onTap: (photo) => showPanoramaDetail(context, item, sourceRect: photo?.rect, sourceRadius: photo?.radius ?? 18),
               compact: true,
               favorited: favorites.isFavorited(item.id),
               onFavoriteToggle: () => favorites.toggle(item.id),
