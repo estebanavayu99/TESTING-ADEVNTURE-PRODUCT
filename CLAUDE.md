@@ -1916,3 +1916,36 @@ Mejoras reales agregadas:
   `<summary>` del FAQ toma el color coral, y el `transform` del botón
   cambia a scale(~0.97) durante el click — sin overflow ni errores de
   consola.
+
+## Auditoría de bugs/código muerto (2026-07-22)
+
+Instrucción explícita del usuario ("busca problemas en funciones o bugs
+o incluso líneas muertas que no uses"). Revisión completa de
+`js/main.js` (lógica de `setMode`, count-ups, reveal-on-scroll, clima
+por scroll, lluvia en canvas, parallax) y de las clases/IDs nuevos
+agregados en `css/styles.css`/`index.html` durante esta sesión.
+
+- **Sin bugs de lógica encontrados** en `main.js`. Único caso límite
+  real pero no nuevo (mismo patrón que ya tenía el contador del widget
+  de Pick Points): si alguien cambia de modo *a mitad* de la animación
+  inicial de count-up del hero (ventana de 1.4s al cargar la página), el
+  número salta al nuevo target en vez de reiniciar la curva de easing —
+  no rompe nada (nunca queda en un valor inconsistente), es cosmético y
+  requeriría una ventana de clic casi imposible de acertar.
+- **Cross-check de selectores**: todos los `getElementById`/
+  `querySelector(All)` de `main.js` matchean un elemento real en
+  `index.html` (script automatizado, cero huérfanos). Cero IDs
+  duplicados en `index.html`. Los wrappers `.hero__copy-row`/
+  `.hero__copy-main` de una iteración anterior del hero (ya
+  abandonada) se confirmaron completamente eliminados, ni rastro en CSS
+  ni HTML.
+- **Bug real encontrado y arreglado**: el `:focus-visible` agregado en
+  la pasada anterior ("detalles pro") cubría `a`/`button`/`summary`/
+  `input`/`[tabindex]` pero no `select`/`textarea` — como
+  `css/styles.css` es compartido por casi todo el sitio (formularios de
+  login, `negocio-servicios.html`, etc.), esos dos tipos de campo se
+  quedaban con el outline azul/negro default del navegador en vez del
+  anillo coral de marca. Se agregaron ambos al selector.
+- Verificado: `node --check` sobre `main.js` sin errores de sintaxis,
+  llaves de `styles.css` balanceadas (435 aperturas/cierres), scroll
+  completo de la página sin regresiones en el sistema de reveal.
