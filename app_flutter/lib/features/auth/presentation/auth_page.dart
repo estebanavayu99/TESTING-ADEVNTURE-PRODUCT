@@ -211,7 +211,24 @@ class _AuthPageState extends State<AuthPage> {
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
-                    child: _buildCardContent(context),
+                    // Fade + leve deslizamiento al cambiar de vista
+                    // (login/signup/verificación/recuperar) — antes el
+                    // formulario cambiaba de golpe con cada tap en los
+                    // tabs o en los links de "olvidé mi contraseña"/
+                    // "crea tu cuenta".
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween(begin: const Offset(0, 0.03), end: Offset.zero).animate(animation),
+                          child: child,
+                        ),
+                      ),
+                      child: _buildCardContent(context),
+                    ),
                   ),
                 ),
               ),
@@ -223,18 +240,24 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Widget _buildCardContent(BuildContext context) {
+    late final Widget child;
     switch (_view) {
       case _AuthView.login:
-        return _loginForm();
+        child = _loginForm();
       case _AuthView.signup:
-        return _signupForm();
+        child = _signupForm();
       case _AuthView.verifyPending:
-        return _verifyPendingView();
+        child = _verifyPendingView();
       case _AuthView.forgotRequest:
-        return _forgotRequestForm();
+        child = _forgotRequestForm();
       case _AuthView.forgotReset:
-        return _forgotResetForm();
+        child = _forgotResetForm();
     }
+    // `AnimatedSwitcher` (más arriba) solo dispara la transición si el
+    // `child` cambia de key — sin esto, todas las vistas devuelven un
+    // `Column` como raíz y Flutter las trataría como "el mismo widget"
+    // actualizado en el lugar, sin ninguna animación.
+    return KeyedSubtree(key: ValueKey(_view), child: child);
   }
 
   Widget _kicker(String text) => Padding(
@@ -247,13 +270,23 @@ class _AuthPageState extends State<AuthPage> {
       );
 
   Widget _banner() {
+    Widget child = const SizedBox.shrink();
     if (_error != null) {
-      return _bannerBox(_error!, PickmapColors.deepRed);
+      child = _bannerBox(_error!, PickmapColors.deepRed);
+    } else if (_success != null) {
+      child = _bannerBox(_success!, PickmapColors.green);
     }
-    if (_success != null) {
-      return _bannerBox(_success!, PickmapColors.green);
-    }
-    return const SizedBox.shrink();
+    // Entra/sale con fade + alto animado en vez de aparecer de golpe y
+    // empujar el resto del formulario de un salto.
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: KeyedSubtree(key: ValueKey(_error ?? _success ?? ''), child: child),
+      ),
+    );
   }
 
   Widget _bannerBox(String text, Color color) => Container(

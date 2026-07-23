@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/navigation/pm_page_route.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/widgets/pm_card.dart';
 import '../../../core/widgets/pm_cta_link.dart';
@@ -123,7 +124,7 @@ class InvitaPage extends StatelessWidget {
               icon: '⭐',
               title: 'Ver mis Pick Points',
               subtitle: 'Revisa tu actividad y tus premios por logros',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Scaffold(body: PickpointsPage()))),
+              onTap: () => Navigator.of(context).push(PmPageRoute(builder: (_) => const Scaffold(body: PickpointsPage()))),
             ),
           ),
         ],

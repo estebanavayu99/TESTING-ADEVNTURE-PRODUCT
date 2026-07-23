@@ -1921,3 +1921,52 @@ interacción (no en más color, ya cubierto arriba):
   se ve fluido y sin artefactos visuales, y las tarjetas en cascada no
   rompen el layout de ninguna pantalla. `flutter analyze`/`flutter test`
   siguen en verde (27 tests).
+
+## Navegación con transición compartida + Auth/Onboarding más fluidos
+
+A pedido explícito del usuario, otra vuelta más de pulido sobre la misma
+línea de "fluidez" ("sigue mejorandola. debe ser muy atractiva y muy pro
+y muy fluida") — Panoramas de nuevo sin tocar (visto bueno ya dado antes).
+
+- **`core/navigation/pm_page_route.dart`** (nuevo): `PmPageRoute`, un
+  `PageRouteBuilder` compartido (fade + leve slide-desde-abajo, 260ms de
+  ida/200ms de vuelta, `Curves.easeOutCubic`) que reemplaza el
+  `MaterialPageRoute` por defecto (slide-desde-la-derecha, sin curva) en
+  los 4 `Navigator.push` de la app: Mi Cuenta → Pick Points, Mi Cuenta →
+  Onboarding (editar perfil), Pick Points → Panoramas, Invita → Pick
+  Points. Un solo widget reutilizado en vez de repetir el
+  `PageRouteBuilder` en cada callsite, para que cualquier navegación
+  nueva que se agregue después use el mismo criterio por defecto.
+- **`auth_page.dart`: transición animada entre vistas del formulario**.
+  Antes, cambiar entre login/signup/verificación-pendiente/recuperar-
+  contraseña (tabs o links "¿Olvidaste tu contraseña?"/"Crea tu cuenta")
+  reemplazaba el contenido de la tarjeta de golpe. Se envolvió
+  `_buildCardContent(context)` en un `AnimatedSwitcher` (260ms, fade +
+  slide vertical sutil). Como las 5 vistas devuelven todas un `Column`
+  como raíz, `AnimatedSwitcher` no detectaba ningún cambio de widget sin
+  una key explícita — se agregó `KeyedSubtree(key: ValueKey(_view), ...)`
+  alrededor del contenido para que la key cambie junto con `_view` y la
+  transición efectivamente dispare (mismo mecanismo ya usado en otras
+  partes del proyecto para distinguir ramas de un switch que devuelven el
+  mismo tipo de widget). El banner de error/éxito (`_banner()`) se animó
+  igual (`AnimatedSize` + `AnimatedSwitcher` con key sobre el mensaje) —
+  antes aparecía de golpe empujando el resto del form de un salto seco.
+- **`onboarding_page.dart`: barra de progreso con transición de color
+  animada**. El segmento activo/inactivo pasó de `Container` a
+  `AnimatedContainer` (260ms, `Curves.easeOut`) — al avanzar/retroceder de
+  paso, el color ya no salta de golpe entre coral y gris.
+- Verificado con Playwright (mismo método de siempre): capturas de la
+  tarjeta de auth a mitad de transición (`auth_mid_transition.png`) y ya
+  asentada en signup (`auth_signup_settled.png`) confirman el fade+slide
+  entre tabs; navegación real Pick Points → Panoramas vía el nuevo botón
+  "Ver mis panoramas" confirma que `PmPageRoute` dispara correctamente
+  (`route_settled2.png`). Bug de arnés de prueba encontrado y corregido en
+  el camino (no un bug de producto): el `dev_preview_main.dart` temporal
+  para probar `AuthPage` aislada no envolvía la pantalla en
+  `ChangeNotifierProvider<AuthController>` — `initState` de `AuthPage`
+  llama `context.read<AuthController>().consumePasswordRecovery()`, que
+  necesita el provider presente; se corrigió el arnés (nunca se commitea)
+  agregando un `AuthController` real construido contra un
+  `SupabaseClient` con URL inválida, mismo patrón ya usado en
+  `test/onboarding_navigation_test.dart`. `flutter analyze`/`flutter
+  test` siguen en verde (27 tests) tras el cambio.

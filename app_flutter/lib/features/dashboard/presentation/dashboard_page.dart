@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/navigation/pm_page_route.dart';
 import '../../../core/theme/pickmap_colors.dart';
 import '../../../core/utils/rut.dart';
 import '../../../core/widgets/pm_card.dart';
@@ -124,7 +125,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Expanded(
                   child: PmCard(
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PickpointsPage())),
+                    onTap: () => Navigator.of(context).push(PmPageRoute(builder: (_) => const PickpointsPage())),
                     padding: const EdgeInsets.all(14),
                     child: _Teaser(
                       icon: '⭐',
@@ -141,7 +142,7 @@ class _DashboardPageState extends State<DashboardPage> {
           PmFadeIn(
             delay: const Duration(milliseconds: 60),
             child: PmCard(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OnboardingPage())),
+              onTap: () => Navigator.of(context).push(PmPageRoute(builder: (_) => const OnboardingPage())),
               padding: const EdgeInsets.all(14),
               child: _Teaser(
                 icon: '🧭',

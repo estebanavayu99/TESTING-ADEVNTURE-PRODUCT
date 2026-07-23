@@ -244,7 +244,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         children: List.generate(_stepCount, (i) {
                           final active = i <= _step;
                           return Expanded(
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 260),
+                              curve: Curves.easeOut,
                               margin: const EdgeInsets.symmetric(horizontal: 3),
                               height: 5,
                               decoration: BoxDecoration(
