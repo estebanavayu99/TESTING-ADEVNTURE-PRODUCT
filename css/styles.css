@@ -28,6 +28,16 @@ body.mode-business {
 }
 
 * { box-sizing: border-box; }
+/* Detalles "pro" que el navegador deja en su default si no se tocan:
+   color de selección de texto con la marca, anillo de foco visible solo
+   para navegación por teclado (no al hacer click con mouse), y feedback
+   táctil al presionar un botón. */
+::selection { background: var(--coral); color: var(--white); }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 /* El nav es sticky (76px de alto, ver .nav__inner) y no compensaba esa
    altura al saltar a un ancla (#alianzas-como, #beto, #segmentos, etc.) —
    el destino quedaba tapado/desfasado bajo el nav. scroll-padding-top
@@ -473,6 +483,10 @@ body.mode-business #beto-empresa { display: block; }
   box-shadow: 0 10px 22px rgba(30, 45, 49, 0.22);
 }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
+/* Feedback táctil al presionar — declarado después de los :hover para
+   que gane en el click (misma especificidad, orden de cascada decide),
+   sin perder la elevación de :hover al soltar. */
+.btn:active { transform: scale(0.97); }
 
 /* Hero stats — reordenado a pedido explícito del usuario ("todo lo que es
    stat, titulo y phone, quiero que lo reordenes"): vuelve al orden de
@@ -1267,6 +1281,17 @@ body.mode-business #beto-empresa { display: block; }
 /* ========== Reveal on scroll ========== */
 [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
 [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
+/* Cascada sutil cuando varias tarjetas/pasos comparten fila (.steps,
+   .cards, .examples__grid) — todas cruzan el umbral de scroll casi al
+   mismo tiempo, así que sin esto aparecían todas de golpe en vez de en
+   secuencia. nth-child funciona porque cada grid solo tiene hijos del
+   mismo tipo (todo .step o todo .card), nunca mezclados con otro
+   elemento — así que "hijo 2 del grid" siempre es la segunda tarjeta. */
+[data-reveal]:nth-child(2) { transition-delay: .08s; }
+[data-reveal]:nth-child(3) { transition-delay: .16s; }
+[data-reveal]:nth-child(4) { transition-delay: .24s; }
+[data-reveal]:nth-child(5) { transition-delay: .32s; }
+[data-reveal]:nth-child(6) { transition-delay: .4s; }
 
 /* ========== Responsive ========== */
 @media (max-width: 980px) {

@@ -1879,3 +1879,40 @@ cuadrado con fondo tenue" ya establecido en el hero
   este widget (el nivel, el conteo, los badges mismos ya eran
   inventados). Verificado en ambos modos con Playwright: sin overflow ni
   errores de consola.
+
+## Auditoría de reveal-on-scroll + detalles "super pro" (2026-07-22)
+
+Instrucción explícita del usuario ("sigue mejorándola... debe ser
+atractivo, elegante y profesional, super pro"). Antes de agregar nada
+nuevo, se investigó una captura de página completa que mostraba huecos
+vacíos enormes entre secciones y un nav duplicado a mitad de página —
+**ambos resultaron ser artefactos de cómo Playwright arma un screenshot
+`fullPage` con animaciones de scroll y elementos `position: sticky`**,
+NO bugs reales: verificado con scroll real gradual (pasos de 80px) que
+las 29 `[data-reveal]` de la página se revelan correctamente en ambos
+modos, y que el nav se ve perfecto en una captura de viewport normal. No
+se tocó nada por esto — se documenta para que una futura sesión no
+vuelva a alarmarse por el mismo artefacto.
+
+Mejoras reales agregadas:
+- **Cascada al revelar tarjetas en fila** (`.steps`, `.cards`,
+  `.examples__grid`): antes todas las tarjetas de una fila aparecían de
+  golpe al cruzar el umbral de scroll casi al mismo tiempo. Se agregó
+  `transition-delay` vía `[data-reveal]:nth-child(2..6)` — funciona
+  porque cada grid solo tiene hijos del mismo tipo (nunca mezclados con
+  otro elemento), así que "2do hijo del grid" siempre es la segunda
+  tarjeta real.
+- **`::selection`** con el coral de marca en vez del azul default del
+  navegador.
+- **`:focus-visible`** con anillo coral para navegación por teclado
+  (`a`, `button`, `summary` —el toggle del FAQ es un `<summary>`—,
+  `input`, `[tabindex]`) — antes no había ningún estilo de foco propio,
+  se veía el outline azul/negro default del navegador.
+- **Feedback táctil al presionar botones** (`.btn:active { transform:
+  scale(0.97); }`), declarado después de los `:hover` para que gane en
+  el instante del click sin perder la elevación de `:hover` al soltar.
+- Verificado con Playwright: los delays de cascada se aplican
+  correctamente (0s/.08s/.16s/.24s/.32s/.4s), el foco por teclado en el
+  `<summary>` del FAQ toma el color coral, y el `transform` del botón
+  cambia a scale(~0.97) durante el click — sin overflow ni errores de
+  consola.
