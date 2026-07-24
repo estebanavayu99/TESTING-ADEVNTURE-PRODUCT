@@ -1177,7 +1177,20 @@ body.mode-business #beto-empresa { display: block; }
   transition: transform .2s, background .2s;
 }
 .faq__item[open] .faq__question::after { transform: translateY(-50%) rotate(45deg); background: rgba(245, 94, 97, 0.18); }
-.faq__answer { margin: 0 0 18px; color: var(--navy-2); font-size: 0.92rem; line-height: 1.6; }
+/* La apertura nativa de <details> es instantánea (el navegador aplica
+   display:none al contenido cuando no hay [open], sin transición
+   posible) — se ve seco al lado del resto del sitio, que ya anima todo.
+   `js/main.js` intercepta el click y anima `max-height` a mano
+   (manteniendo `open` verdadero durante toda la animación de cierre);
+   esta regla solo define la transición, el JS mueve el valor. */
+.faq__answer {
+  margin: 0 0 18px;
+  color: var(--navy-2);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  overflow: hidden;
+  transition: max-height .32s cubic-bezier(.4, 0, .2, 1);
+}
 
 @media (max-width: 900px) {
   .faq__groups { grid-template-columns: 1fr; gap: 8px; }

@@ -203,6 +203,40 @@
     });
   });
 
+  /* ---------- FAQ: abrir/cerrar animado en vez del toggle instantáneo
+     nativo de <details> ---------- */
+  document.querySelectorAll('.faq__item').forEach((details) => {
+    const summary = details.querySelector('.faq__question');
+    const answer = details.querySelector('.faq__answer');
+    if (!summary || !answer) return;
+
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (details.open) {
+        // Cerrando: fija el alto actual, luego anima a 0 y recién ahí
+        // saca el atributo `open` (si se saca antes, el navegador
+        // esconde el contenido de golpe y no hay nada que animar).
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        requestAnimationFrame(() => { answer.style.maxHeight = '0px'; });
+        answer.addEventListener('transitionend', function onEnd() {
+          details.open = false;
+          answer.style.maxHeight = '';
+          answer.removeEventListener('transitionend', onEnd);
+        }, { once: true });
+      } else {
+        // Abriendo: `open` tiene que estar puesto ANTES de medir
+        // scrollHeight, si no el contenido sigue oculto y mide 0.
+        details.open = true;
+        answer.style.maxHeight = '0px';
+        requestAnimationFrame(() => { answer.style.maxHeight = answer.scrollHeight + 'px'; });
+        answer.addEventListener('transitionend', function onEnd() {
+          answer.style.maxHeight = '';
+          answer.removeEventListener('transitionend', onEnd);
+        }, { once: true });
+      }
+    });
+  });
+
   /* ---------- Scroll reveal ---------- */
   const revealTargets = document.querySelectorAll(
     '.step, .card, .example, .widget, .puntos__copy, .marquee, .alianzas__cta'

@@ -1949,3 +1949,43 @@ agregados en `css/styles.css`/`index.html` durante esta sesión.
 - Verificado: `node --check` sobre `main.js` sin errores de sintaxis,
   llaves de `styles.css` balanceadas (435 aperturas/cierres), scroll
   completo de la página sin regresiones en el sistema de reveal.
+
+## FAQ: abrir/cerrar animado en vez del toggle instantáneo (2026-07-22)
+
+Instrucción explícita del usuario ("intenta hacerla más fluida
+todavía"). El `<details>`/`<summary>` nativo del FAQ abría/cerraba de
+golpe — el navegador aplica su ocultamiento interno sin transición
+posible, así que se sentía seco al lado de todo lo demás del sitio, que
+ya anima prácticamente todo. `js/main.js` ahora intercepta el click en
+`.faq__question` (`preventDefault` + toggle manual de `details.open`) y
+anima `max-height` en `.faq__answer` a mano:
+- **Al abrir**: pone `open = true` primero (si no, el contenido sigue
+  sin renderizar y `scrollHeight` da 0), fija `max-height: 0px`, y en el
+  siguiente frame lo sube al `scrollHeight` real — la transición CSS
+  (`.32s cubic-bezier(.4,0,.2,1)`, definida en `css/styles.css`) anima
+  el crecimiento. Al terminar (`transitionend`), limpia el inline style
+  para que el contenido quede libre (`max-height: none`) por si el
+  texto reflowea con un resize.
+- **Al cerrar**: fija `max-height` al alto actual medido, fuerza reflow
+  con un `requestAnimationFrame`, y recién baja a `0px` — solo saca el
+  atributo `open` real al terminar la transición (`transitionend`); si
+  se sacara antes, el navegador escondería el contenido de golpe y no
+  habría nada que animar.
+- **Gotcha encontrado verificando esto**: después de cerrar,
+  `getComputedStyle(answer).display` sigue reportando `"block"` y
+  `offsetHeight` el alto completo, aunque `details.open` ya es `false` y
+  visualmente el contenido SÍ desaparece por completo (confirmado con
+  capturas antes/durante/después). Es un detalle de cómo Chrome
+  implementa el ocultamiento interno de `<details>` (vía un pseudo-
+  elemento `::details-content`, no un `display:none` literal en el hijo
+  de luz) — no es un bug real, solo significa que no hay que confiar en
+  `offsetHeight`/`display` computados del hijo para verificar el estado
+  cerrado; una captura de pantalla es la fuente de verdad.
+- El giro del ícono "+"→"×" (ya implementado antes, vía
+  `.faq__item[open] .faq__question::after`) sigue funcionando igual,
+  sin cambios — es CSS puro atado al atributo `[open]`, independiente
+  de esta animación.
+- Verificado con Playwright (secuencia de valores de `max-height`
+  durante la transición + capturas de pantalla antes/durante/después de
+  abrir y cerrar, en desktop y en 390px): la animación crece/decrece
+  suave, sin overflow horizontal ni errores de consola.
